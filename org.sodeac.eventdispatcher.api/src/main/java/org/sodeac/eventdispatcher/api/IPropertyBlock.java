@@ -20,4 +20,5 @@ public interface IPropertyBlock
 	public Object removeProperty(String key);
 	public Map<String, Object> getProperties();
 	public List<String> getPropertyKeys();
+	public void clear();
 }

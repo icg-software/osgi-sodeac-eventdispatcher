@@ -34,6 +34,7 @@ public class PropertyBlockImpl implements IPropertyBlock
 	
 	private Map<String,Object> properties;
 	private Map<String,Object> propertiesCopy;
+	private List<String> keyList;
 	private ReentrantReadWriteLock propertiesLock;
 	private ReadLock propertiesReadLock;
 	private WriteLock propertiesWriteLock;
@@ -56,6 +57,7 @@ public class PropertyBlockImpl implements IPropertyBlock
 			}
 			this.properties.put(key, value);
 			this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
+			this.keyList = null;
 		}
 		finally 
 		{
@@ -109,6 +111,8 @@ public class PropertyBlockImpl implements IPropertyBlock
 			propertiesWriteLock.lock();
 			Object oldPropertyValue = this.properties.get(key);
 			this.properties.remove(key);
+			this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
+			this.keyList = null;
 			return oldPropertyValue;
 		}
 		finally 
@@ -122,17 +126,24 @@ public class PropertyBlockImpl implements IPropertyBlock
 	{
 		if(this.properties == null)
 		{
-			return new ArrayList<String>();
+			if(this.keyList == null)
+			{
+				this.keyList = Collections.unmodifiableList(new ArrayList<String>());
+			}
+			return keyList;
 		}
 		try
 		{
 			propertiesReadLock.lock();
-			List<String> keyList = new ArrayList<String>();
-			for(String key : this.properties.keySet())
+			if(this.keyList == null)
 			{
-				keyList.add(key);
+				this.keyList = new ArrayList<String>();
+				for(String key : this.properties.keySet())
+				{
+					this.keyList.add(key);
+				}
 			}
-			return Collections.unmodifiableList(keyList);
+			return Collections.unmodifiableList(this.keyList);
 		}
 		finally 
 		{
@@ -162,6 +173,28 @@ public class PropertyBlockImpl implements IPropertyBlock
 			} 
 		}
 		return props;
+	}
+
+	@Override
+	public void clear()
+	{
+		if(this.properties == null)
+		{
+			return;
+		}
+		
+		propertiesWriteLock.lock();
+		try
+		{
+			this.keyList = null;
+			this.properties.clear();
+			this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
+		}
+		finally 
+		{
+			propertiesWriteLock.unlock();
+		}
+		
 	}
 	
 }
