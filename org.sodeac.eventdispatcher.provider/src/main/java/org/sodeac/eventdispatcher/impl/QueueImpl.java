@@ -132,7 +132,7 @@ public class QueueImpl implements IQueue
 			this.genericQueueSpoolLock.unlock();
 		}
 		
-		this.notifyOrCreateWorker();
+		this.notifyOrCreateWorker(-1);
 	}
 	
 	
@@ -483,6 +483,7 @@ public class QueueImpl implements IQueue
 			jobContainer.setPropertyBlock(propertyBlock);
 			jobContainer.setJobControl(jobControl);
 			jobList.add(jobContainer);
+			jobIndex.put(id, jobContainer);
 		}
 		finally 
 		{
@@ -521,10 +522,6 @@ public class QueueImpl implements IQueue
 			
 			IJobControl jobControl = jobContainer.getJobControl();
 			
-			if(executionTimeStamp > 0)
-			{
-				jobControl.setExecutionTimeStamp(executionTimeStamp);
-			}
 			if(heartBeatTimeOut > 0)
 			{
 				jobControl.setHeartBeatTimeOut(heartBeatTimeOut);
@@ -532,6 +529,12 @@ public class QueueImpl implements IQueue
 			if(timeOutValue > 0)
 			{
 				jobControl.setTimeOut(timeOutValue);
+			}
+			
+			if(executionTimeStamp > 0)
+			{
+				jobControl.setExecutionTimeStamp(executionTimeStamp);
+				this.notifyOrCreateWorker(executionTimeStamp);
 			}
 			
 			return jobContainer.getJob();
@@ -629,8 +632,8 @@ public class QueueImpl implements IQueue
 		{
 			for(IQueuedEvent queuedEvent : this.eventList)
 			{
-				match = (topics != null) && (topics.length != 0);
-				if(match)
+				match = true;
+				if((topics != null) && (topics.length != 0))
 				{
 					match = false;
 					for(String topic : topics)
@@ -757,7 +760,7 @@ public class QueueImpl implements IQueue
 			{
 				this.genericQueueSpoolLock.unlock();
 			}
-			this.notifyOrCreateWorker();
+			this.notifyOrCreateWorker(-1);
 		}
 		
 		return true;
@@ -832,7 +835,7 @@ public class QueueImpl implements IQueue
 			{
 				this.genericQueueSpoolLock.unlock();
 			}
-			this.notifyOrCreateWorker();
+			this.notifyOrCreateWorker(-1);
 		}
 		
 		return true;
@@ -1029,7 +1032,7 @@ public class QueueImpl implements IQueue
 		{
 			this.genericQueueSpoolLock.unlock();
 		}
-		this.notifyOrCreateWorker();
+		this.notifyOrCreateWorker(-1);
 	}
 
 
@@ -1048,10 +1051,10 @@ public class QueueImpl implements IQueue
 		{
 			this.genericQueueSpoolLock.unlock();
 		}
-		this.notifyOrCreateWorker();
+		this.notifyOrCreateWorker(-1);
 	}
 	
-	private void notifyOrCreateWorker()
+	private void notifyOrCreateWorker(long nextRuntimeStamp)
 	{
 		this.genericQueueSpoolLock.lock();
 		try
@@ -1063,7 +1066,14 @@ public class QueueImpl implements IQueue
 			}
 			else
 			{
-				this.queueWorker.notifyUpdate();
+				if(nextRuntimeStamp < 1)
+				{
+					this.queueWorker.notifyUpdate();
+				}
+				else
+				{
+					this.queueWorker.notifyUpdate(nextRuntimeStamp);
+				}
 			}
 		}
 		finally 
@@ -1173,7 +1183,7 @@ public class QueueImpl implements IQueue
 		{
 			this.signalListLock.unlock();
 		}
-		this.notifyOrCreateWorker();
+		this.notifyOrCreateWorker(-1);
 		
 	}
 }

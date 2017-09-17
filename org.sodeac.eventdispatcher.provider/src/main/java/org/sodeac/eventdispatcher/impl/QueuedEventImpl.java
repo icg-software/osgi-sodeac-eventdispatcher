@@ -16,9 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.service.event.Event;
 import org.sodeac.eventdispatcher.api.IQueue;
@@ -30,22 +27,19 @@ public class QueuedEventImpl implements IQueuedEvent
 	private Event event = null;
 	private String uuid = null;
 	
-	private Map<String,Object> properties;
-	private ReentrantReadWriteLock propertiesLock;
-	private ReadLock propertiesReadLock;
-	private WriteLock propertiesWriteLock;
-	private Map<String,Object> propertiesCopy;
+	private Object lockPropertyInstance = null;
+	private volatile PropertyBlockImpl propertyBlock = null;
 	private volatile Map<String,Object> nativeProperties;
+	private List<String> emptyKeyList = null;
+	private Map<String, Object>  emptyProperties = null;
 	
 	public QueuedEventImpl(Event event,QueueImpl queue)
 	{
 		super();
 		this.event = event;
 		this.queue = queue;
+		this.lockPropertyInstance = new Object();
 		this.uuid = UUID.randomUUID().toString();
-		this.propertiesLock = new ReentrantReadWriteLock(true);
-		this.propertiesReadLock = this.propertiesLock.readLock();
-		this.propertiesWriteLock = this.propertiesLock.writeLock();
 	}
 
 	@Override
@@ -57,46 +51,31 @@ public class QueuedEventImpl implements IQueuedEvent
 	@Override
 	public Object setProperty(String key, Object value)
 	{
-		Object old = null;
+		if(this.propertyBlock == null)
+		{
+			synchronized (lockPropertyInstance)
+			{
+				if(this.propertyBlock == null)
+				{
+					this.propertyBlock =  new PropertyBlockImpl();
+					this.emptyKeyList = null;
+					this.emptyProperties = null;
+				}
+			}
+		}
 		
-		propertiesWriteLock.lock();
-		try
-		{
-			if(this.properties == null)
-			{
-				this.properties = new HashMap<String,Object>();
-			}
-			else
-			{
-				old = this.properties.get(key);
-			}
-			this.properties.put(key, value);
-			this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
-		}
-		finally 
-		{
-			propertiesWriteLock.unlock();
-		}
-		return old;
+		return this.propertyBlock.setProperty(key, value);
 	}
 
 	@Override
 	public Object getProperty(String key)
 	{
-		if(this.properties == null)
+		if(this.propertyBlock == null)
 		{
 			return null;
 		}
 		
-		try
-		{
-			propertiesReadLock.lock();
-			return this.properties.get(key);
-		}
-		finally 
-		{
-			propertiesReadLock.unlock();
-		}
+		return this.propertyBlock.getProperty(key);
 	}
 
 	@Override
@@ -108,48 +87,57 @@ public class QueuedEventImpl implements IQueuedEvent
 	@Override
 	public List<String> getPropertyKeys()
 	{
-		if(this.properties == null)
+		if(this.propertyBlock == null)
 		{
-			return new ArrayList<String>();
-		}
-		try
-		{
-			propertiesReadLock.lock();
-			List<String> keyList = new ArrayList<String>();
-			for(String key : this.properties.keySet())
+			List<String> returnList = this.emptyKeyList;
+			if(returnList ==  null)
 			{
-				keyList.add(key);
+				synchronized (this.lockPropertyInstance)
+				{
+					if(this.propertyBlock == null)
+					{
+						if(this.emptyKeyList == null)
+						{
+							this.emptyKeyList = Collections.unmodifiableList(new ArrayList<String>());
+						}
+						returnList = this.emptyKeyList;
+					}
+				}
 			}
-			return Collections.unmodifiableList(keyList);
+			if(returnList != null)
+			{
+				return returnList;
+			}
 		}
-		finally 
-		{
-			propertiesReadLock.unlock();
-		}
+		return this.propertyBlock.getPropertyKeys();
 	}
 
 	@Override
 	public Map<String, Object> getProperties()
 	{
-		Map<String,Object> props = this.propertiesCopy;
-		if(props == null)
+		if(this.propertyBlock == null)
 		{
-			propertiesWriteLock.lock();
-			try
+			Map<String,Object> returnIndex = this.emptyProperties;
+			if(returnIndex ==  null)
 			{
-				if(this.properties == null)
+				synchronized (this.lockPropertyInstance)
 				{
-					this.properties = new HashMap<String,Object>();
+					if(this.propertyBlock == null)
+					{
+						if(this.emptyProperties == null)
+						{
+							this.emptyProperties = Collections.unmodifiableMap(new HashMap<String,Object>());
+						}
+						returnIndex = this.emptyProperties;
+					}
 				}
-				this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
-				props = this.propertiesCopy;
 			}
-			finally 
+			if(returnIndex != null)
 			{
-				propertiesWriteLock.unlock();
-			} 
+				return returnIndex;
+			}
 		}
-		return props;
+		return this.propertyBlock.getProperties();
 	}
 
 	@Override

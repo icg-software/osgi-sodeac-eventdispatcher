@@ -45,6 +45,7 @@ public class QueueWorker extends Thread
 	
 	private volatile Long currentTimeOutTimeStamp = null;
 	private volatile JobContainer currentRunningJob = null;
+	private long wakeUpTimeStamp = -1;
 	
 	public QueueWorker(QueueImpl impl)
 	{
@@ -55,7 +56,6 @@ public class QueueWorker extends Thread
 		this.removedEventList = new ArrayList<QueuedEventImpl>();
 		this.firedEventList = new ArrayList<Event>();
 		this.signalList = new ArrayList<String>();
-		
 	}
 
 	@Override
@@ -195,6 +195,18 @@ public class QueueWorker extends Thread
 			}
 			
 			this.dueJobList.clear();
+			this.wakeUpTimeStamp = -2; // rescheduling from now results in skipping next sleep
+			try
+			{
+				synchronized (this.waitMonitor)
+				{
+					if((this.wakeUpTimeStamp > 0) || (this.wakeUpTimeStamp == -3))
+					{
+						this.wakeUpTimeStamp = -2;
+					}
+				}
+			}
+			catch (Exception e) {} 
 			long nextRunTimeStamp = eventQueue.getDueJobs(this.dueJobList);
 			
 			if(! dueJobList.isEmpty())
@@ -483,9 +495,9 @@ public class QueueWorker extends Thread
 				{
 					if(go)
 					{
-						if(isUpdateNotified)
+						if((this.isUpdateNotified) || (this.wakeUpTimeStamp == -3))
 						{
-							isUpdateNotified = false;
+							this.wakeUpTimeStamp = -1;
 						}
 						else
 						{
@@ -496,10 +508,12 @@ public class QueueWorker extends Thread
 							}
 							if(waitTime > 0)
 							{
+								this.wakeUpTimeStamp = System.currentTimeMillis() + waitTime;
 								waitMonitor.wait(waitTime);
 							}
 						}
 					}
+					this.isUpdateNotified = false;
 				}
 			}
 			catch (InterruptedException e) {}
@@ -511,8 +525,8 @@ public class QueueWorker extends Thread
 			{
 				log(LogService.LOG_ERROR,"Error while run QueueWorker",e);
 			}
-		}
-		
+			this.wakeUpTimeStamp = -1;
+		}		
 	}
 	
 	public boolean checkTimeOut()
@@ -628,6 +642,30 @@ public class QueueWorker extends Thread
 			}
 		}
 		return true;
+	}
+	
+	public void notifyUpdate(long newRuntimeStamp)
+	{
+		try
+		{
+			synchronized (this.waitMonitor)
+			{
+				this.isUpdateNotified = true;
+				if(this.wakeUpTimeStamp == -2)
+				{
+					this.wakeUpTimeStamp = -3;
+				}
+				else if(this.wakeUpTimeStamp > 0)
+				{
+					if(this.wakeUpTimeStamp > newRuntimeStamp)
+					{
+						waitMonitor.notify();
+					}
+				}
+			}	
+		}
+		catch (Exception e) {}
+		catch (Error e) {}
 	}
 	
 	public void notifyUpdate()
