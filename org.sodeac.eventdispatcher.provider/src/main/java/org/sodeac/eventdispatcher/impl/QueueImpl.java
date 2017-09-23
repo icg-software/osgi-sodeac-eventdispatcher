@@ -664,6 +664,18 @@ public class QueueImpl implements IQueue
 								break;
 							}
 						}
+						if(topic.startsWith("*"))
+						{
+							while(topic.startsWith("*"))
+							{
+								topic = topic.substring(1, topic.length());
+							}
+							if(queuedEvent.getEvent().getTopic().endsWith(topic))
+							{
+								match = true;
+								break;
+							}
+						}
 					}
 				}
 				

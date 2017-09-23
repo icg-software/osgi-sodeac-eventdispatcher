@@ -1000,9 +1000,115 @@ public class BaseContainerTest extends AbstractTest
 		IQueueJob job3 = (IQueueJob)queuedEvent3.getProperty(BaseFilterTestController.PROPERTY_JOB);
 		assertNotNull("job3  should not be null" ,job3);
 		
-		assertTrue("queue.getEventList 1 should returns correct list", listContentEqueals(new Object[] {queuedEvent1},queue.getEventList(null, null, bundleContext.createFilter("(STRVAL1=value1)"))));
-		assertTrue("queue.getEventList 2 should returns correct list", listContentEqueals(new Object[] {queuedEvent2},queue.getEventList(null, bundleContext.createFilter("(QINTVAL2=-200)"),null)));
-		assertTrue("queue.getJobList 1 should returns correct list",listContentEqueals(new Object[] {job2},queue.getJobList(bundleContext.createFilter("(JSTRVAL2=valueb)"))));
+		// test queueevent filter
+		
+		assertTrue("queue.getEventList  1 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1},
+			queue.getEventList(null, bundleContext.createFilter("(QSTRVAL1=value1)"),null)
+		));
+		
+		// test some filter expressions
+		
+		assertTrue("queue.getEventList  2 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent2},
+			queue.getEventList(null, bundleContext.createFilter("(QINTVAL2=-200)"),null)
+		));
+		assertTrue("queue.getEventList  3 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1,queuedEvent2,queuedEvent3},
+			queue.getEventList(null,bundleContext.createFilter("(QINTVAL2>=-300)"),null)
+		));
+		assertTrue("queue.getEventList  4 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1,queuedEvent3},
+			queue.getEventList(null,bundleContext.createFilter("(QINTVAL2>=0)"),null)
+		));
+		assertTrue("queue.getEventList  5 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent2},
+			queue.getEventList(null,bundleContext.createFilter("(!(QINTVAL2>=0))"),null)
+		));
+		assertTrue("queue.getEventList  6 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1,queuedEvent2,queuedEvent3},
+			queue.getEventList(null,bundleContext.createFilter("(QINTVAL3=*)"),null)
+		));
+		assertTrue("queue.getEventList  7 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1},
+			queue.getEventList(null, bundleContext.createFilter("(QSTRVAL1=*ue1)"),null)
+		));
+		assertTrue("queue.getEventList  8 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1,queuedEvent2},
+			queue.getEventList(null, bundleContext.createFilter("(QSTRVAL1=value*)"),null)
+		));
+		assertTrue("queue.getEventList  9 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1,queuedEvent2,queuedEvent3},
+			queue.getEventList(null, bundleContext.createFilter("(|(QSTRVAL1=value*)(QSTRVAL1=abc))"),null)
+		));
+		assertTrue("queue.getEventList 10 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1},
+			queue.getEventList(null, bundleContext.createFilter("(QBOOLVAL1=true)"),null)
+		));
+		assertTrue("queue.getEventList 11 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent2,queuedEvent3},
+			queue.getEventList(null, bundleContext.createFilter("(QBOOLVAL1=false)"),null)
+		));
+		assertTrue("queue.getEventList 12 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent2},
+			queue.getEventList(null, bundleContext.createFilter("(!(|(QBOOLVAL2=true)(QBOOLVAL2=false)))"),null)
+		));
+		
+		// test event filter
+		
+		assertTrue("queue.getEventList nativ  1 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1},
+			queue.getEventList(null, null, bundleContext.createFilter("(STRVAL1=value1)"))
+		));
+		
+		// test job filter
+		
+		assertTrue("queue.getJobList  1 should returns correct list",listContentEqueals
+		(
+			new Object[] {job2},
+			queue.getJobList(bundleContext.createFilter("(JSTRVAL2=valueb)"))
+		));
+		
+		// test topic
+		
+		assertTrue("queue.getEventList topic 1 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1,queuedEvent3},
+			queue.getEventList(new String[] 
+			{
+				BaseFilterTestController.SCHEDULE_EVENT + BaseFilterTestController.EVENT1, 
+				BaseFilterTestController.SCHEDULE_EVENT + BaseFilterTestController.EVENT3
+			}, null, null)
+		));
+		
+		assertTrue("queue.getEventList topic 2 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1,queuedEvent2,queuedEvent3},
+			queue.getEventList(new String[] {BaseFilterTestController.ALL}, null, null)
+		));
+		assertTrue("queue.getEventList topic 3 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent1,queuedEvent2,queuedEvent3},
+			queue.getEventList(new String[] {BaseFilterTestController.SCHEDULE_EVENT +BaseFilterTestController.ALL}, null, null)
+		));
+		assertTrue("queue.getEventList topic 4 should returns correct list", listContentEqueals
+		(
+			new Object[] {queuedEvent2},
+			queue.getEventList(new String[] {BaseFilterTestController.ALL + BaseFilterTestController.EVENT2}, null, null)
+		));
 	}
 	
 	private boolean listContentEqueals(Object[] expect, List<?> actual)
