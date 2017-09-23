@@ -34,6 +34,11 @@ public class JobControlImpl implements IJobControl
 		this.done = true;
 	}
 	
+	public void preRunPeriodicJob()
+	{
+		this.inRun = true;
+	}
+	
 	public void postRun()
 	{
 		this.inRun = false;
@@ -71,13 +76,6 @@ public class JobControlImpl implements IJobControl
 	@Override
 	public long setExecutionTimeStamp(long executionTimeStamp)
 	{
-		if(inRun)
-		{
-			if(executionTimeStamp < System.currentTimeMillis())
-			{
-				throw new RuntimeException("executionTimeStamp < System.currentTimeMillis()");
-			}
-		}
 		long old = this.executionTimeStamp;
 		this.executionTimeStamp = executionTimeStamp;
 		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);

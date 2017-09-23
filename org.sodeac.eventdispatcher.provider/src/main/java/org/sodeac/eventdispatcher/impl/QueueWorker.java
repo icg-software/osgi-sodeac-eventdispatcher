@@ -23,6 +23,7 @@ import org.sodeac.eventdispatcher.api.IOnJobError;
 import org.sodeac.eventdispatcher.api.IOnJobTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
+import org.sodeac.eventdispatcher.api.IPeriodicQueueJob;
 import org.sodeac.eventdispatcher.api.IOnEventScheduled;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueueJob;
@@ -246,7 +247,20 @@ public class QueueWorker extends Thread
 										currentProcessedJobList.add(jobContainer.getJob());
 									}
 								}
-								dueJob.getJobControl().preRun();
+								if(dueJob.getJob() instanceof IPeriodicQueueJob)
+								{
+									Long periodicRepetitionInterval = ((IPeriodicQueueJob) dueJob.getJob()).getPeriodicRepetitionInterval();
+									if((periodicRepetitionInterval ==  null) || (periodicRepetitionInterval.longValue() < 1))
+									{
+										periodicRepetitionInterval = 1000L * 60L * 60L * 24L * 365L * 108L;
+									}
+									dueJob.getJobControl().setExecutionTimeStamp(System.currentTimeMillis() + periodicRepetitionInterval);
+									dueJob.getJobControl().preRunPeriodicJob();
+								}
+								else
+								{
+									dueJob.getJobControl().preRun();
+								}
 								dueJob.getJob().run(eventQueue, dueJob.getMetrics(), dueJob.getPropertyBlock(), dueJob.getJobControl() ,currentProcessedJobList);
 								dueJob.getJobControl().postRun();
 								this.currentTimeOutTimeStamp = null;
@@ -271,11 +285,11 @@ public class QueueWorker extends Thread
 								
 								try
 								{
+									dueJob.getJobControl().setDone();
 									new Thread()
 									{
 										public void run()
 										{
-											dueJob.getJobControl().setDone();
 											for(ControllerContainer conf : eventQueue.getConfigurationList())
 											{
 												if(conf.getEventController() instanceof IOnJobError)
@@ -314,11 +328,11 @@ public class QueueWorker extends Thread
 								
 								try
 								{
+									dueJob.getJobControl().setDone();
 									new Thread()
 									{
 										public void run()
 										{
-											dueJob.getJobControl().setDone();
 											for(ControllerContainer conf : eventQueue.getConfigurationList())
 											{
 												if(conf.getEventController() instanceof IOnJobError)
@@ -443,19 +457,22 @@ public class QueueWorker extends Thread
 								log(LogService.LOG_ERROR,"Error while process signalList",e);
 							}
 							
-							for(ControllerContainer conf : eventQueue.getConfigurationList())
+							if(dueJob.getJobControl().isDone())
 							{
-								try
+								for(ControllerContainer conf : eventQueue.getConfigurationList())
 								{
-									if(go)
+									try
 									{
-										if(conf.getEventController() instanceof IOnJobDone)
+										if(go)
 										{
-											((IOnJobDone)conf.getEventController()).onJobDone(dueJob.getJob());
+											if(conf.getEventController() instanceof IOnJobDone)
+											{
+												((IOnJobDone)conf.getEventController()).onJobDone(dueJob.getJob());
+											}
 										}
 									}
+									catch (Exception e) {}
 								}
-								catch (Exception e) {}
 							}
 						}
 					}
