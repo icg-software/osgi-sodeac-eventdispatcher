@@ -23,7 +23,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.framework.Filter;
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.Event;
+import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
@@ -31,6 +33,7 @@ import org.sodeac.eventdispatcher.api.IEventController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 public class QueueImpl implements IQueue
 {
@@ -47,6 +50,11 @@ public class QueueImpl implements IQueue
 		this.configurationListLock = new ReentrantReadWriteLock(true);
 		this.configurationListReadLock = this.configurationListLock.readLock();
 		this.configurationListWriteLock = this.configurationListLock.writeLock();
+		
+		this.serviceList = new ArrayList<ServiceContainer>();
+		this.serviceListLock = new ReentrantReadWriteLock(true);
+		this.serviceListReadLock = this.serviceListLock.readLock();
+		this.serviceListWriteLock = this.serviceListLock.writeLock();
 		
 		this.eventList = new ArrayList<QueuedEventImpl>();
 		this.eventListLock = new ReentrantReadWriteLock(true);
@@ -79,6 +87,12 @@ public class QueueImpl implements IQueue
 	private ReentrantReadWriteLock configurationListLock;
 	private ReadLock configurationListReadLock;
 	private WriteLock configurationListWriteLock;
+	
+	private List<ServiceContainer> serviceList;
+	private volatile List<ServiceContainer> serviceListCopy = null;
+	private ReentrantReadWriteLock serviceListLock;
+	private ReadLock serviceListReadLock;
+	private WriteLock serviceListWriteLock;
 	
 	private List<QueuedEventImpl> eventList = null;
 	private ReentrantReadWriteLock eventListLock;
@@ -199,6 +213,193 @@ public class QueueImpl implements IQueue
 		finally 
 		{
 			configurationListReadLock.unlock();
+		}
+	}
+	
+	public void addService(IQueueService queueService,Map<String, ?> properties)
+	{
+		boolean reschedule = false;
+		serviceListWriteLock.lock();
+		try
+		{
+			for(ServiceContainer serviceContainer : this.serviceList)
+			{
+				if(serviceContainer.getQueueService() == queueService)
+				{
+					serviceContainer.setProperties(properties);
+					reschedule = true;
+					break;
+				}
+			}
+			
+			if(! reschedule)
+			{
+				ServiceContainer serviceContainer = new ServiceContainer();
+				serviceContainer.setProperties(properties);
+				serviceContainer.setQueueService(queueService);
+				
+				this.serviceList.add(serviceContainer);
+				this.serviceListCopy = null;
+			}
+		}
+		finally 
+		{
+			serviceListWriteLock.unlock();
+		}
+		
+		this.scheduleService(queueService, properties, reschedule);
+		
+	}
+	
+	private void scheduleService(IQueueService queueService,Map<String, ?> properties, boolean reschedule)
+	{
+		String serviceId = null;
+		long delay = 0;
+		long timeout = -1;
+		long hbtimeout = -1;
+		
+		
+		try
+		{
+			if(properties.get(IQueueService.PROPERTY_SERVICE_ID) != null)
+			{
+				serviceId = (String)properties.get(IQueueService.PROPERTY_SERVICE_ID);
+			}		
+		}
+		catch (Exception e) 
+		{
+			log(LogService.LOG_ERROR,"problems with serviceid",e);
+		}
+		
+		try
+		{
+			if(properties.get(IQueueService.PROPERTY_START_DELAY_MS) != null)
+			{
+				Object delayObject = properties.get(IQueueService.PROPERTY_START_DELAY_MS);
+				if(delayObject instanceof String)
+				{
+					delay = Long.parseLong((String)delayObject);
+				}
+				else if(delayObject instanceof Integer)
+				{
+					delay = ((Integer)delayObject);
+				}
+				else
+				{
+					delay = ((Long)delayObject);
+				}
+			}		
+		}
+		catch (Exception e) 
+		{
+			log(LogService.LOG_ERROR,"problems with startdelayvalue",e);
+		}
+		
+		try
+		{
+			if(properties.get(IQueueService.PROPERTY_TIMEOUT_MS) != null)
+			{
+				Object timeoutObject = properties.get(IQueueService.PROPERTY_TIMEOUT_MS);
+				if(timeoutObject instanceof String)
+				{
+					timeout = Long.parseLong((String)timeoutObject);
+				}
+				else if(timeoutObject instanceof Integer)
+				{
+					timeout = ((Integer)timeoutObject);
+				}
+				else
+				{
+					timeout = ((Long)timeoutObject);
+				}
+			}		
+		}
+		catch (Exception e) 
+		{
+			log(LogService.LOG_ERROR,"problems with timeoutvalue",e);
+		}
+		
+		try
+		{
+			if(properties.get(IQueueService.PROPERTY_HB_TIMEOUT_MS) != null)
+			{
+				Object hbtimeoutObject = properties.get(IQueueService.PROPERTY_HB_TIMEOUT_MS);
+				if(hbtimeoutObject instanceof String)
+				{
+					hbtimeout = Long.parseLong((String)hbtimeoutObject);
+				}
+				else if(hbtimeoutObject instanceof Integer)
+				{
+					hbtimeout = ((Integer)hbtimeoutObject);
+				}
+				else
+				{
+					hbtimeout = ((Long)hbtimeoutObject);
+				}
+			}		
+		}
+		catch (Exception e) 
+		{
+			log(LogService.LOG_ERROR,"problems with heartbeattimeoutvalue",e);
+		}
+		
+		
+		try
+		{
+			if(reschedule)
+			{
+				this.rescheduleJob(serviceId, System.currentTimeMillis() + delay, timeout, hbtimeout);
+				return;
+			}
+			IPropertyBlock servicePropertyBlock = this.eventDispatcher.createPropertyBlock();
+			for(Entry<String,?> entry : properties.entrySet())
+			{
+				servicePropertyBlock.setProperty(entry.getKey(), entry.getValue());
+			}
+			this.scheduleJob(serviceId, queueService, servicePropertyBlock, System.currentTimeMillis() + delay, timeout, hbtimeout);
+		}
+		catch (Exception e) 
+		{
+			log(LogService.LOG_ERROR,"problems scheduling service with id " + serviceId,e);
+		}
+	}
+	
+	public boolean removeService(IQueueService eventQueueService)
+	{
+		serviceListWriteLock.lock();
+		try
+		{
+			List<ServiceContainer> toDeleteList = new ArrayList<ServiceContainer>();
+			for(ServiceContainer serviceContainer : this.serviceList)
+			{
+				if(serviceContainer.getQueueService() == eventQueueService)
+				{
+					toDeleteList.add(serviceContainer);
+				}
+			}
+			for(ServiceContainer toDelete : toDeleteList)
+			{
+				this.serviceList.remove(toDelete);
+			}
+			this.serviceListCopy = null;
+			return toDeleteList.size() > 0;
+		}
+		finally 
+		{
+			serviceListWriteLock.unlock();
+		}
+	}
+	
+	public int getServiceSize()
+	{
+		serviceListReadLock.lock();
+		try
+		{
+			return this.serviceList.size();
+		}
+		finally 
+		{
+			serviceListReadLock.unlock();
 		}
 	}
 	
@@ -482,8 +683,6 @@ public class QueueImpl implements IQueue
 			jobContainer.setMetrics(metric);
 			jobContainer.setPropertyBlock(propertyBlock);
 			jobContainer.setJobControl(jobControl);
-			jobList.add(jobContainer);
-			jobIndex.put(id, jobContainer);
 		}
 		finally 
 		{
@@ -491,6 +690,19 @@ public class QueueImpl implements IQueue
 		}
 		
 		jobContainer.getJob().configure(id, jobContainer.getMetrics(), jobContainer.getPropertyBlock(), jobContainer.getJobControl());
+		
+		jobListWriteLock.lock();
+		try
+		{
+			jobList.add(jobContainer);
+			jobIndex.put(id, jobContainer);
+		}
+		finally 
+		{
+			jobListWriteLock.unlock();
+		}
+		notifyOrCreateWorker(executionTimeStamp);
+		
 		return id;
 	}
 	
@@ -879,6 +1091,32 @@ public class QueueImpl implements IQueue
 		return list;
 	}
 	
+	public List<ServiceContainer> getServiceList()
+	{
+		List<ServiceContainer> list = serviceListCopy;
+		if(list != null)
+		{
+			return list; 
+		}
+		serviceListReadLock.lock();
+		try
+		{
+			list = new ArrayList<ServiceContainer>();
+			for(ServiceContainer service : serviceList)
+			{
+				list.add(service);
+			}
+			list = Collections.unmodifiableList(list);
+			serviceListCopy = list;
+		}
+		finally 
+		{
+			serviceListReadLock.unlock();
+		}
+		 
+		return list;
+	}
+	
 	public boolean checkTimeOut()
 	{
 		QueueWorker worker = null;
@@ -1196,6 +1434,70 @@ public class QueueImpl implements IQueue
 			this.signalListLock.unlock();
 		}
 		this.notifyOrCreateWorker(-1);
+	}
+	
+	protected void log(int logServiceLevel,String logMessage, Exception e)
+	{
+		try
+		{
+			LogService logService = null;
+			ComponentContext context = null;
+			
+			if(eventDispatcher != null){logService = eventDispatcher.logService;}
+			if(eventDispatcher != null){context = eventDispatcher.getContext();}
+			
+			if(logService != null)
+			{
+				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
+			}
+			else
+			{
+				if(logServiceLevel == LogService.LOG_ERROR)
+				{
+					System.err.println(logMessage);
+				}
+				if(e != null)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+		catch (Exception ie) 
+		{
+			ie.printStackTrace();
+		}
+	}
+	
+	protected void log(int logServiceLevel,String logMessage, Error e)
+	{
 		
+		try
+		{
+			LogService logService = null;
+			ComponentContext context = null;
+			
+			if(eventDispatcher != null){logService = eventDispatcher.logService;}
+			if(eventDispatcher != null){context = eventDispatcher.getContext();}
+			
+			if(logService != null)
+			{
+				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
+			}
+			else
+			{
+				if(logServiceLevel == LogService.LOG_ERROR)
+				{
+					System.err.println(logMessage);
+				}
+				if(e != null)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+		catch (Exception ie) 
+		{
+			ie.printStackTrace();
+		}
 	}
 }

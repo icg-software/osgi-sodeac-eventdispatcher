@@ -37,6 +37,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
+import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IEventController;
 
 import com.codahale.metrics.MetricRegistry;
@@ -50,6 +51,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 	private WriteLock queueIndexWriteLock;
 	private DispatcherGuardian dispatcherGuardian;
 	private List<ControllerContainer> controllerList = null;
+	private List<ServiceContainer> serviceList = null;
 	
 	private volatile ComponentContext context = null;
 	
@@ -64,6 +66,8 @@ public class EventDispatcherImpl implements IEventDispatcher
 	
 	protected volatile MetricsService metricsService;
 	
+	// TODO replace synchronized (controllerList/serviceList) by locks ?
+	
 	public EventDispatcherImpl()
 	{
 		super();
@@ -71,7 +75,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		this.queueIndexReadLock = this.queueIndexLock.readLock();
 		this.queueIndexWriteLock = this.queueIndexLock.writeLock();
 		this.controllerList = new ArrayList<ControllerContainer>();
-		
+		this.serviceList = new ArrayList<ServiceContainer>();
 	}
 	
 	@Override
@@ -108,50 +112,6 @@ public class EventDispatcherImpl implements IEventDispatcher
 		return true;
 	}
 	
-	/*@Override
-	public boolean ensureQueueExists(String queueId)
-	{
-		QueueImpl queue = null;
-		this.queueIndexReadLock.lock();
-		try
-		{
-			queue = this.queueIndex.get(queueId);
-			
-			if(queue != null)
-			{
-				return false;
-			}
-		}
-		finally 
-		{
-			this.queueIndexReadLock.unlock();
-		}
-
-		this.queueIndexWriteLock.lock();
-		try
-		{
-			queue = this.queueIndex.get(queueId);
-			
-			if(queue != null)
-			{
-				return false;
-			}
-			
-			queue = new QueueImpl(queueId, this);
-			
-			this.queueIndex.put(queueId,queue );
-			if(this.counterQueueSize != null)
-			{
-				this.counterQueueSize.increment();
-			}
-		}
-		finally 
-		{
-			this.queueIndexWriteLock.unlock();
-		}
-		
-		return true;
-	}*/
 	
 	@Override
 	public List<String> getQueueIdList()
@@ -458,6 +418,27 @@ public class EventDispatcherImpl implements IEventDispatcher
 			{
 				this.queueIndexWriteLock.unlock();
 			}
+			
+			this.queueIndexReadLock.lock();
+			try
+			{
+				synchronized(this.serviceList)
+				{
+					for(ServiceContainer serviceContainer :  this.serviceList )
+					{
+						if(! queueId.equals(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)))
+						{
+							continue;
+						}
+						
+						queue.addService(serviceContainer.getQueueService(), serviceContainer.getProperties());
+					}
+				}
+			}
+			finally 
+			{
+				this.queueIndexReadLock.unlock();
+			}
 		}
 		
 		queue.addConfiguration(eventController, properties);
@@ -480,6 +461,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 				}
 			}
 		}
+		
 		return true;
 	}
 	
@@ -577,6 +559,135 @@ public class EventDispatcherImpl implements IEventDispatcher
 				}
 			}
 		}
+		return registered;
+	}
+	
+	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
+	public void bindQueueService(IQueueService queueService,Map<String, ?> properties)
+	{
+		synchronized (this.serviceList)// sync
+		{
+			ServiceContainer serviceContainer = new ServiceContainer();
+			serviceContainer.setQueueService(queueService);
+			serviceContainer.setProperties(properties);
+			
+			this.serviceList.add(serviceContainer);
+			
+		}
+		
+		if(this.context != null)
+		{
+			registerQueueService(queueService, properties);
+		}
+	}
+	
+	private boolean registerQueueService(IQueueService queueService,Map<String, ?> properties)
+	{
+		if(this.context == null)
+		{
+			return false;
+		}
+		
+		String queueId = (String)properties.get(IQueueService.PROPERTY_QUEUE_ID);
+		if(queueId == null)
+		{
+			if(this.logService != null)
+			{
+				this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "Missing QueueId (Null) for service");
+			}
+			else
+			{
+				System.err.println("Missing QueueId (Null) for service");
+			}
+			return false;
+		}
+		if(queueId.isEmpty())
+		{
+			if(this.logService != null)
+			{
+				this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "Missing QueueId (Empty) for service");
+			}
+			else
+			{
+				System.err.println("Missing QueueId (empty) for service");
+			}
+			return false;
+		}
+		QueueImpl queue = null;
+		this.queueIndexReadLock.lock();
+		try
+		{
+			queue = this.queueIndex.get(queueId);
+		}
+		finally 
+		{
+			this.queueIndexReadLock.unlock();
+		}
+		
+		
+		if(queue == null)
+		{
+			return false;
+		}
+		
+		queue.addService(queueService, properties);
+		return true;
+	}
+	
+	public void unbindQueueService(IQueueService queueService,Map<String, ?> properties)
+	{
+		synchronized (this.serviceList)
+		{
+			List<ServiceContainer> removeList = null;
+			for(ServiceContainer serviceContainer : this.serviceList)
+			{
+				if(serviceContainer.getQueueService() == queueService)
+				{
+					if(removeList ==  null)
+					{
+						removeList = new ArrayList<ServiceContainer>();
+					}
+					removeList.add(serviceContainer);
+				}
+			}
+			if(removeList != null)
+			{
+				for(ServiceContainer serviceContainer : removeList)
+				{
+					this.serviceList.remove(serviceContainer);
+				}
+			}
+		}
+		if(this.context != null)
+		{
+			this.unregisterQueueService(queueService);
+		}
+	}
+	
+	private boolean unregisterQueueService(IQueueService queueService)
+	{
+		if(this.context == null)
+		{
+			return false;
+		}
+		
+		boolean registered = false;
+		this.queueIndexReadLock.lock();
+		try
+		{
+			for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet() )
+			{
+				if(entry.getValue().removeService(queueService))
+				{
+					// TODO setDone
+				}
+			}
+		}
+		finally 
+		{
+			this.queueIndexReadLock.unlock();
+		}
+		
 		return registered;
 	}
 

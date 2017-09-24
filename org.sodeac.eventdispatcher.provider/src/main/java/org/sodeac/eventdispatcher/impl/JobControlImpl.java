@@ -60,6 +60,11 @@ public class JobControlImpl implements IJobControl
 		this.inTimeOut = true;
 		this.done = true;
 	}
+	
+	public void timeOutService()
+	{
+		this.inTimeOut = true;
+	}
 
 	@Override
 	public boolean isInTimeOut()

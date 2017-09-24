@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.Event;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
@@ -27,6 +26,7 @@ import org.sodeac.eventdispatcher.api.IPeriodicQueueJob;
 import org.sodeac.eventdispatcher.api.IOnEventScheduled;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueService;
 
 public class QueueWorker extends Thread
 {
@@ -257,6 +257,38 @@ public class QueueWorker extends Thread
 									dueJob.getJobControl().setExecutionTimeStamp(System.currentTimeMillis() + periodicRepetitionInterval);
 									dueJob.getJobControl().preRunPeriodicJob();
 								}
+								else if(dueJob.getJob() instanceof IQueueService)
+								{
+									long periodicRepetitionInterval = -1L;
+									
+									try
+									{
+										if(dueJob.getPropertyBlock().getProperty(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL) != null)
+										{
+											Object pri = dueJob.getPropertyBlock().getProperty(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL);
+											if(pri instanceof String)
+											{
+												periodicRepetitionInterval = Long.parseLong((String)pri);
+											}
+											else if(pri instanceof Integer)
+											{
+												periodicRepetitionInterval = ((Integer)pri);
+											}
+											else
+											{
+												periodicRepetitionInterval = ((Long)pri);
+											}
+										}		
+									}
+									catch (Exception e) {}
+									
+									if(periodicRepetitionInterval < 1)
+									{
+										periodicRepetitionInterval = 1000L * 60L * 60L * 24L * 365L * 108L;
+									}
+									dueJob.getJobControl().setExecutionTimeStamp(System.currentTimeMillis() + periodicRepetitionInterval);
+									dueJob.getJobControl().preRunPeriodicJob();
+								}
 								else
 								{
 									dueJob.getJobControl().preRun();
@@ -285,7 +317,10 @@ public class QueueWorker extends Thread
 								
 								try
 								{
-									dueJob.getJobControl().setDone();
+									if(! (dueJob.getJob() instanceof IQueueService))
+									{
+										dueJob.getJobControl().setDone();
+									}
 									new Thread()
 									{
 										public void run()
@@ -328,7 +363,10 @@ public class QueueWorker extends Thread
 								
 								try
 								{
-									dueJob.getJobControl().setDone();
+									if(! (dueJob.getJob() instanceof IQueueService))
+									{
+										dueJob.getJobControl().setDone();
+									}
 									new Thread()
 									{
 										public void run()
@@ -480,7 +518,10 @@ public class QueueWorker extends Thread
 					{
 						try
 						{
-							dueJob.getJobControl().setDone();
+							if(! (dueJob.getJob() instanceof IQueueService))
+							{
+								dueJob.getJobControl().setDone();
+							}
 						}
 						catch (Exception ie) {}
 						log(LogService.LOG_ERROR,"Error while process currentProcessedJobList",e);
@@ -601,7 +642,14 @@ public class QueueWorker extends Thread
 		
 		try
 		{
-			timeOutJob.getJobControl().timeOut();
+			if(timeOutJob.getJob() instanceof IQueueService)
+			{
+				timeOutJob.getJobControl().timeOutService();
+			}
+			else
+			{
+				timeOutJob.getJobControl().timeOut();
+			}
 		}
 		catch (Exception e) {}
 		
@@ -721,69 +769,39 @@ public class QueueWorker extends Thread
 	
 	private void log(int logServiceLevel,String logMessage, Exception e)
 	{
-		try
+		if(eventQueue != null)
 		{
-			EventDispatcherImpl dispatcher = null;
-			LogService logService = null;
-			ComponentContext context = null;
-			
-			if(eventQueue != null){dispatcher = eventQueue.getEventDispatcher();}
-			if(dispatcher != null){logService = dispatcher.logService;}
-			if(dispatcher != null){context = dispatcher.getContext();}
-			
-			if(logService != null)
-			{
-				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
-			}
-			else
-			{
-				if(logServiceLevel == LogService.LOG_ERROR)
-				{
-					System.err.println(logMessage);
-				}
-				if(e != null)
-				{
-					e.printStackTrace();
-				}
-			}
+			eventQueue.log(logServiceLevel, logMessage, e);
 		}
-		catch (Exception ie) 
+		else
 		{
-			ie.printStackTrace();
+			if(logServiceLevel == LogService.LOG_ERROR)
+			{
+				System.err.println(logMessage);
+			}
+			if(e != null)
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	private void log(int logServiceLevel,String logMessage, Error e)
 	{
-		try
+		if(eventQueue != null)
 		{
-			EventDispatcherImpl dispatcher = null;
-			LogService logService = null;
-			ComponentContext context = null;
-			
-			if(eventQueue != null){dispatcher = eventQueue.getEventDispatcher();}
-			if(dispatcher != null){logService = dispatcher.logService;}
-			if(dispatcher != null){context = dispatcher.getContext();}
-			
-			if(logService != null)
-			{
-				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
-			}
-			else
-			{
-				if(logServiceLevel == LogService.LOG_ERROR)
-				{
-					System.err.println(logMessage);
-				}
-				if(e != null)
-				{
-					e.printStackTrace();
-				}
-			}
+			eventQueue.log(logServiceLevel, logMessage, e);
 		}
-		catch (Exception ie) 
+		else
 		{
-			ie.printStackTrace();
+			if(logServiceLevel == LogService.LOG_ERROR)
+			{
+				System.err.println(logMessage);
+			}
+			if(e != null)
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 

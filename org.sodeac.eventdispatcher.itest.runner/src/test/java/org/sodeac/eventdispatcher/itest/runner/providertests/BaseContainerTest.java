@@ -24,6 +24,7 @@ import org.sodeac.eventdispatcher.itest.components.base.BaseHeartbeatTimeoutTest
 import org.sodeac.eventdispatcher.itest.components.base.BasePeriodicJobTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseReCreateWorkerTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseReScheduleTestController;
+import org.sodeac.eventdispatcher.itest.components.base.BaseServiceTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutTestController;
 
@@ -1212,5 +1213,92 @@ public class BaseContainerTest extends AbstractTest
 		assertEquals("Expect Job Done",TracingEvent.ON_JOB_DONE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
+	}
+	
+	@Test(timeout=12000)
+	public void test15GetJobDispatcherWorkflow() throws InterruptedException 
+	{
+		IQueue queue = this.eventDispatcher.getQueue(BaseServiceTestController.QUEUE_ID);
+		assertNotNull("queue should not be null" ,queue);
+		
+		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		assertNotNull("tracingObject should not be null" ,tracingObject);
+		
+		int tracingEventPosition = 0;
+		CountDownLatch latch = (CountDownLatch)queue.getPropertyBlock().getProperty(BaseServiceTestController.EVENT_PROPERTY_LATCH);
+		
+		Event event1 =  new Event(BaseServiceTestController.RESCHEDULE_EVENT1,new HashMap<String,Object>());
+		eventAdmin.sendEvent(event1);
+		
+		try
+		{
+			Thread.sleep(1000);
+		}
+		catch (Exception e) {}
+		
+		Event event2 =  new Event(BaseServiceTestController.RESCHEDULE_EVENT2,new HashMap<String,Object>());
+		eventAdmin.sendEvent(event2);
+		
+		try
+		{
+			Thread.sleep(1000);
+		}
+		catch (Exception e) {}
+		
+		Event event3 =  new Event(BaseServiceTestController.RESCHEDULE_EVENT3,new HashMap<String,Object>());
+		eventAdmin.sendEvent(event3);
+		
+		
+		try
+		{
+			latch.await(10, TimeUnit.SECONDS);
+		}
+		catch (Exception e) {}
+		
+		Thread.sleep(3000);
+		
+		// 1. Queue Observe
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		for(int i = 0; i < 3; i++)
+		{
+			// a. Schedule Event
+				
+			assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+			assertEquals("Expect Event scheduled",TracingEvent.ON_EVENT_SCHEDULED, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+			tracingEventPosition++;
+			
+			// b. remove Event
+			
+			assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+			assertEquals("Expect Event removed",TracingEvent.ON_REMOVE_EVENT, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+			tracingEventPosition++;
+			
+			// c. Topic signal
+			
+			assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+			assertEquals("Expect Signal",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+			String signal = BaseServiceTestController.RESCHEDULE_EVENT1;
+			if(i == 1)
+			{
+				signal = BaseServiceTestController.RESCHEDULE_EVENT2;
+			}
+			else if(i == 2)
+			{
+				signal = BaseServiceTestController.RESCHEDULE_EVENT3;
+			}
+			assertEquals("Expect correct topic signal",signal, tracingObject.getTracingEventList().get(tracingEventPosition).getSignal());
+			tracingEventPosition++;
+			
+
+			// d remove event signal
+			
+			assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+			assertEquals("Expect Signal",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+			tracingEventPosition++;
+		}
 	}
 }
