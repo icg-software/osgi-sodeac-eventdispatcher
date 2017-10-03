@@ -185,7 +185,6 @@ public class QueueImpl implements IQueue
 						registerProperties.put(EventConstants.EVENT_TOPIC,topic);
 						ServiceRegistration<EventHandler> registration = eventDispatcher.getContext().getBundleContext().registerService(EventHandler.class, handler, registerProperties);
 						handler.setRegistration(registration);
-						System.out.println("R1 " + topic);
 					}
 				}
 				else
@@ -248,7 +247,6 @@ public class QueueImpl implements IQueue
 								registerProperties.put(EventConstants.EVENT_TOPIC,handler.getTopic());
 								ServiceRegistration<EventHandler> registration = eventDispatcher.getContext().getBundleContext().registerService(EventHandler.class, handler, registerProperties);
 								handler.setRegistration(registration);
-								System.out.println("R2 " + handler.getTopic());
 							}
 						}
 					}
