@@ -12,7 +12,9 @@ package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,8 +25,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.framework.Filter;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.Event;
+import org.osgi.service.event.EventConstants;
+import org.osgi.service.event.EventHandler;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
@@ -168,6 +173,88 @@ public class QueueImpl implements IQueue
 			configurationContainer.setProperties(properties);
 			configurationContainer.setEventController(eventQueueConfiguration);
 			
+			if(properties.get(IEventController.CONSUME_EVENT_TOPIC) != null)
+			{
+				if(properties.get(IEventController.CONSUME_EVENT_TOPIC) instanceof String)
+				{
+					String topic = (String)properties.get(IEventController.CONSUME_EVENT_TOPIC);
+					if(! topic.isEmpty())
+					{
+						ConsumeEventHandler handler = configurationContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId, topic));
+						Dictionary<String, Object> registerProperties = new Hashtable<String,Object>();
+						registerProperties.put(EventConstants.EVENT_TOPIC,topic);
+						ServiceRegistration<EventHandler> registration = eventDispatcher.getContext().getBundleContext().registerService(EventHandler.class, handler, registerProperties);
+						handler.setRegistration(registration);
+						System.out.println("R1 " + topic);
+					}
+				}
+				else
+				{
+					List<String> topicList = new ArrayList<String>();
+					if(properties.get(IEventController.CONSUME_EVENT_TOPIC) instanceof List)
+					{
+						for(Object item : (List<?>)properties.get(IEventController.CONSUME_EVENT_TOPIC))
+						{
+							if(item == null)
+							{
+								continue;
+							}
+							if(!(item instanceof String))
+							{
+								continue;
+							}
+							String topic = (String) item;
+							if(topic.isEmpty())
+							{
+								continue;
+							}
+							topicList.add(topic);
+						}
+					}
+					
+					if(properties.get(IEventController.CONSUME_EVENT_TOPIC) instanceof String[])
+					{
+						for(Object item : (String[])properties.get(IEventController.CONSUME_EVENT_TOPIC))
+						{
+							if(item == null)
+							{
+								continue;
+							}
+							if(!(item instanceof String))
+							{
+								continue;
+							}
+							String topic = (String) item;
+							if(topic.isEmpty())
+							{
+								continue;
+							}
+							topicList.add(topic);
+						}
+					}
+					
+					if(! topicList.isEmpty())
+					{
+						for(String topic : topicList)
+						{
+							configurationContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId, topic));
+						}
+						
+						if(configurationContainer.getConsumeEventHandlerList() != null)
+						{
+							for(ConsumeEventHandler handler :  configurationContainer.getConsumeEventHandlerList())
+							{
+								Dictionary<String, Object> registerProperties = new Hashtable<String,Object>();
+								registerProperties.put(EventConstants.EVENT_TOPIC,handler.getTopic());
+								ServiceRegistration<EventHandler> registration = eventDispatcher.getContext().getBundleContext().registerService(EventHandler.class, handler, registerProperties);
+								handler.setRegistration(registration);
+								System.out.println("R2 " + handler.getTopic());
+							}
+						}
+					}
+				}
+			}
+			
 			this.configurationList.add(configurationContainer);
 			this.configurationListCopy = null;
 		}
@@ -193,6 +280,26 @@ public class QueueImpl implements IQueue
 			for(ControllerContainer toDelete : toDeleteList)
 			{
 				this.configurationList.remove(toDelete);
+				
+				if(toDelete.getConsumeEventHandlerList() != null)
+				{
+					for(ConsumeEventHandler handler : toDelete.getConsumeEventHandlerList() )
+					{
+						ServiceRegistration<EventHandler> registration = handler.getRegistration();
+						handler.setRegistration(null);
+						try
+						{
+							if(registration != null)
+							{
+								registration.unregister();
+							}
+						}
+						catch (Exception e) 
+						{
+							log(LogService.LOG_ERROR,"Unregistration Consuming Event for queue " + queueId , e);
+						}
+					}
+				}
 			}
 			this.configurationListCopy = null;
 			return toDeleteList.size() > 0;

@@ -12,4 +12,5 @@ package org.sodeac.eventdispatcher.api;
 
 public interface IEventController
 {
+	public static final String CONSUME_EVENT_TOPIC = "consume.event.topic";
 }

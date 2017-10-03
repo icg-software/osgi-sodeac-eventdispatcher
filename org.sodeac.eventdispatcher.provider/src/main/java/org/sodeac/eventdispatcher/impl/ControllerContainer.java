@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.sodeac.eventdispatcher.api.IEventController;
@@ -18,6 +20,7 @@ public class ControllerContainer
 {
 	private Map<String, ?> properties = null;
 	private IEventController eventController = null;
+	private List<ConsumeEventHandler> consumeEventHandlerList = null;
 	
 	public Map<String, ?> getProperties()
 	{
@@ -34,5 +37,18 @@ public class ControllerContainer
 	public void setEventController(IEventController eventController)
 	{
 		this.eventController = eventController;
+	}
+	public ConsumeEventHandler addConsumeEventHandler(ConsumeEventHandler consumeEventHandler)
+	{
+		if(this.consumeEventHandlerList == null)
+		{
+			this.consumeEventHandlerList = new ArrayList<ConsumeEventHandler>();
+		}
+		this.consumeEventHandlerList.add(consumeEventHandler);
+		return consumeEventHandler;
+	}
+	public List<ConsumeEventHandler> getConsumeEventHandlerList()
+	{
+		return consumeEventHandlerList;
 	}
 }
