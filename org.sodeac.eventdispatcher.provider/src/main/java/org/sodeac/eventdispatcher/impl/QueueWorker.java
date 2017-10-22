@@ -23,10 +23,12 @@ import org.sodeac.eventdispatcher.api.IOnJobTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
 import org.sodeac.eventdispatcher.api.IPeriodicQueueJob;
+import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnEventScheduled;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
+import org.sodeac.eventdispatcher.api.ITimer;
 
 public class QueueWorker extends Thread
 {
@@ -225,6 +227,8 @@ public class QueueWorker extends Thread
 						}
 						if(go)
 						{
+							ITimer.Context timerContextJob = null;
+							ITimer.Context timerContextQueue = null;
 							try
 							{
 								jobTimeOut = ((dueJob.getJobControl().getTimeOut() > 0) || (dueJob.getJobControl().getHeartBeatTimeOut() > 0));
@@ -293,19 +297,69 @@ public class QueueWorker extends Thread
 								{
 									dueJob.getJobControl().preRun();
 								}
+								
+								this.currentRunningJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_STARTED_TIMESTAMP, System.currentTimeMillis());
+								
+								dueJob.getMetrics().meter(IMetrics.METRICS_RUN_JOB).mark();
+								dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB).inc();
+								eventQueue.getMetrics().meter(IMetrics.METRICS_RUN_JOB).mark();
+								eventQueue.getMetrics().counter(IMetrics.METRICS_RUN_JOB).inc();
+								timerContextJob = dueJob.getMetrics().timer(IMetrics.METRICS_RUN_JOB).time();
+								timerContextQueue = eventQueue.getMetrics().timer(IMetrics.METRICS_RUN_JOB).time();
+								
 								dueJob.getJob().run(eventQueue, dueJob.getMetrics(), dueJob.getPropertyBlock(), dueJob.getJobControl() ,currentProcessedJobList);
+								
+								this.currentRunningJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_FINISHED_TIMESTAMP, System.currentTimeMillis());
+								this.currentRunningJob.getPropertyBlock().setProperty(IQueueJob.PROPERTY_KEY_THROWED_EXCEPTION, null);
+								
+								timerContextJob.stop();
+								timerContextQueue.stop();
+								
 								dueJob.getJobControl().postRun();
+								
 								this.currentTimeOutTimeStamp = null;
 								this.currentRunningJob = null;
 								if(jobTimeOut)
 								{
-									this.eventQueue.getEventDispatcher().unregisterTimeOut(this.eventQueue,dueJob);
+									try
+									{
+										this.eventQueue.getEventDispatcher().unregisterTimeOut(this.eventQueue,dueJob);
+									}
+									catch (Exception e) 
+									{
+										this.log(LogService.LOG_ERROR, "eventQueue.getEventDispatcher().unregisterTimeOut(this.eventQueue,dueJob)", e);
+									}
 								}
 							}
 							catch (Exception e) 
 							{
+								this.currentRunningJob.getPropertyBlock().setProperty(IQueueJob.PROPERTY_KEY_THROWED_EXCEPTION, e);
 								log(LogService.LOG_ERROR,"Exception while process job " + dueJob,e);
-								dueJob.getJobControl().preRun();
+								if(timerContextJob != null)
+								{
+									try
+									{
+										timerContextJob.stop();
+									}
+									catch (Exception e2) {}
+								}
+								if(timerContextQueue != null)
+								{
+									try
+									{
+										timerContextQueue.stop();
+									}
+									catch (Exception e2) {}
+								}
+								
+								try
+								{
+									dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+									eventQueue.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+								}
+								catch (Exception e2) {}
+								
+								dueJob.getJobControl().postRun();
 								this.currentTimeOutTimeStamp = null;
 								this.currentRunningJob = null;
 								if(jobTimeOut)
@@ -351,8 +405,34 @@ public class QueueWorker extends Thread
 							}
 							catch (Error e) 
 							{
+								Exception exc = new Exception(e.getMessage(),e);
+								this.currentRunningJob.getPropertyBlock().setProperty(IQueueJob.PROPERTY_KEY_THROWED_EXCEPTION, exc);
 								log(LogService.LOG_ERROR,"Error while process job " + dueJob,e);
-								dueJob.getJobControl().preRun();
+								if(timerContextJob != null)
+								{
+									try
+									{
+										timerContextJob.stop();
+									}
+									catch (Exception e2) {}
+								}
+								if(timerContextQueue != null)
+								{
+									try
+									{
+										timerContextQueue.stop();
+									}
+									catch (Exception e2) {}
+								}
+								
+								try
+								{
+									dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+									eventQueue.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+								}
+								catch (Exception e2) {}
+								
+								dueJob.getJobControl().postRun();
 								this.currentTimeOutTimeStamp = null;
 								this.currentRunningJob = null;
 								if(jobTimeOut)
@@ -377,7 +457,7 @@ public class QueueWorker extends Thread
 												{
 													try
 													{
-														((IOnJobError)conf.getEventController()).onJobError(dueJob.getJob(),  new Exception(e));
+														((IOnJobError)conf.getEventController()).onJobError(dueJob.getJob(),  new Exception(exc));
 													}
 													catch (Exception e) {}
 												}

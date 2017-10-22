@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Sebastian Palarus
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Sebastian Palarus - initial API and implementation
+ *******************************************************************************/
 package org.sodeac.eventdispatcher.itest.runner.providertests;
 
 import org.osgi.framework.Bundle;
@@ -105,37 +115,9 @@ public class BaseContainerTest extends AbstractTest
 		assertNotNull("EventAdmin should not be null" ,eventAdmin);
 		assertNotNull("eventDispatcher should not be null" ,eventDispatcher);
 	}
-	
-	@Test
-	public void test01ComponentRegistrationCounterNotEmpty() 
-	{
-		assertNotNull("metricInstances should not be null" ,metricInstances);
-		MetricRegistry metricRegistry = metricInstances.getMetricRegistry();
-		assertNotNull("metricRegistry should not be null" ,metricRegistry);
-	
-		SortedMap<String, Counter> countersControllerRegistration = metricRegistry.getCounters(new MetricFilterByName(MetricRegistry.name(IEventDispatcher.class, "controllerregistrations")));
-		Counter counterControllerRegistration = countersControllerRegistration.get(countersControllerRegistration.firstKey());
-		assertNotNull("counterControllerRegistration should not be null" ,counterControllerRegistration);
-		assertNotEquals("counterControllerRegistration should not be empty", 0L,counterControllerRegistration.getCount());
-		
-	}
-	
-	@Test
-	public void test02QueueCounterNotEmpty() 
-	{
-		assertNotNull("metricInstances should not be null" ,metricInstances);
-		MetricRegistry metricRegistry = metricInstances.getMetricRegistry();
-		assertNotNull("metricRegistry should not be null" ,metricRegistry);
-	
-		SortedMap<String, Counter> countersQueues = metricRegistry.getCounters(new MetricFilterByName(MetricRegistry.name(IEventDispatcher.class, "queues")));
-		Counter counterQueues = countersQueues.get(countersQueues.firstKey());
-		assertNotNull("counterQueues should not be null" ,counterQueues);
-		assertNotEquals("counterQueues should not be empty", 0L,counterQueues.getCount());
-			
-	}
-	
+
 	@Test(timeout=5000)
-	public void test03SimplestDispatcherWorkflow() 
+	public void test01SimplestDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -196,7 +178,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000 + BaseDelayedTestController.DELAY)
-	public void test04SimpleDelayedDispatcherWorkflow() 
+	public void test02SimpleDelayedDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseDelayedTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -262,7 +244,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000 + BaseTimeoutTestController.SLEEP_VALUE)
-	public void test05SimpleTimeoutDispatcherWorkflow() 
+	public void test03SimpleTimeoutDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseTimeoutTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -310,7 +292,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=60000)
-	public void test06SimpleHearbeatTimeoutDispatcherWorkflow() 
+	public void test04SimpleHearbeatTimeoutDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseHeartbeatTimeoutTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -358,7 +340,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=25000)
-	public void test07RecreateWorkerDispatcherWorkflow() 
+	public void test05RecreateWorkerDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReCreateWorkerTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -486,7 +468,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000)
-	public void test08SimpleExceptionDispatcherWorkflow() 
+	public void test06SimpleExceptionDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseExceptionTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -528,7 +510,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=10000)
-	public void test09SimpleReScheduleDispatcherWorkflow1() 
+	public void test07SimpleReScheduleDispatcherWorkflow1() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReScheduleTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -609,7 +591,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=10000)
-	public void test10SimpleReScheduleDispatcherWorkflow2() 
+	public void test08SimpleReScheduleDispatcherWorkflow2() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReScheduleTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -688,7 +670,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=12000)
-	public void test11GetJobDispatcherWorkflow() 
+	public void test09GetJobDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseGetJobTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -780,7 +762,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=10000)
-	public void test12PropertyBlockDispatcherWorkflow() 
+	public void test10PropertyBlockDispatcherWorkflow() 
 	{
 		IPropertyBlock propertyBlock = this.eventDispatcher.createPropertyBlock();
 		
@@ -858,7 +840,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=13000)
-	public void test13FilterDispatcherWorkflow() throws InvalidSyntaxException 
+	public void test11FilterDispatcherWorkflow() throws InvalidSyntaxException 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseFilterTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1153,7 +1135,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=13000)
-	public void test14PeriodicJob() throws Exception 
+	public void test12PeriodicJob() throws Exception 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BasePeriodicJobTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1217,7 +1199,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=12000)
-	public void test15GetJobDispatcherWorkflow() throws InterruptedException 
+	public void test13GetJobDispatcherWorkflow() throws InterruptedException 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseServiceTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1304,7 +1286,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000 )
-	public void test16SimpleRegistrationForEventDispatcherWorkflow() 
+	public void test14SimpleRegistrationForEventDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseDelayedTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);

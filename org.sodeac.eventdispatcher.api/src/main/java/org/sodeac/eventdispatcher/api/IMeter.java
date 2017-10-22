@@ -8,25 +8,15 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.itest.components;
+package org.sodeac.eventdispatcher.api;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-public class TracingObject
+public interface IMeter
 {
-	public static final String PROPERTY_KEY_TRACING_OBJECT = "TRACING_OBJECT";
-	
-	public TracingObject()
-	{
-		super();
-		this.tracingEventList = new CopyOnWriteArrayList<>();//ArrayList<TracingEvent>();
-	}
-	
-	private List<TracingEvent> tracingEventList = null;
-
-	public List<TracingEvent> getTracingEventList()
-	{
-		return tracingEventList;
-	}
+	public void mark();
+	public void mark(long n);
+	public long getCount();
+	public double getMeanRate();
+	public double getOneMinuteRate();
+	public double getFiveMinuteRate();
+	public double getFifteenMinuteRate();
 }

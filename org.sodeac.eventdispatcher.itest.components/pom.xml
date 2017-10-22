@@ -24,12 +24,7 @@
         <dependency>
 	    <groupId>io.dropwizard.metrics</groupId>
 	    <artifactId>metrics-core</artifactId>
-	    <version>3.2.3</version>
-	</dependency>
-		<dependency>
-	    <groupId>org.apache.sling</groupId>
-	    <artifactId>org.apache.sling.commons.metrics</artifactId>
-	    <version>1.2.2</version>
+	    <version>3.2.5</version>
 	</dependency>
   </dependencies>
   <build>
@@ -41,7 +36,11 @@
         <version>3.3.0</version>
         <configuration>
           <instructions>
-            <Export-Package>org.sodeac.eventdispatcher.itest.components</Export-Package>
+            <Export-Package>
+            	org.sodeac.eventdispatcher.itest.components,
+            	org.sodeac.eventdispatcher.itest.components.base,
+            	org.sodeac.eventdispatcher.itest.components.compressor
+            </Export-Package>
           </instructions>
           <source>1.8</source>
           <target>1.8</target>

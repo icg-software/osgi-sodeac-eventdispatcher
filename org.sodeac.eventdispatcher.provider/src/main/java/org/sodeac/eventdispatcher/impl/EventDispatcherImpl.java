@@ -12,7 +12,9 @@ package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,8 +22,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
-import org.apache.sling.commons.metrics.Counter;
-import org.apache.sling.commons.metrics.MetricsService;
+import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -33,11 +35,13 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueService;
+import org.sodeac.eventdispatcher.api.ICounter;
 import org.sodeac.eventdispatcher.api.IEventController;
 
 import com.codahale.metrics.MetricRegistry;
@@ -61,10 +65,10 @@ public class EventDispatcherImpl implements IEventDispatcher
 	@Reference(cardinality=ReferenceCardinality.MANDATORY,policy=ReferencePolicy.STATIC)
 	protected volatile EventAdmin eventAdmin;
 	
-	@Reference(cardinality=ReferenceCardinality.MANDATORY,policy=ReferencePolicy.STATIC,target = "(name=sling)")
-	protected volatile MetricRegistry metricRegistry;
+	protected volatile MetricRegistry metricRegistry = new  MetricRegistry();
+	private List<ServiceRegistration<?>> registrationList = new ArrayList<ServiceRegistration<?>>();
 	
-	protected volatile MetricsService metricsService;
+	private volatile IMetrics metrics = null; 
 	
 	// TODO replace synchronized (controllerList/serviceList) by locks ?
 	
@@ -76,6 +80,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		this.queueIndexWriteLock = this.queueIndexLock.writeLock();
 		this.controllerList = new ArrayList<ControllerContainer>();
 		this.serviceList = new ArrayList<ServiceContainer>();
+		this.metrics = new MetricImpl(this, new PropertyBlockImpl());
 	}
 	
 	@Override
@@ -156,8 +161,8 @@ public class EventDispatcherImpl implements IEventDispatcher
 		this.dispatcherGuardian.unregisterTimeOut(queue,job);
 	}
 	
-	private Counter counterQueueSize;
-	private Counter counterConfigurationSize;
+	private ICounter counterQueueSize;
+	private ICounter counterConfigurationSize;
 	
 	@Activate
 	private void activate(ComponentContext context, Map<String, ?> properties)
@@ -167,10 +172,10 @@ public class EventDispatcherImpl implements IEventDispatcher
 		this.queueIndexReadLock.lock();
 		try
 		{
-			counterQueueSize = metricsService.counter(MetricRegistry.name(IEventDispatcher.class, "queues"));
+			counterQueueSize = metrics.counter("Queues");
 			if(! this.queueIndex.isEmpty())
 			{
-				counterQueueSize.increment(this.queueIndex.size());
+				counterQueueSize.inc(this.queueIndex.size());
 			}
 		}
 		finally 
@@ -180,11 +185,11 @@ public class EventDispatcherImpl implements IEventDispatcher
 		
 		synchronized (this.controllerList)
 		{
-			counterConfigurationSize = metricsService.counter(MetricRegistry.name(IEventDispatcher.class, "controllerregistrations"));
+			counterConfigurationSize = metrics.counter( "ControllerRegistrations");
 			
 			if(! this.controllerList.isEmpty())
 			{
-				counterConfigurationSize.increment(this.controllerList.size());
+				counterConfigurationSize.inc(this.controllerList.size());
 			}
 		}
 		this.dispatcherGuardian = new DispatcherGuardian(this);
@@ -225,11 +230,22 @@ public class EventDispatcherImpl implements IEventDispatcher
 			}
 		}
 		
+		Dictionary<String, Object> metricRegistryProperties = new Hashtable<>();
+		metricRegistryProperties.put(Constants.SERVICE_DESCRIPTION, "Sodeac Metrics Registry");
+		metricRegistryProperties.put(Constants.SERVICE_VENDOR, "Sodeac Framework");
+		metricRegistryProperties.put("name", "sodeac"); // analog sling metrics
+		registrationList.add(context.getBundleContext().registerService(MetricRegistry.class.getName(), metricRegistry, metricRegistryProperties));
+		
 	}
 	
 	@Deactivate
 	private void deactivate(ComponentContext context)
 	{
+		for (ServiceRegistration<?> reg : registrationList) 
+		{
+            reg.unregister();
+		}
+		
 		List<ControllerContainer> controllerContainerCopy = null;
 		synchronized (this.controllerList)
 		{
@@ -271,7 +287,29 @@ public class EventDispatcherImpl implements IEventDispatcher
 		{
 			for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet() )
 			{
-				entry.getValue().stopQueueMonitor();
+				try
+				{
+					entry.getValue().dispose();
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+				
+				try
+				{
+					entry.getValue().stopQueueWorker();
+				}
+				catch (Exception e) {}
+				
+				try
+				{
+					if(entry.getValue().getMetrics() != null)
+					{
+						((MetricImpl)entry.getValue().getMetrics()).dispose();
+					}
+				}
+				catch (Exception e) {}
 			}
 		}
 		finally 
@@ -284,7 +322,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		{
 			if(this.counterQueueSize != null)
 			{
-				counterQueueSize.decrement(this.queueIndex.size());
+				counterQueueSize.dec(this.queueIndex.size());
 				this.counterQueueSize = null;
 			}
 			this.queueIndex.clear();
@@ -299,40 +337,14 @@ public class EventDispatcherImpl implements IEventDispatcher
 			this.dispatcherGuardian.stopWatchDog();
 		}
 		catch (Exception e) {}
-	}
-	
-	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
-	public void bindMetricsService(MetricsService metricsService,Map<String, ?> properties)
-	{
-		this.metricsService = metricsService;
 		
-		synchronized (this.controllerList)
+		counterQueueSize = null;
+		counterConfigurationSize = null;
+		try
 		{
-			if(this.counterConfigurationSize != null)
-			{
-				if(! this.controllerList.isEmpty())
-				{
-					this.counterConfigurationSize.increment(this.controllerList.size());
-				}
-			}
+			((MetricImpl)this.metrics).dispose();
 		}
-	}
-	
-	public void unbindMetricsService(MetricsService metricsService,Map<String, ?> properties)
-	{
-		if(this.metricsService != null)
-		{
-			if(this.counterConfigurationSize != null)
-			{
-				if(! this.controllerList.isEmpty())
-				{
-					this.counterConfigurationSize.decrement(this.controllerList.size());
-				}
-			}
-		}
-		this.counterQueueSize = null;
-		this.counterConfigurationSize = null;
-		this.metricsService = null;
+		catch (Exception e) {e.printStackTrace();}
 	}
 
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
@@ -348,7 +360,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 			
 			if(this.counterConfigurationSize != null)
 			{
-				this.counterConfigurationSize.increment();
+				this.counterConfigurationSize.inc();
 			}
 		}
 		
@@ -411,7 +423,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 				this.queueIndex.put(queueId,queue );
 				if(this.counterQueueSize != null)
 				{
-					this.counterQueueSize.increment();
+					this.counterQueueSize.inc();
 				}
 			}
 			finally 
@@ -489,7 +501,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 					
 					if(this.counterConfigurationSize != null)
 					{
-						this.counterConfigurationSize.decrement();
+						this.counterConfigurationSize.dec();
 					}
 				}
 			}
@@ -509,6 +521,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		
 		boolean registered = false;
 		List<QueueImpl> registeredOnQueueList = null;
+		List<QueueImpl> removeList = null;
 		this.queueIndexReadLock.lock();
 		try
 		{
@@ -526,7 +539,11 @@ public class EventDispatcherImpl implements IEventDispatcher
 				
 				if(entry.getValue().getConfigurationSize() == 0)
 				{
-					// TODO remove/stop Queue
+					if(removeList == null)
+					{
+						removeList = new ArrayList<QueueImpl>();
+					}
+					removeList.add(entry.getValue());
 				}
 			}
 		}
@@ -542,7 +559,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 				if(registeredOnQueueList != null)
 				{
 					for(QueueImpl queue : registeredOnQueueList)
-					{
+					{	
 						((IOnQueueReverse)eventQueueConfiguration).onQueueReverse(queue);
 					}
 				}
@@ -557,6 +574,51 @@ public class EventDispatcherImpl implements IEventDispatcher
 				{
 					System.err.println("Exception on on-close() event controller " + e.getMessage());
 				}
+			}
+		}
+		
+		if(removeList != null)
+		{
+			this.queueIndexWriteLock.lock();
+			try
+			{
+				for(QueueImpl queue : removeList)
+				{
+					try
+					{
+						if(queue.getMetrics() != null)
+						{
+							((MetricImpl)queue.getMetrics()).dispose();
+						}
+					}
+					catch (Exception e) {}
+					
+					try
+					{
+						queue.dispose();
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+					
+					try
+					{
+						queue.stopQueueWorker();
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+					}
+					
+					this.queueIndex.remove(queue.getQueueId());
+					
+					counterQueueSize.dec();
+				}
+			}
+			finally 
+			{
+				this.queueIndexWriteLock.unlock();
 			}
 		}
 		return registered;
@@ -701,14 +763,14 @@ public class EventDispatcherImpl implements IEventDispatcher
 		return logService;
 	}
 
-	public MetricsService getMetricsService()
-	{
-		return metricsService;
-	}
-
 	public MetricRegistry getMetricRegistry()
 	{
-		return metricRegistry;
+		return this.metricRegistry;
+	}
+
+	public IMetrics getMetrics()
+	{
+		return metrics;
 	}
 
 	@Override

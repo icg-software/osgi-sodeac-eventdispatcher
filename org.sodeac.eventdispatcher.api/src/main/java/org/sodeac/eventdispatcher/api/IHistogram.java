@@ -10,13 +10,26 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
-public interface IQueueService extends IQueueJob
+public interface IHistogram
 {
-	public static final String PROPERTY_QUEUE_ID = IEventDispatcher.PROPERTY_QUEUE_ID;
+	public interface Snapshot
+	{
+		public double getValue(double quantile);
+		public long[] getValues();
+		public int size();
+		public double getMedian();
+		public double get75thPercentile();
+		public double get95thPercentile();
+		public double get98thPercentile();
+		public double get99thPercentile();
+		public double get999thPercentile();
+		public long getMax();
+		public double getMean();
+		public long getMin();
+	}
 	
-	public static final String PROPERTY_SERVICE_ID 						= "serviceid";
-	public static final String PROPERTY_TIMEOUT_MS 						= "servicetimeout";
-	public static final String PROPERTY_HB_TIMEOUT_MS 					= "serviceheartbeattimeout";
-	public static final String PROPERTY_START_DELAY_MS 					= "servicestartdelay";
-	public static final String PROPERTY_PERIODIC_REPETITION_INTERVAL 	= "serviceperiodicrepetitioninterval"; 
+	public void update(int value);
+	public void update(long value);
+	public long getCount();
+	public Snapshot getSnapshot();
 }

@@ -36,10 +36,13 @@ import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IEventController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.IGauge;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
+import org.sodeac.eventdispatcher.api.ITimer;
+
 public class QueueImpl implements IQueue
 {
 	public QueueImpl(String queueId,EventDispatcherImpl eventDispatcher)
@@ -79,7 +82,9 @@ public class QueueImpl implements IQueue
 		this.removedEventList = new ArrayList<QueuedEventImpl>();
 		this.firedEventList = new ArrayList<Event>();
 		
-		this.metrics = new MetricImpl(this);
+		PropertyBlockImpl qualityValues = new PropertyBlockImpl();
+		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
+		this.metrics = new MetricImpl(this,qualityValues, null);
 		this.propertyBlock = new PropertyBlockImpl();
 	}
 	
@@ -126,6 +131,8 @@ public class QueueImpl implements IQueue
 	
 	private ReentrantLock genericQueueSpoolLock = null;
 	
+	private volatile boolean disposed = false; 
+	
 	public void scheduleEvent(Event event)
 	{
 		QueuedEventImpl queuedEvent = null;
@@ -149,6 +156,24 @@ public class QueueImpl implements IQueue
 		finally 
 		{
 			this.genericQueueSpoolLock.unlock();
+		}
+		
+		try
+		{
+			eventDispatcher.getMetrics().counter(Event.class.getName(), "Scheduled").inc();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "increment metric counter", e);
+		}
+		
+		try
+		{
+			eventDispatcher.getMetrics().meter(Event.class.getName(), "Scheduled").mark();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric counter", e);
 		}
 		
 		this.notifyOrCreateWorker(-1);
@@ -564,6 +589,15 @@ public class QueueImpl implements IQueue
 				{
 					this.jobIndex.remove(id);
 				}
+				
+				try
+				{
+					((MetricImpl)jobContainer.getMetrics()).dispose();
+				}
+				catch(Exception e)
+				{
+					log(LogService.LOG_ERROR, "dispose metrics", e);
+				}
 			}
 			return toRemove.size();
 		}
@@ -734,6 +768,16 @@ public class QueueImpl implements IQueue
 			{
 				this.jobIndex.remove(toRemove.getId());
 				this.jobList.remove(toRemove);
+				
+				try
+				{
+					((MetricImpl)toRemove.getMetrics()).dispose();
+				}
+				catch(Exception e)
+				{
+					log(LogService.LOG_ERROR, "dispose metrics", e);
+				}
+				
 				toRemove = null;
 			}
 			
@@ -750,6 +794,16 @@ public class QueueImpl implements IQueue
 					{
 						this.jobIndex.remove(jobContainer.getId());
 						this.jobList.remove(jobContainer);
+						
+						try
+						{
+							((MetricImpl)jobContainer.getMetrics()).dispose();
+						}
+						catch(Exception e)
+						{
+							log(LogService.LOG_ERROR, "dispose metrics", e);
+						}
+						
 						jobContainer = null;
 					}
 					else
@@ -759,8 +813,11 @@ public class QueueImpl implements IQueue
 				}
 			}
 			
+			PropertyBlockImpl qualityValues = new PropertyBlockImpl();
+			qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
+			
 			jobContainer = new JobContainer();
-			MetricImpl metric = new MetricImpl(this);
+			MetricImpl metric = new MetricImpl(this,qualityValues, id);
 			
 			if(propertyBlock == null)
 			{
@@ -788,6 +845,36 @@ public class QueueImpl implements IQueue
 			jobContainer.setMetrics(metric);
 			jobContainer.setPropertyBlock(propertyBlock);
 			jobContainer.setJobControl(jobControl);
+			
+			metric.registerGauge(new IGauge<Long>()
+			{
+
+				@Override
+				public Long getValue()
+				{
+					return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_CREATED);
+				}
+			}, IMetrics.GAUGE_JOB_CREATED);
+			
+			metric.registerGauge(new IGauge<Long>()
+			{
+
+				@Override
+				public Long getValue()
+				{
+					return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_FINISHED_TIMESTAMP);
+				}
+			}, IMetrics.GAUGE_JOB_FINISHED);
+			
+			metric.registerGauge(new IGauge<Long>()
+			{
+
+				@Override
+				public Long getValue()
+				{
+					return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_STARTED_TIMESTAMP);
+				}
+			}, IMetrics.GAUGE_JOB_STARTED);
 		}
 		finally 
 		{
@@ -834,6 +921,15 @@ public class QueueImpl implements IQueue
 			{
 				this.jobIndex.remove(jobContainer.getId());
 				this.jobList.remove(jobContainer);
+				
+				try
+				{
+					((MetricImpl)jobContainer.getMetrics()).dispose();
+				}
+				catch(Exception e)
+				{
+					log(LogService.LOG_ERROR, "dispose metrics", e);
+				}
 				return null;
 			}
 			
@@ -897,6 +993,15 @@ public class QueueImpl implements IQueue
 			{
 				this.jobIndex.remove(id);
 				this.jobList.remove(jobContainer);
+				
+				try
+				{
+					((MetricImpl)jobContainer.getMetrics()).dispose();
+				}
+				catch(Exception e)
+				{
+					log(LogService.LOG_ERROR, "dispose metrics", e);
+				}
 			}
 		}
 		finally 
@@ -1258,7 +1363,12 @@ public class QueueImpl implements IQueue
 		return timeOut;
 	}
 	
-	public void stopQueueMonitor()
+	public void dispose()
+	{
+		this.disposed = true;
+	}
+	
+	public void stopQueueWorker()
 	{
 		this.genericQueueSpoolLock.lock();
 		try
@@ -1375,19 +1485,58 @@ public class QueueImpl implements IQueue
 	@Override
 	public void sendEvent(String topic, Map<String, ?> properties)
 	{
-		Event event = new Event(topic,properties);
-		this.eventDispatcher.eventAdmin.sendEvent(event);
-		this.genericQueueSpoolLock.lock();
 		try
 		{
-			firedEventListUpdate = true;
-			this.firedEventList.add(event);
+			eventDispatcher.getMetrics().counter(Event.class.getName(), "Send").inc();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "increment metric counter", e);
+		}
+		
+		try
+		{
+			eventDispatcher.getMetrics().meter(Event.class.getName(), "Send").mark();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric counter", e);
+		}
+		
+		ITimer.Context timerContext = null;
+		try
+		{
+			timerContext = eventDispatcher.getMetrics().timer(Event.class.getName(), "Send").time();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "metric timer service", e);
+		}
+		
+		Event event = new Event(topic,properties);
+		try
+		{
+			this.eventDispatcher.eventAdmin.sendEvent(event);
 		}
 		finally 
 		{
-			this.genericQueueSpoolLock.unlock();
+			if(timerContext != null)
+			{
+				try {timerContext.stop();}catch (Exception e) {}
+			}
+			
+			this.genericQueueSpoolLock.lock();
+			try
+			{
+				firedEventListUpdate = true;
+				this.firedEventList.add(event);
+			}
+			finally 
+			{
+				this.genericQueueSpoolLock.unlock();
+			}
+			this.notifyOrCreateWorker(-1);
 		}
-		this.notifyOrCreateWorker(-1);
 	}
 
 
@@ -1407,6 +1556,24 @@ public class QueueImpl implements IQueue
 			this.genericQueueSpoolLock.unlock();
 		}
 		this.notifyOrCreateWorker(-1);
+		
+		try
+		{
+			eventDispatcher.getMetrics().counter(Event.class.getName(), "Post").inc();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "increment metric counter", e);
+		}
+		
+		try
+		{
+			eventDispatcher.getMetrics().meter(Event.class.getName(), "Post").mark();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric counter", e);
+		}
 	}
 	
 	private void notifyOrCreateWorker(long nextRuntimeStamp)
@@ -1416,6 +1583,10 @@ public class QueueImpl implements IQueue
 		{
 			if(this.queueWorker == null)
 			{
+				if(this.disposed)
+				{
+					return;
+				}
 				this.queueWorker = new QueueWorker(this);
 				this.queueWorker.start();
 			}
@@ -1497,7 +1668,7 @@ public class QueueImpl implements IQueue
 			try
 			{
 				worker = this.queueWorker;
-				if(worker == null)
+				if((worker == null) && (! this.disposed))
 				{
 					this.queueWorker = new QueueWorker(this);
 					this.queueWorker.start();

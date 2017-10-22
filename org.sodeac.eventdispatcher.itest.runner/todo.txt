@@ -1,0 +1,3 @@
+// TODO Remote SQL Cursor /Heartbeat / TimeOut
+// TODO JMX
+// TODO iTests Sortierung + FactoryAPI für mehrere Sort-Worker

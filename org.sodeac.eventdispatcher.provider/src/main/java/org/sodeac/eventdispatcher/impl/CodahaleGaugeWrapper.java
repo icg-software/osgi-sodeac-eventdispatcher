@@ -8,25 +8,25 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.itest.components;
+package org.sodeac.eventdispatcher.impl;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import org.sodeac.eventdispatcher.api.IGauge;
 
-public class TracingObject
+import com.codahale.metrics.Gauge;
+
+public class CodahaleGaugeWrapper<T> implements Gauge<T>,IGauge<T>
 {
-	public static final String PROPERTY_KEY_TRACING_OBJECT = "TRACING_OBJECT";
+	private Gauge<T> gauge = null;
 	
-	public TracingObject()
+	public CodahaleGaugeWrapper(Gauge<T> gauge)
 	{
 		super();
-		this.tracingEventList = new CopyOnWriteArrayList<>();//ArrayList<TracingEvent>();
+		this.gauge = gauge;
 	}
-	
-	private List<TracingEvent> tracingEventList = null;
-
-	public List<TracingEvent> getTracingEventList()
+	@Override
+	public T getValue()
 	{
-		return tracingEventList;
+		return this.gauge.getValue();
 	}
+
 }

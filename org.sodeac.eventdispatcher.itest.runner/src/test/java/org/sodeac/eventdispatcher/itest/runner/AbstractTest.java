@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Sebastian Palarus
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Sebastian Palarus - initial API and implementation
+ *******************************************************************************/
 package org.sodeac.eventdispatcher.itest.runner;
 
 import org.ops4j.pax.exam.Option;
@@ -116,8 +126,8 @@ public abstract class AbstractTest
 			cleanCaches( true ),
 			logLevel(LogLevel.INFO),
 			features(karafStandardRepo , "scr"),
-			mavenBundle("io.dropwizard.metrics", "metrics-core", "3.2.3").start(),
-			mavenBundle("org.apache.sling", "org.apache.sling.commons.metrics", "1.2.2").start(),
+			mavenBundle("io.dropwizard.metrics", "metrics-core", "3.2.5").start(),
+			//mavenBundle("org.apache.sling", "org.apache.sling.commons.metrics", "1.2.2").start(),
 			mavenBundle("org.easymock", "easymock", "3.4").start(),
 			reactorBundle("org.sodeac.eventdispatcher.api","0.9.0").start(),
 			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.0").start(),

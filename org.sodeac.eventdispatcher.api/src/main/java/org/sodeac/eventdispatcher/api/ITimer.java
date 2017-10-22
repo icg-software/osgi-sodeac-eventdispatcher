@@ -8,25 +8,25 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.itest.components;
+package org.sodeac.eventdispatcher.api;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.io.Closeable;
+import java.util.concurrent.TimeUnit;
 
-public class TracingObject
+public interface ITimer
 {
-	public static final String PROPERTY_KEY_TRACING_OBJECT = "TRACING_OBJECT";
-	
-	public TracingObject()
+	public interface Context extends Closeable
 	{
-		super();
-		this.tracingEventList = new CopyOnWriteArrayList<>();//ArrayList<TracingEvent>();
+		public long stop();
 	}
 	
-	private List<TracingEvent> tracingEventList = null;
+	public void update(long duration, TimeUnit unit);
 
-	public List<TracingEvent> getTracingEventList()
-	{
-		return tracingEventList;
-	}
+	public Context time();
+	
+	public long getCount();
+	public double getMeanRate();
+	public double getOneMinuteRate();
+	public double getFiveMinuteRate();
+	public double getFifteenMinuteRate();
 }
