@@ -72,6 +72,7 @@ public class BaseServiceTestController extends AbstractBaseTestController implem
 	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
 	protected volatile IEventDispatcher dispatcher;
 	
+	@SuppressWarnings("unused")
 	private volatile ComponentContext context = null;
 	private CountDownLatch latch =  null;
 	

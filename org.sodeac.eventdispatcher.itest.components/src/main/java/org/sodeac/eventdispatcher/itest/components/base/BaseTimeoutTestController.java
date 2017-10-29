@@ -66,7 +66,7 @@ public class BaseTimeoutTestController extends AbstractBaseTestController implem
 	{
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		IQueueJob job = new BaseTimeOutJob(SLEEP_VALUE);
-		event.getQueue().scheduleJob(null,job,null,-1,TIMEOUT_VALUE, -1);
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
+		event.getQueue().scheduleJob(null,job,null,-1,TIMEOUT_VALUE, -1);
 	}
 }

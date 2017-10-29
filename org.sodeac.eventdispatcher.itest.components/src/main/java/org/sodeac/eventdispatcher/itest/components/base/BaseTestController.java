@@ -65,7 +65,7 @@ public class BaseTestController extends AbstractBaseTestController implements Ev
 	{
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		IQueueJob job = new FireSyncEvent(event,JOB_EVENT,event.getNativeEventProperties());
-		event.getQueue().scheduleJob(job);
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
+		event.getQueue().scheduleJob(job);
 	}
 }
