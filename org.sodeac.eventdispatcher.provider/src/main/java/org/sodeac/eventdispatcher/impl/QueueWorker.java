@@ -233,7 +233,7 @@ public class QueueWorker extends Thread
 							{
 								jobTimeOut = ((dueJob.getJobControl().getTimeOut() > 0) || (dueJob.getJobControl().getHeartBeatTimeOut() > 0));
 								this.currentRunningJob = dueJob;
-								this.currentRunningJob.getMetrics().heartBeat();
+								this.currentRunningJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, System.currentTimeMillis());
 								
 								if(jobTimeOut)
 								{
@@ -680,9 +680,10 @@ public class QueueWorker extends Thread
 		boolean heartBeatTimeout = false;
 		if(timeOutJob.getJobControl().getHeartBeatTimeOut() > 0)
 		{
-			if(timeOutJob.getMetrics().getLastHeartBeat() > 0)
+			long lastHeartBeat = timeOutJob.getMetrics().getGauge(Long.class, IMetrics.GAUGE_JOB_LAST_HEARTBEAT).getValue();
+			if(lastHeartBeat > 0)
 			{
-				if((timeOutJob.getMetrics().getLastHeartBeat() + timeOutJob.getJobControl().getHeartBeatTimeOut() ) <= System.currentTimeMillis())
+				if((lastHeartBeat + timeOutJob.getJobControl().getHeartBeatTimeOut() ) <= System.currentTimeMillis())
 				{
 					heartBeatTimeout = true;
 				}

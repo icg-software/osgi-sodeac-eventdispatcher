@@ -21,6 +21,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.log.LogService;
+import org.sodeac.eventdispatcher.api.IMetrics;
 
 public class DispatcherGuardian extends Thread
 {
@@ -137,7 +138,7 @@ public class DispatcherGuardian extends Thread
 						heartBeatTimeOut = job.getJobControl().getHeartBeatTimeOut();
 						if(heartBeatTimeOut > 0)
 						{
-							lastHeartBeat = job.getMetrics().getLastHeartBeat();
+							lastHeartBeat = job.getMetrics().getGauge(Long.class, IMetrics.GAUGE_JOB_LAST_HEARTBEAT).getValue();
 							heartBeatTimeOutStamp = lastHeartBeat + heartBeatTimeOut;
 							if(lastHeartBeat > 0)
 							{
@@ -317,7 +318,7 @@ public class DispatcherGuardian extends Thread
 					long heartBeatTimeOut = job.getJobControl().getHeartBeatTimeOut();
 					if(heartBeatTimeOut > 0)
 					{
-						long lastHeartBeat = job.getMetrics().getLastHeartBeat();
+						long lastHeartBeat = job.getMetrics().getGauge(Long.class, IMetrics.GAUGE_JOB_LAST_HEARTBEAT).getValue();
 						if(lastHeartBeat > 0)
 						{
 							long heartBeatTimeOutStamp = lastHeartBeat + heartBeatTimeOut;

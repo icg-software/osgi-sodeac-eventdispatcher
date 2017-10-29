@@ -40,7 +40,7 @@ public class BaseHeartBeatTimeOutJob implements IQueueJob
 			e.printStackTrace();
 		}
 		
-		metrics.heartBeat();
+		metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, System.currentTimeMillis());
 		
 		try
 		{
@@ -51,7 +51,7 @@ public class BaseHeartBeatTimeOutJob implements IQueueJob
 			e.printStackTrace();
 		}
 		
-		metrics.heartBeat();
+		metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, System.currentTimeMillis());
 		
 		try
 		{
@@ -61,7 +61,8 @@ public class BaseHeartBeatTimeOutJob implements IQueueJob
 		{
 			e.printStackTrace();
 		}
-		metrics.heartBeat();
+		
+		metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, System.currentTimeMillis());
 		
 		try
 		{
@@ -71,8 +72,8 @@ public class BaseHeartBeatTimeOutJob implements IQueueJob
 		{
 			e.printStackTrace();
 		}
-		metrics.heartBeat();
 		
+		metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, System.currentTimeMillis());
 		try
 		{
 			Thread.sleep(5000);
@@ -81,7 +82,8 @@ public class BaseHeartBeatTimeOutJob implements IQueueJob
 		{
 			e.printStackTrace();
 		}
-		metrics.heartBeat();
+		
+		metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, System.currentTimeMillis());
 	}
 
 }

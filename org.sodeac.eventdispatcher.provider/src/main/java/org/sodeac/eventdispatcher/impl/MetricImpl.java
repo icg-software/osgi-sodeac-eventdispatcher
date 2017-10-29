@@ -69,8 +69,6 @@ public class MetricImpl implements IMetrics
 		this.metricsWriteLock = this.metricsLock.writeLock();
 	}
 	
-	private long lastHeartBeat = -1;
-	
 	private String jobId = null;
 	private QueueImpl queue = null;
 	private EventDispatcherImpl dispatcher = null;
@@ -83,19 +81,6 @@ public class MetricImpl implements IMetrics
 	private ReentrantReadWriteLock metricsLock;
 	private ReadLock metricsReadLock;
 	private WriteLock metricsWriteLock;
-	
-	
-	@Override
-	public long getLastHeartBeat()
-	{
-		return this.lastHeartBeat;
-	}
-
-	@Override
-	public void heartBeat()
-	{
-		this.lastHeartBeat = System.currentTimeMillis();
-	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override

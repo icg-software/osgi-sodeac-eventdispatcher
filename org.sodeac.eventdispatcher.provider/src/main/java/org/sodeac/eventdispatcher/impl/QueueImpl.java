@@ -846,6 +846,8 @@ public class QueueImpl implements IQueue
 			jobContainer.setPropertyBlock(propertyBlock);
 			jobContainer.setJobControl(jobControl);
 			
+			qualityValues.setProperty(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, -1L);
+			
 			metric.registerGauge(new IGauge<Long>()
 			{
 
@@ -875,6 +877,16 @@ public class QueueImpl implements IQueue
 					return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_STARTED_TIMESTAMP);
 				}
 			}, IMetrics.GAUGE_JOB_STARTED);
+			
+			metric.registerGauge(new IGauge<Long>()
+			{
+
+				@Override
+				public Long getValue()
+				{
+					return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
+				}
+			}, IMetrics.GAUGE_JOB_LAST_HEARTBEAT);
 		}
 		finally 
 		{
