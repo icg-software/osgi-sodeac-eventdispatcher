@@ -22,8 +22,6 @@ import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
-import org.sodeac.eventdispatcher.itest.runner.MetricFilterByName;
-import org.sodeac.eventdispatcher.itest.components.MetricInstances;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingObject;
 import org.sodeac.eventdispatcher.itest.components.base.BaseDelayedTestController;
@@ -39,8 +37,6 @@ import org.sodeac.eventdispatcher.itest.components.base.BaseServiceTestControlle
 import org.sodeac.eventdispatcher.itest.components.base.BaseTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutTestController;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -56,7 +52,6 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -65,7 +60,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.SortedMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -84,9 +78,6 @@ public class BaseContainerTest extends AbstractTest
 	
 	@Inject
 	private EventAdmin eventAdmin;
-	
-	@Inject
-	private MetricInstances metricInstances;
 	
 	@Inject
 	
@@ -580,7 +571,8 @@ public class BaseContainerTest extends AbstractTest
 		tracingEventPosition++;
 		
 		long expectOffset = BaseReScheduleTestController.DELAY + BaseReScheduleTestController.RESCHEDULE_DELAY;
-		assertTrue("Time between Scheduling Event and Refire Event after rescheduling1 should be >= " +expectOffset + ". Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) >= expectOffset);
+		long tolerance = (expectOffset / 100 ) * 3;  // race conditions
+		assertTrue("Time between Scheduling Event and Refire Event after rescheduling1 should be >= " + expectOffset + " - " + tolerance + " . Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) >= (expectOffset - tolerance));
 		
 		System.out.println("[INFO] Definied delay for reschedulingDelayTest1: " + expectOffset + " ms / measured delay on runtime: " + (fireEventTimeStamp - schedulingTimeStamp) + " ms");
 		
@@ -661,10 +653,12 @@ public class BaseContainerTest extends AbstractTest
 		tracingEventPosition++;
 		
 		long expectOffset = BaseReScheduleTestController.RESCHEDULE_DELAY;
-		assertTrue("Time between Scheduling Event and Refire Event after rescheduling2 should be >= " +expectOffset + ". Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) >= expectOffset);
+		long tolerance = (expectOffset / 100 ) * 3; // race conditions
+		assertTrue("Time between Scheduling Event and Refire Event after rescheduling2 should be >= " + expectOffset + " - " + tolerance + " . Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) >= (expectOffset - tolerance));
 		
 		long unexpectOffset = BaseReScheduleTestController.DELAY;
-		assertTrue("Time between Scheduling Event and Refire Event after rescheduling2 should be < " +unexpectOffset + ". Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) < unexpectOffset);
+		tolerance = (expectOffset / 100 ) * 3;  // race conditions
+		assertTrue("Time between Scheduling Event and Refire Event after rescheduling2 should be < " +unexpectOffset + " - " + tolerance + " .  Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) < (unexpectOffset + tolerance));
 		
 		System.out.println("[INFO] Definied delay for reschedulingDelayTest2: " + expectOffset + " ms / measured delay on runtime: " + (fireEventTimeStamp - schedulingTimeStamp) + " ms");
 	}
