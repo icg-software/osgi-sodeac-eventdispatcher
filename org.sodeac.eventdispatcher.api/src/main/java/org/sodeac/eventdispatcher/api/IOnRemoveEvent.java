@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for components of {@link IEventController} that makes it possible to react on removing events
+ * An extension interface for {@link IEventController} that makes it possible to react on removing events
  * 
  * @author Sebastian Palarus
  *
@@ -22,7 +22,7 @@ public interface IOnRemoveEvent extends IEventController
 	/**
 	 * This methode is fired, if {@link IEventController} remove a scheduled {@link IQueuedEvent}
 	 * 
-	 * @param event new scheduled event, contains {@link org.osgi.service.event.Event}
+	 * @param event removed event
 	 */
 	public void onRemoveEvent(IQueuedEvent event);
 }

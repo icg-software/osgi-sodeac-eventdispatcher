@@ -13,7 +13,7 @@ package org.sodeac.eventdispatcher.api;
 import java.util.List;
 
 /**
- * A QueueJob is a job reacts to incomming events. the principal aim of a job is recreate and send events depends on metrics, time or other things 
+ * A {@link IQueueJob} acts as processor for queued events or as service.
  * 
  * @author Sebastian Palarus
  *
@@ -30,6 +30,24 @@ public interface IQueueJob
 	
 	public static final long DEFAULT_TIMEOUT = 1080 * 108;
 	
+	/**
+	 * invoked onetime at initialization of this job
+	 * 
+	 * @param id registrationid of this job
+	 * @param metrics metric-handler for this job
+	 * @param propertyBlock properties for this job
+	 * @param jobControl state-handler for this job
+	 */
 	public void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl);
+	
+	/**
+	 * run this job, invoked by queueworker.
+	 * 
+	 * @param queue parent-{@link IQueue} 
+	 * @param metrics metric-handler for this job
+	 * @param propertyBlock properties for this job
+	 * @param jobControl state-handler for this job
+	 * @param currentProcessedJobList all jobs run in the same task phase
+	 */
 	public void run(IQueue queue,IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl, List<IQueueJob> currentProcessedJobList);
 }

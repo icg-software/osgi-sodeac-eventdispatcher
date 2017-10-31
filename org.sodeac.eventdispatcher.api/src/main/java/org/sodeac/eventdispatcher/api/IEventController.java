@@ -10,6 +10,13 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+/**
+ * 
+ * An eventcontroller reacts to a wide variety of queue happenings, if it implements appropriate extension interfaces.
+ * 
+ * @author Sebastian Palarus
+ *
+ */
 public interface IEventController
 {
 	public static final String CONSUME_EVENT_TOPIC = "consume.event.topic";

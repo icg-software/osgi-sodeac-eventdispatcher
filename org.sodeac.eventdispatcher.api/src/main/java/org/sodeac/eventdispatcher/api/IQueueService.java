@@ -10,9 +10,15 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+/**
+ * OSGi-service interface to register {@link IQueueJob} as OSGi-service / component
+ * 
+ * @author Sebastian Palarus
+ *
+ */
 public interface IQueueService extends IQueueJob
 {
-	public static final String PROPERTY_QUEUE_ID = IEventDispatcher.PROPERTY_QUEUE_ID;
+	public static final String PROPERTY_QUEUE_ID 						= IEventDispatcher.PROPERTY_QUEUE_ID;
 	
 	public static final String PROPERTY_SERVICE_ID 						= "serviceid";
 	public static final String PROPERTY_TIMEOUT_MS 						= "servicetimeout";

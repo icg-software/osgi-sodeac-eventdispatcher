@@ -14,7 +14,7 @@ import org.osgi.service.event.Event;
 
 /**
  * 
- * An extension interface for components of {@link IEventController} that makes it possible to react if a jobs (re)fire an event by invoke {@link IQueue}.send/postEvent 
+ * An extension interface for {@link IEventController} that makes it possible to react if a jobs (re)fire an event by invoke {@link IQueue}.send/postEvent 
  * 
  * @author Sebastian Palarus
  *
@@ -22,7 +22,9 @@ import org.osgi.service.event.Event;
 public interface IOnFireEvent extends IEventController
 {
 	/**
-	 * This methode is fired, if {@link IQueue} sends / posts  a new {@link org.osgi.service.event.Event}
+	 * This is fired, if {@link IQueue} sends / posts  a new {@link org.osgi.service.event.Event}
+	 * <br>
+	 * invoked by queueworker
 	 * 
 	 * @param event new fired {@link org.osgi.service.event.Event}
 	 * @param queue fire by {@link IQueue}

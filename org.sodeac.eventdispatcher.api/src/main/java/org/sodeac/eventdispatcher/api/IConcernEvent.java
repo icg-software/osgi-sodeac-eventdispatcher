@@ -10,7 +10,19 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+/**
+ * if implementing this interface it is possible to declare a relation or responsibility to an event.
+ * 
+ * @author Sebastian Palarus
+ *
+ */
 public interface IConcernEvent
 {
+	/**
+	 * request for relation or responsibility to an event
+	 * 
+	 * @param event {@link IQueuedEvent} to test relation
+	 * @return true if object concern {@code event}, otherwise false
+	 */
 	public boolean concernEvent(IQueuedEvent event);
 }

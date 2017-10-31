@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for components of {@link IEventController} that makes it possible to react if a job runs in a timeout
+ * An extension interface for {@link IEventController} that makes it possible to react if a job runs in a timeout
  * 
  * @author Sebastian Palarus
  *
@@ -20,9 +20,11 @@ package org.sodeac.eventdispatcher.api;
 public interface IOnJobTimeout extends IEventController
 {
 	/**
-	 * This methode is fired, if {@link IQueueJob} remove a scheduled {@link IQueuedEvent}
+	 * This is fired, if {@link IQueueJob} runs in timeout
+	 * <br>
+	 * invoked by new thread
 	 * 
-	 * @param job new scheduled event, contains {@link org.osgi.service.event.Event}
+	 * @param job runs in timeout
 	 */
 	public void onJobTimeout(IQueueJob job);
 }

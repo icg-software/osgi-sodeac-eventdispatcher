@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for components of {@link IEventController} that makes it possible to react on scheduling events
+ * An extension interface for {@link IEventController} that makes it possible to react on scheduling events
  * 
  * @author Sebastian Palarus
  *
@@ -20,7 +20,9 @@ package org.sodeac.eventdispatcher.api;
 public interface IOnEventScheduled extends IEventController
 {
 	/**
-	 * This methode is fired, if {@link IEventController} schedule a new {@link org.osgi.service.event.Event}
+	 * This is fired, if {@link IEventController} schedule a new {@link org.osgi.service.event.Event}.
+	 * <br>
+	 * invoked by queueworker
 	 * 
 	 * @param event new scheduled event, contains {@link org.osgi.service.event.Event}
 	 */

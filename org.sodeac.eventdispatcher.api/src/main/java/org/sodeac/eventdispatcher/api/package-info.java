@@ -8,20 +8,16 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.api;
+
 
 /**
- * An extenstion interface for {@link IQueueJob}. This job is not finished by default and re-run periodically this job, until the job set done manually with state-handler {@link IJobControl}.
+ * 
+ * Provides an API for eventdispatcher. An eventdispatcher is a kind of control center middleware for osgi-events. 
+ * The eventdispatcher can modify events by following aspects: quality, quantity, rhythm and monitoring.
+ * 
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IPeriodicQueueJob extends IQueueJob
-{
-	/**
-	 * default periodic interval
-	 * 
-	 * @return
-	 */
-	public long getPeriodicRepetitionInterval();
-}
+
+package org.sodeac.eventdispatcher.api;

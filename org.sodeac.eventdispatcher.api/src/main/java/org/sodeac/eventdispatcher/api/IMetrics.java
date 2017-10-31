@@ -11,7 +11,7 @@
 package org.sodeac.eventdispatcher.api;
 
 /**
- * a facade to read or feed metrics for {@link IEventDispatcher}, {@link IQueue} and {@link IQueueJob}
+ * metric-handler to read or feed metrics for {@link IEventDispatcher}, {@link IQueue} and {@link IQueueJob}
  * 
  * @author Sebastian Palarus
  *
@@ -32,15 +32,85 @@ public interface IMetrics
 	public static final String GAUGE_JOB_FINISHED = "JobFinished";
 	public static final String GAUGE_JOB_LAST_HEARTBEAT = "LastHeartbeat";
 	
+	/**
+	 * getter for registered qualityvalue with associated {@code key}. Qualityvalues acts as database for gauges.
+	 * 
+	 * @param key the key whose associated qualityvalue is to be returned
+	 * 
+	 * @return the quality with specified key, or null if property does not exists
+	 */
 	public Object getQualityValue(String key);
+	
+	/**
+	 * register a qualityvalue {@code value} with associated {@code key}.Qualityvalues acts as database for gauges.
+	 * 
+	 * @param key key with which the specified quality is to be associated
+	 * @param value quality to be associated with the specified key 
+	 * 
+	 * @return previews qualityvalue registered with {@code key}, or null
+	 */
 	public Object setQualityValue(String key, Object value);
+	
+	/**
+	 * remove qualityvalue with associated {@code key}
+	 * 
+	 * @param key key the key whose associated qualityvalue is to be removed
+	 * 
+	 * @return the removed qualityvalue with specified key, or null if qualityvalue does not exists
+	 */
 	public Object removeQualityValue(String key);
 	
+	/**
+	 * Returns the {@link IGauge} of this metric-object registered under {@code names}
+	 * 
+	 * @param type the type of {@link IGauge}
+	 * @param names registration names of {@link IGauge}
+	 * @return {@link IGauge} with type {@code type} registered under {@code names}, or null
+	 */
 	public <T> IGauge<T> getGauge(Class<T> type, String... names);
+	
+	/**
+	 * register {@link IGauge} under {@code names}
+	 * 
+	 * @param gauge implementation of {@link IGauge} to register
+	 * @param names registration names
+	 * @return registered {@link IGauge}
+	 */
 	public IGauge<?> registerGauge(IGauge<?> gauge, String... names);
 	
+	/**
+	 * return the {@link IMeter} registered under {@code names}. If {@link IMeter} not registered 
+     * a new {@link IMeter} is created and registered before returns
+	 *  
+	 * @param names registration names of {@link IMeter}
+	 * @return {@link IMeter} registered under {@code names}
+	 */
 	public IMeter meter(String... names);
+	
+	/**
+	 * return the {@link ITimer} registered under {@code names}. If {@link ITimer} not registered 
+     * a new {@link ITimer} is created and registered before returns
+	 *  
+	 * @param names registration names of {@link ITimer}
+	 * @return {@link ITimer} registered under {@code names}
+	 */
 	public ITimer timer(String... names);
+	
+	/**
+	 * return the {@link ICounter} registered under {@code names}. If {@link ICounter} not registered 
+     * a new {@link ICounter} is created and registered before returns
+	 *  
+	 * @param names registration names of {@link ICounter}
+	 * @return {@link ICounter} registered under {@code names}
+	 */
 	public ICounter counter(String... names);
+	
+	/**
+	 * return the {@link IHistogram} registered under {@code names}. If {@link IHistogram} not registered 
+     * a new {@link IHistogram} is created and registered before returns
+	 *  
+	 * @param names registration names of {@link IHistogram}
+	 * @return {@link IHistogram} registered under {@code names}
+	 */
 	public IHistogram histogram(String... names);
 }

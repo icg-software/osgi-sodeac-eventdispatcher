@@ -10,6 +10,12 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+/**
+ * acts as state container for jobexecutions
+ * 
+ * @author Sebastian Palarus
+ *
+ */
 public interface IJobControl
 {
 	/**
@@ -28,29 +34,73 @@ public interface IJobControl
 	
 	/**
 	 * 
-	 * @return timestamp, the worker has to invoke run-methode
+	 * @return timestamp of execution plan for next run
 	 */
 	public long getExecutionTimeStamp();
 	
+	/**
+	 * setter for timestamp of execution plan for next run
+	 * 
+	 * <br>
+	 * 
+	 * additionally job is marked done == false
+	 * 
+	 * @param executionTimeStamp timestamp for next run
+	 * 
+	 * @return overwritten execution timestamp
+	 */
 	public long setExecutionTimeStamp(long executionTimeStamp);
 	
 	
 	/**
+	 * getter for timout value
 	 * 
-	 * @return time in ms, the run-methode should be finished
+	 * @return timeout value
 	 */
-	public long getTimeOut(); // Rule
+	public long getTimeOut();
 	
+	/**
+	 * setter for timeout value
+	 * 
+	 * @param timeOut new timeout value
+	 * @return overwritten timeout value
+	 */
 	public long setTimeOut(long timeOut);
 	
 	
+	/**
+	 * getter for heartbeat timeout value
+	 * 
+	 * @return heartbeat timeout value
+	 */
 	public long getHeartBeatTimeOut();
 	
+	/**
+	 * setter for heartbeat timeout value
+	 * 
+	 * @param heartBeatTimeOut new heartbeat timeout value
+	 * 
+	 * @return overwritten heartbeat timeout value 
+	 */
 	public long setHeartBeatTimeOut(long heartBeatTimeOut);
 	
-	public void timeOut(); // Command
+	/**
+	 * notify, that this job runs to long
+	 */
+	public void timeOut(); 
+
+	/**
+	 * 
+	 * @return true if job runs to long (timeout or heartbeat timeout), otherwise false
+	 */
+	public boolean isInTimeOut();
 	
+	/**
+	 * in moment, ignore this methode
+	 * 
+	 * @return false
+	 */
 	public boolean stopOnTimeOut();
 
-	public boolean isInTimeOut();
+
 }

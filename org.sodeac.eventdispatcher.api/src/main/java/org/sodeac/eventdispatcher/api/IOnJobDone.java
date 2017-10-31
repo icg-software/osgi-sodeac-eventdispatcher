@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for components of {@link IEventController} that makes it possible to react on finishing a job
+ * An extension interface for {@link IEventController} that makes it possible to react on finishing a job
  * 
  * @author Sebastian Palarus
  *
@@ -20,9 +20,11 @@ package org.sodeac.eventdispatcher.api;
 public interface IOnJobDone extends IEventController
 {
 	/**
-	 * This methode is fired, if {@link IQueueJob} remove a scheduled {@link IQueuedEvent}
+	 * This is fired, if {@link IQueueJob} remove a scheduled {@link IQueuedEvent}
+	 * <br>
+	 * invoked by queueworker
 	 * 
-	 * @param job new scheduled event, contains {@link org.osgi.service.event.Event}
+	 * @param job finished {@link IQueueJob}
 	 */
 	public void onJobDone(IQueueJob job);
 }

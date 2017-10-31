@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for components of {@link IEventController} that makes it possible to react if a job throws an exception or an error
+ * An extension interface for {@link IEventController} that makes it possible to react if a job throws an exception or an error
  * 
  * @author Sebastian Palarus
  *
@@ -20,10 +20,12 @@ package org.sodeac.eventdispatcher.api;
 public interface IOnJobError extends IEventController
 {
 	/**
-	 * This methode is fired, if {@link IQueueJob} remove a scheduled {@link IQueuedEvent}
+	 * This methode is fired, if {@link IQueueJob} throws an exception
+	 * <br>
+	 * invoked by queueworker
 	 * 
-	 * @param job new scheduled event, contains {@link org.osgi.service.event.Event}
-	 * @param exception
+	 * @param job job which throws the exception
+	 * @param exception throwed exception
 	 */
 	public void onJobError(IQueueJob job, Exception exception);
 }

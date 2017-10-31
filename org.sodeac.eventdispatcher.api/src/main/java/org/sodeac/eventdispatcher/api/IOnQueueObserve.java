@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for components of {@link IEventController} that makes it possible to react if starts to observe a {@link IQueue}
+ * An extension interface for {@link IEventController} that makes it possible to react if starts to observe a {@link IQueue}
  * 
  * @author Sebastian Palarus
  *
@@ -20,9 +20,9 @@ package org.sodeac.eventdispatcher.api;
 public interface IOnQueueObserve extends IEventController
 {
 	/**
-	 * This methode is fired, if {@link IEventController} starts to observe a {@link IQueue}
+	 * This is fired, if {@link IEventController} starts to observe a {@link IQueue}
 	 * 
-	 * @param queue is linked with this {@link IEventController}
+	 * @param queue is linked with {@link IEventController}
 	 */
 	public void onQueueObserve(IQueue queue);
 }
