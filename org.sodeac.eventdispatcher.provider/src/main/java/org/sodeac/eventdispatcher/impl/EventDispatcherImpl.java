@@ -99,7 +99,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		}
 		if(queue == null)
 		{
-			// TODO oneTimeLog
+			// TODO oneTime - Log
 			if(this.logService != null)
 			{
 				this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "Queue is missing " + queueId);

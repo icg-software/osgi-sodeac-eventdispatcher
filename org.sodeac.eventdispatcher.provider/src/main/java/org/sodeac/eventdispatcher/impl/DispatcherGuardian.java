@@ -138,6 +138,7 @@ public class DispatcherGuardian extends Thread
 						heartBeatTimeOut = job.getJobControl().getHeartBeatTimeOut();
 						if(heartBeatTimeOut > 0)
 						{
+							
 							lastHeartBeat = job.getMetrics().getGauge(Long.class, IMetrics.GAUGE_JOB_LAST_HEARTBEAT).getValue();
 							heartBeatTimeOutStamp = lastHeartBeat + heartBeatTimeOut;
 							if(lastHeartBeat > 0)
