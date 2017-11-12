@@ -55,7 +55,7 @@ public interface IQueuedEvent
 	 * 
 	 * @param key property key
 	 * 
-	 * @returnproperty for {@link IQueuedEvent} registered with {@code key} or null, if absent
+	 * @return property for {@link IQueuedEvent} registered with {@code key} or null, if absent
 	 */
 	public Object getProperty(String key);
 	

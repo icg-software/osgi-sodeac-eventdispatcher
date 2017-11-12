@@ -23,6 +23,8 @@ public interface IMetrics
 	public static final String QUALITY_VALUE_STARTED_TIMESTAMP = "QUALITY_VALUE_STARTED_TIMESTAMP";
 	public static final String QUALITY_VALUE_FINISHED_TIMESTAMP = "QUALITY_VALUE_FINISHED_TIMESTAMP";
 	public static final String QUALITY_VALUE_LAST_HEARTBEAT = "QUALITY_VALUE_LAST_HEARTBEAT";
+	public static final String QUALITY_VALUE_LAST_SEND_EVENT = "QUALITY_VALUE_LAST_SEND_EVENT";
+	public static final String QUALITY_VALUE_LAST_POST_EVENT = "QUALITY_VALUE_LAST_POST_EVENT";
 	
 	public static final String METRICS_RUN_JOB = "Run";
 	public static final String METRICS_RUN_JOB_ERROR = "ErrorRun";
@@ -31,6 +33,11 @@ public interface IMetrics
 	public static final String GAUGE_JOB_STARTED = "JobStarted";
 	public static final String GAUGE_JOB_FINISHED = "JobFinished";
 	public static final String GAUGE_JOB_LAST_HEARTBEAT = "LastHeartbeat";
+	public static final String GAUGE_LAST_SEND_EVENT = "LastSendEvent";
+	public static final String GAUGE_LAST_POST_EVENT = "LastPostEvent";
+	
+	public static final String METRICS_SEND_EVENT = "SendEvent";
+	public static final String METRICS_POST_EVENT = "PostEvent";
 	
 	/**
 	 * getter for registered qualityvalue with associated {@code key}. Qualityvalues acts as database for gauges.

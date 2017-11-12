@@ -21,23 +21,16 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.sodeac.eventdispatcher.itest.components.TracingObject;
 
 @Component
 (
 	immediate=true,
 	service=EventHandler.class,
-	property=
-	{
-		EventConstants.EVENT_TOPIC + "=" +	CompressorStatics.TOPIC_PUBLISH_TRACING_OBJECT,
-		EventConstants.EVENT_TOPIC + "=" +	CompressorStatics.TOPIC_START_TEST
-	}
+	property=EventConstants.EVENT_TOPIC + "=" +	CompressorStatics.TOPIC_START_TEST
 )
 public class Producer implements EventHandler
 {
 
-	private TracingObject tracingObject = null;
-	
 	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
 	protected volatile EventAdmin eventAdmin;
 	
@@ -45,18 +38,27 @@ public class Producer implements EventHandler
 	@Override
 	public void handleEvent(Event event)
 	{
-		if(event.getTopic().equals(CompressorStatics.TOPIC_PUBLISH_TRACING_OBJECT))
-		{
-			this.tracingObject = (TracingObject)event.getProperty(TracingObject.class.getCanonicalName());
-			return;
-		}
-		
 		if(event.getTopic().equals(CompressorStatics.TOPIC_START_TEST))
 		{
-			Map<String,Object> properties = new HashMap<String,Object>();
-			Event rawEvent = new Event(CompressorStatics.TOPIC_RAW_EVENT,properties);
-			eventAdmin.sendEvent(rawEvent);
+			for(int i = 0; i < 100 ; i++)
+			{
+				try
+				{
+					Map<String,Object> properties = new HashMap<String,Object>();
+					properties.put(CompressorStatics.PROPERTY_COUNT, i);
+					Event rawEvent = new Event(CompressorStatics.TOPIC_RAW_EVENT,properties);
+					eventAdmin.sendEvent(rawEvent);
+					if((i == 30) || (i == 70))
+					{
+						Thread.sleep(1600);
+					}
+					else
+					{
+						Thread.sleep(100);
+					}
+				}
+				catch (Exception e) {}
+			}
 		}
 	}
-
 }

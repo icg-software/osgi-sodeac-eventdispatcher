@@ -86,6 +86,25 @@ public class QueueImpl implements IQueue
 		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
 		this.metrics = new MetricImpl(this,qualityValues, null);
 		this.propertyBlock = new PropertyBlockImpl();
+		
+		this.metrics.registerGauge(new IGauge<Long>()
+		{
+			@Override
+			public Long getValue()
+			{
+				return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_LAST_SEND_EVENT);
+			}
+		}, IMetrics.GAUGE_LAST_SEND_EVENT);
+		
+		this.metrics.registerGauge(new IGauge<Long>()
+		{
+
+			@Override
+			public Long getValue()
+			{
+				return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_LAST_POST_EVENT);
+			}
+		}, IMetrics.GAUGE_LAST_POST_EVENT);
 	}
 	
 	private MetricImpl metrics;
@@ -1497,9 +1516,11 @@ public class QueueImpl implements IQueue
 	@Override
 	public void sendEvent(String topic, Map<String, ?> properties)
 	{
+		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_SEND_EVENT, System.currentTimeMillis());
+		
 		try
 		{
-			eventDispatcher.getMetrics().counter(Event.class.getName(), "Send").inc();
+			eventDispatcher.getMetrics().counter(Event.class.getName(), IMetrics.METRICS_SEND_EVENT).inc();
 		}
 		catch(Exception e)
 		{
@@ -1508,7 +1529,7 @@ public class QueueImpl implements IQueue
 		
 		try
 		{
-			eventDispatcher.getMetrics().meter(Event.class.getName(), "Send").mark();
+			eventDispatcher.getMetrics().meter(Event.class.getName(), IMetrics.METRICS_SEND_EVENT).mark();
 		}
 		catch(Exception e)
 		{
@@ -1518,7 +1539,7 @@ public class QueueImpl implements IQueue
 		ITimer.Context timerContext = null;
 		try
 		{
-			timerContext = eventDispatcher.getMetrics().timer(Event.class.getName(), "Send").time();
+			timerContext = eventDispatcher.getMetrics().timer(Event.class.getName(), IMetrics.METRICS_SEND_EVENT).time();
 		}
 		catch(Exception e)
 		{
@@ -1555,6 +1576,27 @@ public class QueueImpl implements IQueue
 	@Override
 	public void postEvent(String topic, Map<String, ?> properties)
 	{
+		
+		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_POST_EVENT, System.currentTimeMillis());
+		
+		try
+		{
+			eventDispatcher.getMetrics().counter(Event.class.getName(), IMetrics.METRICS_POST_EVENT).inc();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "increment metric counter", e);
+		}
+		
+		try
+		{
+			eventDispatcher.getMetrics().meter(Event.class.getName(), IMetrics.METRICS_POST_EVENT).mark();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric counter", e);
+		}
+		
 		Event event = new Event(topic,properties);
 		this.eventDispatcher.eventAdmin.postEvent(event);
 		this.genericQueueSpoolLock.lock();
@@ -1568,24 +1610,6 @@ public class QueueImpl implements IQueue
 			this.genericQueueSpoolLock.unlock();
 		}
 		this.notifyOrCreateWorker(-1);
-		
-		try
-		{
-			eventDispatcher.getMetrics().counter(Event.class.getName(), "Post").inc();
-		}
-		catch(Exception e)
-		{
-			log(LogService.LOG_ERROR, "increment metric counter", e);
-		}
-		
-		try
-		{
-			eventDispatcher.getMetrics().meter(Event.class.getName(), "Post").mark();
-		}
-		catch(Exception e)
-		{
-			log(LogService.LOG_ERROR, "mark metric counter", e);
-		}
 	}
 	
 	private void notifyOrCreateWorker(long nextRuntimeStamp)

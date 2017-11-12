@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.itest.components.compressor;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
@@ -34,8 +35,10 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID + "=" + CompressorStatics.QUEUE_ID,
-		IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL+"="+ CompressorStatics.HEARTBEAT,
+		IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL+"="+ CompressorStatics.SERVICE_REPETITION_INTERVAL,
 		IQueueService.PROPERTY_SERVICE_ID+"=" + CompressorStatics.COMPRESSOR_SERVICE_ID,
+		IEventController.CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_START_COMPRESSOR,
+		IEventController.CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_STOP_COMPRESSOR,
 		IEventController.CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_RAW_EVENT
 	}
 )
@@ -43,16 +46,45 @@ public class Compressor implements IQueueService,IEventController,IOnEventSchedu
 {
 	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
 	protected volatile IEventDispatcher dispatcher;
-
+	
+	private boolean run = false;
+	private int minCount = -1;
+	private int maxCount = -1;
+	private int collectedEvents = 0;
+	
 	@Override
 	public void onEventScheduled(IQueuedEvent event)
 	{
-		//System.out.println("Schedule Event: " + event.getEvent().getTopic());
-		//System.out.println("List " + event.getQueue().getEventList(null, null, null).size());
+		if(event.getEvent().getTopic().equals(CompressorStatics.TOPIC_START_COMPRESSOR))
+		{
+			this.run = true;
+			return;
+		}
 		
-		// Minimal offset
-		// MEtrics??? job counter / job timout / event send/rcv counter/time (über interface parametrisierbar machen(ja/nein))
-		// garbage collector vor metrics !!!!
+		if(event.getEvent().getTopic().equals(CompressorStatics.TOPIC_STOP_COMPRESSOR))
+		{
+			this.run = false;
+			return;
+		}
+		
+		if(run)
+		{
+			if(event.getEvent().getTopic().equals(CompressorStatics.TOPIC_RAW_EVENT))
+			{
+				int count = (Integer)event.getNativeEventProperties().get(CompressorStatics.PROPERTY_COUNT);
+				if((minCount < 0) || (count < minCount))
+				{
+					minCount = count;
+				}
+				if((maxCount < 0) || (count > maxCount))
+				{
+					maxCount = count;
+				}
+				collectedEvents++;
+				
+				this.sendEvents(event.getQueue());
+			}
+		}
 	}
 	
 	@Override
@@ -65,6 +97,45 @@ public class Compressor implements IQueueService,IEventController,IOnEventSchedu
 		List<IQueueJob> currentProcessedJobList
 	)
 	{
+		if(run)
+		{
+			this.sendEvents(queue);
+		}
+	}
+	
+	private void sendEvents(IQueue queue)
+	{
+		long now = System.currentTimeMillis();
+		Long lastSend = queue.getMetrics().getGauge(Long.class, IMetrics.GAUGE_LAST_SEND_EVENT).getValue();
+		queue.rescheduleJob(CompressorStatics.COMPRESSOR_SERVICE_ID, now + CompressorStatics.HEARTBEAT_INTERVAL, -1, -1);
+		
+		if(collectedEvents == 0)
+		{
+			if((lastSend == null) || (lastSend.longValue() <= (now - CompressorStatics.HEARTBEAT_INTERVAL)))
+			{
+				HashMap<String,Object> properties = new HashMap<String,Object>();
+				properties.put(CompressorStatics.PROPERTY_COUNT_SIZE, 0);
+				queue.sendEvent(CompressorStatics.TOPIC_COMPRESSED_EVENT, properties);
+			}
+		}
+		else
+		{
+			if((lastSend == null) || (lastSend.longValue() <= (now - CompressorStatics.MINIMAL_INTERVAL)))
+			{
+				HashMap<String,Object> properties = new HashMap<String,Object>();
+				properties.put(CompressorStatics.PROPERTY_COUNT_SIZE, collectedEvents);
+				properties.put(CompressorStatics.PROPERTY_COUNT_MIN, minCount);
+				properties.put(CompressorStatics.PROPERTY_COUNT_MAX, maxCount);
+				queue.sendEvent(CompressorStatics.TOPIC_COMPRESSED_EVENT, properties);
+				collectedEvents = 0;
+				minCount = -1;
+				maxCount = -1;
+			}
+			else
+			{
+				queue.rescheduleJob(CompressorStatics.COMPRESSOR_SERVICE_ID, lastSend + CompressorStatics.MINIMAL_INTERVAL, -1, -1);
+			}
+		}
 	}
 
 

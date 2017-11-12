@@ -111,7 +111,54 @@ public class CompressorTest extends AbstractTest
 		Event event =  new Event(CompressorStatics.TOPIC_PUBLISH_TRACING_OBJECT,eventProperties);
 		eventAdmin.sendEvent(event);
 		
+		long previewsTimestamp = System.currentTimeMillis();
+		eventAdmin.sendEvent(new Event(CompressorStatics.TOPIC_START_COMPRESSOR,new HashMap<>()));
+		
+		try
+		{
+			Thread.sleep(1000);
+		}
+		catch (Exception e) {}
+		
 		eventAdmin.sendEvent(new Event(CompressorStatics.TOPIC_START_TEST,new HashMap<>()));
+		
+		try
+		{
+			Thread.sleep(2000);
+		}
+		catch (Exception e) {}
+		
+		eventAdmin.sendEvent(new Event(CompressorStatics.TOPIC_STOP_COMPRESSOR,new HashMap<>()));
+		
+		try
+		{
+			Thread.sleep(1000);
+		}
+		catch (Exception e) {}
+		
+		for(int i = 0;i < tracingObject.getTracingEventList().size(); i++)
+		{
+			TracingEvent te = tracingObject.getTracingEventList().get(i);
+			if(te.getMethode() != TracingEvent.SEND_EVENT)
+			{
+				continue;
+			}
+			event = te.getRawEvent();
+			long currentTimeStanp = te.getTimestamp();
+			
+			if(((Integer)event.getProperty(CompressorStatics.PROPERTY_COUNT_SIZE)).intValue() == 0)
+			{
+				System.out.println("" + (currentTimeStanp - previewsTimestamp) + " ms heartbeat");
+			}
+			else
+			{
+				int min = ((Integer)event.getProperty(CompressorStatics.PROPERTY_COUNT_MIN)).intValue();
+				int max = ((Integer)event.getProperty(CompressorStatics.PROPERTY_COUNT_MAX)).intValue();
+				
+				System.out.println("" + (currentTimeStanp - previewsTimestamp) + " ms  " + min + " - " + max);
+			}
+			previewsTimestamp = currentTimeStanp;
+		}
 		
 		/*
 		// 1. Queue Observe
