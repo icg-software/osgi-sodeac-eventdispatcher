@@ -29,6 +29,7 @@ import org.sodeac.eventdispatcher.itest.components.base.BaseEventRegistrationTes
 import org.sodeac.eventdispatcher.itest.components.base.BaseExceptionTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseFilterTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseGetJobTestController;
+import org.sodeac.eventdispatcher.itest.components.base.BaseHeartBeatTimeOutJob;
 import org.sodeac.eventdispatcher.itest.components.base.BaseHeartbeatTimeoutTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BasePeriodicJobTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseReCreateWorkerTestController;
@@ -229,9 +230,10 @@ public class BaseContainerTest extends AbstractTest
 		assertEquals("Expect Job Done",TracingEvent.ON_JOB_DONE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
-		assertTrue("Time between Scheduling Event and Refire Event should be >= " + BaseDelayedTestController.DELAY + ". Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) >= BaseDelayedTestController.DELAY);
+		long timeDiff = fireEventTimeStamp - schedulingTimeStamp;
+		assertTrue("Time between Scheduling Event and Refire Event should be  " + BaseDelayedTestController.DELAY + " (+/- 50 ms). Actual: " + timeDiff , super.checkTimeMeasure(BaseDelayedTestController.DELAY, timeDiff, 50, -1) );
 		
-		System.out.println("[INFO] Definied delay for simpleDelayTest: " + BaseDelayedTestController.DELAY + " ms / measured delay on runtime: " + (fireEventTimeStamp - schedulingTimeStamp) + " ms");
+		System.out.println("[INFO] Definied delay for simpleDelayTest: " + BaseDelayedTestController.DELAY + " ms / measured delay on runtime: " + timeDiff + " ms");
 	}
 	
 	@Test(timeout=5000 + BaseTimeoutTestController.SLEEP_VALUE)
@@ -278,6 +280,7 @@ public class BaseContainerTest extends AbstractTest
 		long timeoutTimeStamp = tracingObject.getTracingEventList().get(tracingEventPosition).getTimestamp();
 		tracingEventPosition++;
 		
+		assertTrue("Timeout Handling should be invoked after  " + BaseTimeoutTestController.TIMEOUT_VALUE + " (+/- 100 ms). Actual: " + (timeoutTimeStamp - schedulingTimeStamp) , super.checkTimeMeasure(BaseTimeoutTestController.TIMEOUT_VALUE, timeoutTimeStamp - schedulingTimeStamp, 100, -1) );
 		System.out.println("[INFO] Definied timeout for timeoutDelayTest: " + BaseTimeoutTestController.TIMEOUT_VALUE + " ms / measured timeouthandling on runtime: " + (timeoutTimeStamp - schedulingTimeStamp) + " ms");
 		
 	}
@@ -326,7 +329,11 @@ public class BaseContainerTest extends AbstractTest
 		long timeoutTimeStamp = tracingObject.getTracingEventList().get(tracingEventPosition).getTimestamp();
 		tracingEventPosition++;
 		
-		System.out.println("[INFO] Definied heartbeattimeout for target timeoutDelayTest: 9500 ms / measured timeouthandling on runtime: " + (timeoutTimeStamp - schedulingTimeStamp) + " ms");
+		long idealValue = BaseHeartbeatTimeoutTestController.HEARTBEAT_TIMEOUT + BaseHeartBeatTimeOutJob.HEARTBEATS_IN_TIME;
+		long timeDiff = timeoutTimeStamp - schedulingTimeStamp;
+
+		assertTrue("HeartbeitTimeout Handling should be invoked after  " + idealValue + " (+/- 100 ms). Actual: " + timeDiff , super.checkTimeMeasure(idealValue, timeDiff, 100, -1) );
+		System.out.println("[INFO] Definied heartbeattimeout for target timeoutDelayTest: " + idealValue + " ms / measured timeouthandling on runtime: " + timeDiff + " ms");
 		
 	}
 	
@@ -403,8 +410,11 @@ public class BaseContainerTest extends AbstractTest
 		assertEquals("Expect Job TimeOut",TracingEvent.ON_JOB_TIMEOUT, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		long timeoutTimeStamp = tracingObject.getTracingEventList().get(tracingEventPosition).getTimestamp();
 		tracingEventPosition++;
-			
-		System.out.println("[INFO] Definied first jobtimeout in worker-recreate test: 5400 ms / measured timeouthandling on runtime: " + (timeoutTimeStamp - schedulingTimeStamp) + " ms");
+		
+		long timeDiff = timeoutTimeStamp - schedulingTimeStamp;
+
+		assertTrue("First jobtimeout on recreate test  should be " + BaseReCreateWorkerTestController.TIMEOUT_VALUE + " (+/- 100 ms). Actual: " + timeDiff , super.checkTimeMeasure(BaseReCreateWorkerTestController.TIMEOUT_VALUE, timeDiff, 100, -1) );
+		System.out.println("[INFO] Definied first jobtimeout in worker-recreate test: " + BaseReCreateWorkerTestController.TIMEOUT_VALUE  + " ms / measured timeouthandling on runtime: " + timeDiff  + " ms");
 		
 		// 5. First Job continue working with timeout flag = true // + 6000
 		
@@ -444,8 +454,10 @@ public class BaseContainerTest extends AbstractTest
 		assertEquals("Expect Job TimeOut",TracingEvent.ON_JOB_TIMEOUT, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		timeoutTimeStamp = tracingObject.getTracingEventList().get(tracingEventPosition).getTimestamp();
 		tracingEventPosition++;
-				
-		System.out.println("[INFO] Definied second jobtimeout with new worker in worker-recreate test: 5400 ms / measured timeouthandling on runtime: " + (timeoutTimeStamp - schedulingTimeStamp) + " ms");
+		
+		timeDiff = timeoutTimeStamp - schedulingTimeStamp;
+		assertTrue("Second jobtimeout on recreate test  should be " + BaseReCreateWorkerTestController.TIMEOUT_VALUE + " (+/- 100 ms). Actual: " + timeDiff , super.checkTimeMeasure(BaseReCreateWorkerTestController.TIMEOUT_VALUE, timeDiff, 100, -1) );
+		System.out.println("[INFO] Definied second jobtimeout with new worker in worker-recreate test: " + BaseReCreateWorkerTestController.TIMEOUT_VALUE  + " ms / measured timeouthandling on runtime: " + timeDiff + " ms");
 		
 		for(int i = 0; i < 6; i++)
 		{
@@ -570,11 +582,10 @@ public class BaseContainerTest extends AbstractTest
 		assertEquals("Expect Job Done",TracingEvent.ON_JOB_DONE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
-		long expectOffset = BaseReScheduleTestController.DELAY + BaseReScheduleTestController.RESCHEDULE_DELAY;
-		long tolerance = (expectOffset / 100 ) * 3;  // race conditions
-		assertTrue("Time between Scheduling Event and Refire Event after rescheduling1 should be >= " + expectOffset + " - " + tolerance + " . Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) >= (expectOffset - tolerance));
-		
-		System.out.println("[INFO] Definied delay for reschedulingDelayTest1: " + expectOffset + " ms / measured delay on runtime: " + (fireEventTimeStamp - schedulingTimeStamp) + " ms");
+		long idealTimeDiff = BaseReScheduleTestController.DELAY + BaseReScheduleTestController.RESCHEDULE_DELAY;
+		long timeDiff = fireEventTimeStamp - schedulingTimeStamp;
+		assertTrue("Time between Scheduling Event and Refire Event after rescheduling1 should be >= " + idealTimeDiff + " (+/- 150ms) . Actual: " + timeDiff, super.checkTimeMeasure(idealTimeDiff, timeDiff, 150, -1));
+		System.out.println("[INFO] Definied delay for reschedulingDelayTest1: " + idealTimeDiff + " ms / measured delay on runtime: " + (fireEventTimeStamp - schedulingTimeStamp) + " ms");
 		
 		// Clear Tracing for Reschedule 2 Test
 		TracingEvent queueObserve = tracingObject.getTracingEventList().get(0);
@@ -652,15 +663,10 @@ public class BaseContainerTest extends AbstractTest
 		assertEquals("Expect Job Done",TracingEvent.ON_JOB_DONE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
-		long expectOffset = BaseReScheduleTestController.RESCHEDULE_DELAY;
-		long tolerance = (expectOffset / 100 ) * 3; // race conditions
-		assertTrue("Time between Scheduling Event and Refire Event after rescheduling2 should be >= " + expectOffset + " - " + tolerance + " . Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) >= (expectOffset - tolerance));
-		
-		long unexpectOffset = BaseReScheduleTestController.DELAY;
-		tolerance = (expectOffset / 100 ) * 3;  // race conditions
-		assertTrue("Time between Scheduling Event and Refire Event after rescheduling2 should be < " +unexpectOffset + " - " + tolerance + " .  Actual: " + (fireEventTimeStamp - schedulingTimeStamp), (fireEventTimeStamp - schedulingTimeStamp) < (unexpectOffset + tolerance));
-		
-		System.out.println("[INFO] Definied delay for reschedulingDelayTest2: " + expectOffset + " ms / measured delay on runtime: " + (fireEventTimeStamp - schedulingTimeStamp) + " ms");
+		long idealTimeDiff = BaseReScheduleTestController.RESCHEDULE_DELAY;
+		long timeDiff = fireEventTimeStamp - schedulingTimeStamp;
+		assertTrue("Time between Scheduling Event and Refire Event after rescheduling2 should be >= " + idealTimeDiff + " (+/- 150ms) . Actual: " + timeDiff, super.checkTimeMeasure(idealTimeDiff, timeDiff, 150, -1));
+		System.out.println("[INFO] Definied delay for reschedulingDelayTest2: " + idealTimeDiff + " ms / measured delay on runtime: " + (fireEventTimeStamp - schedulingTimeStamp) + " ms");
 	}
 	
 	@Test(timeout=12000)

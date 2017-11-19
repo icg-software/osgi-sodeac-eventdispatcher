@@ -46,9 +46,10 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 )
 public class BaseHeartbeatTimeoutTestController extends AbstractBaseTestController implements EventHandler,IEventController,IOnEventScheduled,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
-	public static final String 	QUEUE_ID 		= "basehbtimeouttestqueue";
-	public static final String 	JOB_EVENT 		= "org/sodeac/eventdispatcher/itest/basehbtimeouttest/jobevent";
-	public static final String 	SCHEDULE_EVENT 	= "org/sodeac/eventdispatcher/itest/basehbtimeouttest/scheduleevent";
+	public static final String 	QUEUE_ID 			= "basehbtimeouttestqueue";
+	public static final String 	JOB_EVENT 			= "org/sodeac/eventdispatcher/itest/basehbtimeouttest/jobevent";
+	public static final String 	SCHEDULE_EVENT 		= "org/sodeac/eventdispatcher/itest/basehbtimeouttest/scheduleevent";
+	public static final long 	HEARTBEAT_TIMEOUT	= 3500;
 	
 	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
 	protected volatile IEventDispatcher dispatcher;
@@ -65,6 +66,6 @@ public class BaseHeartbeatTimeoutTestController extends AbstractBaseTestControll
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		IQueueJob job = new BaseHeartBeatTimeOutJob();
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-		event.getQueue().scheduleJob(null,job,null,-1, -1, 3500);
+		event.getQueue().scheduleJob(null,job,null,-1, -1, HEARTBEAT_TIMEOUT);
 	}
 }

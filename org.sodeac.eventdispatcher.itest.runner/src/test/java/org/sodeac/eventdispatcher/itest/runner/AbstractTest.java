@@ -106,7 +106,7 @@ public abstract class AbstractTest
 		MavenArtifactUrlReference karafUrl = maven()
 			.groupId("org.apache.karaf")
 			.artifactId("apache-karaf")
-			.version("4.1.2")
+			.version("4.1.3")
 			.type("zip");
 
 		MavenUrlReference karafStandardRepo = maven()
@@ -148,6 +148,37 @@ public abstract class AbstractTest
 			}
 			try {Thread.sleep(108);}catch (Exception e) {}
 		}
+	}
+	
+	public boolean checkTimeMeasure(long idealValue, long realValue, long absoluteTolerance, double relativeToleranceInPercent )
+	{
+		if(idealValue == realValue)
+		{
+			return true;
+		}
+		
+		long diff = realValue - idealValue;
+		if(diff < 0)
+		{
+			diff = -1 * diff;
+		}
+		if(absoluteTolerance > 0)
+		{
+			if(diff <= absoluteTolerance)
+			{
+				return true;
+			}
+		}
+		
+		if((relativeToleranceInPercent >= 0.0) && (relativeToleranceInPercent <= 100.0))
+		{
+			double relDiff = ((idealValue / 100.0) * relativeToleranceInPercent);
+			if(relDiff <= (double)diff)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 }

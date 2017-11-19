@@ -20,6 +20,8 @@ import org.sodeac.eventdispatcher.api.IQueueJob;
 
 public class BaseHeartBeatTimeOutJob implements IQueueJob
 {
+	public static final long HEARTBEATS_IN_TIME = 1000 + 2000 + 3000;
+	
 	public BaseHeartBeatTimeOutJob()
 	{
 		super();

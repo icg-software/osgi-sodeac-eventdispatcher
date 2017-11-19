@@ -13,21 +13,14 @@ package org.sodeac.eventdispatcher.itest.runner.providertests;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueJob;
-import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingObject;
 import org.sodeac.eventdispatcher.itest.components.compressor.CompressorStatics;
-
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -42,19 +35,13 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerSuite;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.SortedMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -136,6 +123,10 @@ public class CompressorTest extends AbstractTest
 		}
 		catch (Exception e) {}
 		
+		boolean firstSignal = true;
+		boolean firstHeartBeat = true;
+		
+		List<Integer> values = new ArrayList<Integer>();
 		for(int i = 0;i < tracingObject.getTracingEventList().size(); i++)
 		{
 			TracingEvent te = tracingObject.getTracingEventList().get(i);
@@ -145,57 +136,53 @@ public class CompressorTest extends AbstractTest
 			}
 			event = te.getRawEvent();
 			long currentTimeStanp = te.getTimestamp();
+			long diff = (currentTimeStanp - previewsTimestamp);
 			
 			if(((Integer)event.getProperty(CompressorStatics.PROPERTY_COUNT_SIZE)).intValue() == 0)
 			{
-				System.out.println("" + (currentTimeStanp - previewsTimestamp) + " ms heartbeat");
+				if(firstHeartBeat)
+				{
+					firstHeartBeat = false;
+				}
+				else
+				{
+					System.out.println("" + diff + " ms heartbeat");
+					assertTrue("heartbeat should fired after 1000 ms (+/- 50 ms)  . Actual: " + diff, super.checkTimeMeasure(1000, diff, 50, -1));
+				}
 			}
 			else
 			{
 				int min = ((Integer)event.getProperty(CompressorStatics.PROPERTY_COUNT_MIN)).intValue();
 				int max = ((Integer)event.getProperty(CompressorStatics.PROPERTY_COUNT_MAX)).intValue();
+				System.out.println("" + diff + " ms  " + min + " - " + max);
 				
-				System.out.println("" + (currentTimeStanp - previewsTimestamp) + " ms  " + min + " - " + max);
+				for(int j = min; j <= max; j++ )
+				{
+					values.add(j);
+				}
+				
+				if(firstSignal)
+				{
+					firstSignal = false;
+				}
+				else
+				{
+					assertTrue("publish values should fired after 500 ms (+/- 50 ms)  . Actual: " + diff, super.checkTimeMeasure(500, diff, 50, -1));
+				}
 			}
 			previewsTimestamp = currentTimeStanp;
 		}
 		
-		/*
-		// 1. Queue Observe
+		assertEquals("100 signals should be fired", 100, values.size());
 		
-		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
-		tracingEventPosition++;
+		int nextSignal = 0;
 		
-		// 2. Schedule Event
+		for(int signal : values)
+		{
+			assertEquals("signal should be ordered and complete", nextSignal,signal);
+			nextSignal++;
+		}
 		
-		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Event scheduled",TracingEvent.ON_EVENT_SCHEDULED, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
-		tracingEventPosition++;
-		
-		// 3. Fire Event
-		
-		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Fire Event",TracingEvent.ON_FIRE_EVENT, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
-		tracingEventPosition++;
-		
-		// 4. Remove Event
-		
-		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Remove Event",TracingEvent.ON_REMOVE_EVENT, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
-		tracingEventPosition++;
-		
-		//  5. Signal
-		
-		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect QueueSignal",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
-		tracingEventPosition++;
-			
-		//  6. Job Done
-		
-		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Job Done",TracingEvent.ON_JOB_DONE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
-		tracingEventPosition++;
-		*/
+		System.out.println("");
 	}
 }
