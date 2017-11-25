@@ -87,8 +87,8 @@ public class MetricImpl implements IMetrics
 	public <T> IGauge<T> getGauge(Class<T> type, String... names)
 	{
 		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),"Gauge") :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),"Gauge");
+				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_GAUGE) :  
+				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_GAUGE);
 
 		try
 		{
@@ -160,8 +160,8 @@ public class MetricImpl implements IMetrics
 	public IGauge<?> registerGauge(IGauge<?> gauge, String... names)
 	{
 		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),"Gauge") :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),"Gauge");
+				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_GAUGE) :  
+				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_GAUGE);
 				
 		try
 		{
@@ -256,8 +256,8 @@ public class MetricImpl implements IMetrics
 	public IMeter meter(String... names)
 	{
 		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),"Meters") :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),"Meters");
+				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_METER) :  
+				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_METER);
 		
 		try
 		{
@@ -296,8 +296,8 @@ public class MetricImpl implements IMetrics
 	public ITimer timer(String... names)
 	{
 		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),"Timer") :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),"Timer");
+				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_TIMER) :  
+				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_TIMER);
 		try
 		{
 			this.metricsReadLock.lock();
@@ -335,8 +335,8 @@ public class MetricImpl implements IMetrics
 	public ICounter counter(String... names)
 	{
 		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),"Counter") :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),"Counter");
+				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_COUNTER) :  
+				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_COUNTER);
 		try
 		{
 			this.metricsReadLock.lock();
@@ -374,8 +374,8 @@ public class MetricImpl implements IMetrics
 	public IHistogram histogram(String... names)
 	{
 		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),"Histogram") :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),"Histogram");
+				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_HISTORGRAM) :  
+				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_HISTORGRAM);
 		try
 		{
 			this.metricsReadLock.lock();

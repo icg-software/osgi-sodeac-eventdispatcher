@@ -26,6 +26,15 @@ public interface IMetrics
 	public static final String QUALITY_VALUE_LAST_SEND_EVENT = "QUALITY_VALUE_LAST_SEND_EVENT";
 	public static final String QUALITY_VALUE_LAST_POST_EVENT = "QUALITY_VALUE_LAST_POST_EVENT";
 	
+	public static final String POSTFIX_COUNTER = "Counter";
+	public static final String POSTFIX_GAUGE = "Gauge";
+	public static final String POSTFIX_HISTORGRAM = "Histogram";
+	public static final String POSTFIX_METER = "Meter";
+	public static final String POSTFIX_TIMER = "Timer";
+	
+	public static final String METRICS_QUEUE = "Queue";
+	public static final String METRICS_EVENT_CONTROLLER = "EventController";
+	
 	public static final String METRICS_RUN_JOB = "Run";
 	public static final String METRICS_RUN_JOB_ERROR = "ErrorRun";
 	

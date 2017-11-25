@@ -172,7 +172,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		this.queueIndexReadLock.lock();
 		try
 		{
-			counterQueueSize = metrics.counter("Queues");
+			counterQueueSize = metrics.counter(IMetrics.METRICS_QUEUE);
 			if(! this.queueIndex.isEmpty())
 			{
 				counterQueueSize.inc(this.queueIndex.size());
@@ -185,7 +185,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		
 		synchronized (this.controllerList)
 		{
-			counterConfigurationSize = metrics.counter( "ControllerRegistrations");
+			counterConfigurationSize = metrics.counter( IMetrics.METRICS_EVENT_CONTROLLER);
 			
 			if(! this.controllerList.isEmpty())
 			{

@@ -14,9 +14,12 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.sodeac.eventdispatcher.api.IEventController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
@@ -61,10 +64,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.SortedMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -117,30 +123,84 @@ public class MetricTest extends AbstractTest
 	}
 	
 	@Test
-	public void test01ComponentRegistrationCounterNotEmpty() 
+	public void test01EventControllerCounter() 
 	{
 		assertNotNull("metricInstances should not be null" ,metricInstances);
 		MetricRegistry metricRegistry = metricInstances.getMetricRegistry();
 		assertNotNull("metricRegistry should not be null" ,metricRegistry);
 	
-		SortedMap<String, Counter> countersControllerRegistration = metricRegistry.getCounters(new MetricFilterByName(MetricRegistry.name(IEventDispatcher.class, "ControllerRegistrations","Counter")));
+		SortedMap<String, Counter> countersControllerRegistration = metricRegistry.getCounters
+		(
+			new MetricFilterByName(MetricRegistry.name
+			(
+				IEventDispatcher.class, 
+				IMetrics.METRICS_EVENT_CONTROLLER,
+				IMetrics.POSTFIX_COUNTER
+			)
+		));
 		Counter counterControllerRegistration = countersControllerRegistration.get(countersControllerRegistration.firstKey());
 		assertNotNull("counterControllerRegistration should not be null" ,counterControllerRegistration);
-		assertNotEquals("counterControllerRegistration should not be empty", 0L,counterControllerRegistration.getCount());
+		
+		long counterBefore = counterControllerRegistration.getCount();
+		assertNotEquals("controllerlist should not be empty, because auf component regs", 0L,counterControllerRegistration.getCount());
+		
+		// register new controller
+		
+		Dictionary<String, Object> properties = new Hashtable<String, Object>();
+		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "test123");
+		ServiceRegistration<IEventController> reg = bundleContext.registerService(IEventController.class, new IEventController(){}, properties);
+	
+	
+		long counterWhile = counterControllerRegistration.getCount();
+		assertEquals("size of controllerlist should increment after add registration", counterBefore + 1,counterWhile);
+		
+		// unregister controller
+		
+		reg.unregister();
+		
+		long counterAfter = counterControllerRegistration.getCount();
+		assertEquals("sizeof controllerlist should decrement after remove registration", counterWhile -1 , counterAfter);
 		
 	}
 	
 	@Test
-	public void test02QueueCounterNotEmpty() 
+	public void test02QueueCounter() 
 	{
 		assertNotNull("metricInstances should not be null" ,metricInstances);
 		MetricRegistry metricRegistry = metricInstances.getMetricRegistry();
 		assertNotNull("metricRegistry should not be null" ,metricRegistry);
 	
-		SortedMap<String, Counter> countersQueues = metricRegistry.getCounters(new MetricFilterByName(MetricRegistry.name(IEventDispatcher.class, "Queues","Counter")));
+		SortedMap<String, Counter> countersQueues = metricRegistry.getCounters
+		(
+			new MetricFilterByName(MetricRegistry.name
+			(
+				IEventDispatcher.class, 
+				IMetrics.METRICS_QUEUE,
+				IMetrics.POSTFIX_COUNTER
+			)
+		));
 		Counter counterQueues = countersQueues.get(countersQueues.firstKey());
 		assertNotNull("counterQueues should not be null" ,counterQueues);
-		assertNotEquals("counterQueues should not be empty", 0L,counterQueues.getCount());
+		
+		long counterBefore = counterQueues.getCount();
+		assertNotEquals("queuelist should not be empty, because auf component regs", 0L,counterQueues.getCount());
+		
+		// register new controller
+		
+		Dictionary<String, Object> properties = new Hashtable<String, Object>();
+		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "test123");
+		ServiceRegistration<IEventController> reg = bundleContext.registerService(IEventController.class, new IEventController(){}, properties);
+	
+	
+		long counterWhile = counterQueues.getCount();
+		assertEquals("size of queuelist size should increment after add registration", counterBefore + 1,counterWhile);
+		
+		// unregister controller
+		
+		reg.unregister();
+		
+		long counterAfter = counterQueues.getCount();
+		assertEquals("size of  queuelist size should decrement after remove registration", counterWhile -1 , counterAfter);
 			
 	}
 	
