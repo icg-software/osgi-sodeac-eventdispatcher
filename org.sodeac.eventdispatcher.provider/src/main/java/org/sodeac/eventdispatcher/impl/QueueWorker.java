@@ -302,12 +302,8 @@ public class QueueWorker extends Thread
 								
 								if(dueJob.isNamedJob())
 								{
-									dueJob.getMetrics().meter(IMetrics.METRICS_RUN_JOB).mark();
-									dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB).inc();
 									timerContextJob = dueJob.getMetrics().timer(IMetrics.METRICS_RUN_JOB).time();
 								}
-								eventQueue.getMetrics().meter(IMetrics.METRICS_RUN_JOB).mark();
-								eventQueue.getMetrics().counter(IMetrics.METRICS_RUN_JOB).inc();
 								
 								timerContextQueue = eventQueue.getMetrics().timer(IMetrics.METRICS_RUN_JOB).time();
 								
@@ -363,9 +359,9 @@ public class QueueWorker extends Thread
 								{
 									if(dueJob.isNamedJob())
 									{
-										dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+										dueJob.getMetrics().meter(IMetrics.METRICS_RUN_JOB_ERROR).mark();
 									}
-									eventQueue.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+									eventQueue.getMetrics().meter(IMetrics.METRICS_RUN_JOB_ERROR).mark();
 								}
 								catch (Exception e2) {}
 								
@@ -439,9 +435,9 @@ public class QueueWorker extends Thread
 								{
 									if(dueJob.isNamedJob())
 									{
-										dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+										dueJob.getMetrics().meter(IMetrics.METRICS_RUN_JOB_ERROR).mark();
 									}
-									eventQueue.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+									eventQueue.getMetrics().meter(IMetrics.METRICS_RUN_JOB_ERROR).mark();
 								}
 								catch (Exception e2) {}
 								

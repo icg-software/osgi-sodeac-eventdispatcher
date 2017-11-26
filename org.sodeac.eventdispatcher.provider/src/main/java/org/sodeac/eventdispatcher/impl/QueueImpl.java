@@ -179,15 +179,6 @@ public class QueueImpl implements IQueue
 		
 		try
 		{
-			eventDispatcher.getMetrics().counter(Event.class.getName(), "Scheduled").inc();	// TODO test
-		}
-		catch(Exception e)
-		{
-			log(LogService.LOG_ERROR, "increment metric counter", e);
-		}
-		
-		try
-		{
 			eventDispatcher.getMetrics().meter(Event.class.getName(), "Scheduled").mark();	// TODO test
 		}
 		catch(Exception e)
@@ -879,7 +870,7 @@ public class QueueImpl implements IQueue
 			
 			if(jobContainer.isNamedJob())
 			{
-				metric.registerGauge(new IGauge<Long>()																		// TODO test
+				metric.registerGauge(new IGauge<Long>()
 				{
 	
 					@Override
@@ -889,7 +880,7 @@ public class QueueImpl implements IQueue
 					}
 				}, IMetrics.GAUGE_JOB_CREATED);
 				
-				metric.registerGauge(new IGauge<Long>()																		// TODO test
+				metric.registerGauge(new IGauge<Long>()
 				{
 	
 					@Override
@@ -899,7 +890,7 @@ public class QueueImpl implements IQueue
 					}
 				}, IMetrics.GAUGE_JOB_FINISHED);
 				
-				metric.registerGauge(new IGauge<Long>()																		// TODO test
+				metric.registerGauge(new IGauge<Long>()
 				{
 	
 					@Override
@@ -909,7 +900,7 @@ public class QueueImpl implements IQueue
 					}
 				}, IMetrics.GAUGE_JOB_STARTED);
 				
-				metric.registerGauge(new IGauge<Long>()																		// TODO test
+				metric.registerGauge(new IGauge<Long>()
 				{
 	
 					@Override
@@ -1532,24 +1523,6 @@ public class QueueImpl implements IQueue
 		// TODO test metrics
 		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_SEND_EVENT, System.currentTimeMillis());
 		
-		try
-		{
-			eventDispatcher.getMetrics().counter(Event.class.getName(), IMetrics.METRICS_SEND_EVENT).inc();
-		}
-		catch(Exception e)
-		{
-			log(LogService.LOG_ERROR, "increment metric counter", e);
-		}
-		
-		try
-		{
-			eventDispatcher.getMetrics().meter(Event.class.getName(), IMetrics.METRICS_SEND_EVENT).mark();
-		}
-		catch(Exception e)
-		{
-			log(LogService.LOG_ERROR, "mark metric counter", e);
-		}
-		
 		ITimer.Context timerContext = null;
 		try
 		{
@@ -1593,14 +1566,6 @@ public class QueueImpl implements IQueue
 		// TODO test metrics
 		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_POST_EVENT, System.currentTimeMillis());
 		
-		try
-		{
-			eventDispatcher.getMetrics().counter(Event.class.getName(), IMetrics.METRICS_POST_EVENT).inc();
-		}
-		catch(Exception e)
-		{
-			log(LogService.LOG_ERROR, "increment metric counter", e);
-		}
 		
 		try
 		{
