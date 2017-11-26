@@ -19,13 +19,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.sodeac.eventdispatcher.api.ICounter;
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IGauge;
 import org.sodeac.eventdispatcher.api.IHistogram;
 import org.sodeac.eventdispatcher.api.IMeter;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
-import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.ITimer;
 
 import com.codahale.metrics.Gauge;
@@ -86,9 +84,7 @@ public class MetricImpl implements IMetrics
 	@Override
 	public <T> IGauge<T> getGauge(Class<T> type, String... names)
 	{
-		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_GAUGE) :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_GAUGE);
+		String key = IMetrics.metricName(this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_GAUGE, names);
 
 		try
 		{
@@ -159,10 +155,7 @@ public class MetricImpl implements IMetrics
 	@Override
 	public IGauge<?> registerGauge(IGauge<?> gauge, String... names)
 	{
-		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_GAUGE) :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_GAUGE);
-				
+		String key = IMetrics.metricName(this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_GAUGE, names);
 		try
 		{
 			this.metricsWriteLock.lock();
@@ -255,9 +248,7 @@ public class MetricImpl implements IMetrics
 	@Override
 	public IMeter meter(String... names)
 	{
-		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_METER) :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_METER);
+		String key = IMetrics.metricName(this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_METER, names);
 		
 		try
 		{
@@ -295,9 +286,8 @@ public class MetricImpl implements IMetrics
 	@Override
 	public ITimer timer(String... names)
 	{
-		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_TIMER) :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_TIMER);
+		String key = IMetrics.metricName(this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_TIMER, names);
+		
 		try
 		{
 			this.metricsReadLock.lock();
@@ -334,9 +324,7 @@ public class MetricImpl implements IMetrics
 	@Override
 	public ICounter counter(String... names)
 	{
-		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_COUNTER) :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_COUNTER);
+		String key = IMetrics.metricName(this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_COUNTER, names);
 		try
 		{
 			this.metricsReadLock.lock();
@@ -373,9 +361,7 @@ public class MetricImpl implements IMetrics
 	@Override
 	public IHistogram histogram(String... names)
 	{
-		String key = this.queue == null ? 
-				MetricRegistry.name(MetricRegistry.name(IEventDispatcher.class.getName(),names),POSTFIX_HISTORGRAM) :  
-				MetricRegistry.name(IQueue.class.getName(),MetricRegistry.name(queue.getQueueId() + ((jobId == null) ? "": "." + jobId), names),POSTFIX_HISTORGRAM);
+		String key = IMetrics.metricName(this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_HISTORGRAM, names);
 		try
 		{
 			this.metricsReadLock.lock();

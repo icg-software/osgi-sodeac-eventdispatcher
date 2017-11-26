@@ -129,4 +129,56 @@ public interface IMetrics
 	 * @return {@link IHistogram} registered under {@code names}
 	 */
 	public IHistogram histogram(String... names);
+	
+	/**
+	 * return common metric key 
+	 * 
+	 * @param queueId id of queue or null
+	 * @param jobId id of job or null
+	 * @param postfix Counter/Gauge/Histogram/Meter/Timer
+	 * @param names registration name of metric object
+	 * 
+	 * @return common metric key 
+	 */
+	public static String metricName(String queueId, String jobId, String postfix, String... names)
+	{
+		StringBuilder builder = new StringBuilder();
+		if((queueId != null) && (!queueId.isEmpty()))
+		{
+			builder.append(IQueue.class.getName());
+			builder.append("." + queueId);
+			
+			if((jobId != null) && (!jobId.isEmpty()))
+			{
+				builder.append("." + jobId);
+			}
+		}
+		else
+		{
+			builder.append(IEventDispatcher.class.getName());
+		}
+		
+		if(names != null)
+		{
+			for (String name : names) 
+			{
+				if(name == null)
+				{
+					continue;
+				}
+				if(name.isEmpty())
+				{
+					continue;
+				}
+				builder.append("." + name);
+            }
+		}
+		
+		if((postfix != null) && (! postfix.isEmpty()))
+		{
+			builder.append("." + postfix);
+		}
+		
+		return builder.toString();
+	}
 }
