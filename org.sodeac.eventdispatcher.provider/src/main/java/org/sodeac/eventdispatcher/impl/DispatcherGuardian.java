@@ -138,27 +138,33 @@ public class DispatcherGuardian extends Thread
 						heartBeatTimeOut = job.getJobControl().getHeartBeatTimeOut();
 						if(heartBeatTimeOut > 0)
 						{
-							
-							lastHeartBeat = job.getMetrics().getGauge(Long.class, IMetrics.GAUGE_JOB_LAST_HEARTBEAT).getValue();
-							heartBeatTimeOutStamp = lastHeartBeat + heartBeatTimeOut;
-							if(lastHeartBeat > 0)
+							try
 							{
-								if(heartBeatTimeOutStamp <= currentTimeStamp)
+								lastHeartBeat = (Long)job.getMetrics().getQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
+								heartBeatTimeOutStamp = lastHeartBeat + heartBeatTimeOut;
+								if(lastHeartBeat > 0)
 								{
-									if(timeOutList == null)
+									if(heartBeatTimeOutStamp <= currentTimeStamp)
 									{
-										timeOutList = new ArrayList<QueueImpl>();
+										if(timeOutList == null)
+										{
+											timeOutList = new ArrayList<QueueImpl>();
+										}
+										timeOutList.add(entry.getKey());
+										inTimeOut = true;
 									}
-									timeOutList.add(entry.getKey());
-									inTimeOut = true;
-								}
-								else
-								{
-									if(nextTimeOutTimeStamp > heartBeatTimeOutStamp)
+									else
 									{
-										nextTimeOutTimeStamp = heartBeatTimeOutStamp;
+										if(nextTimeOutTimeStamp > heartBeatTimeOutStamp)
+										{
+											nextTimeOutTimeStamp = heartBeatTimeOutStamp;
+										}
 									}
 								}
+							}
+							catch (Exception e) 
+							{
+								log(LogService.LOG_ERROR,"Error while check heartbeat timeout",e);
 							}
 						}
 					}
@@ -319,14 +325,21 @@ public class DispatcherGuardian extends Thread
 					long heartBeatTimeOut = job.getJobControl().getHeartBeatTimeOut();
 					if(heartBeatTimeOut > 0)
 					{
-						long lastHeartBeat = job.getMetrics().getGauge(Long.class, IMetrics.GAUGE_JOB_LAST_HEARTBEAT).getValue();
-						if(lastHeartBeat > 0)
+						try
 						{
-							long heartBeatTimeOutStamp = lastHeartBeat + heartBeatTimeOut;
-							if(heartBeatTimeOutStamp < this.currentWait)
+							long lastHeartBeat = (Long)job.getMetrics().getQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
+							if(lastHeartBeat > 0)
 							{
-								notify = true;
+								long heartBeatTimeOutStamp = lastHeartBeat + heartBeatTimeOut;
+								if(heartBeatTimeOutStamp < this.currentWait)
+								{
+									notify = true;
+								}
 							}
+						}
+						catch (Exception e) 
+						{
+							log(LogService.LOG_ERROR,"Error while check heartbeat timeout",e);
 						}
 					}
 				}

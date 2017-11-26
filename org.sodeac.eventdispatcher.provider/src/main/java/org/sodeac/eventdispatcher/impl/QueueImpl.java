@@ -83,11 +83,11 @@ public class QueueImpl implements IQueue
 		this.firedEventList = new ArrayList<Event>();
 		
 		PropertyBlockImpl qualityValues = new PropertyBlockImpl();
-		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
+		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis()); // TODO test
 		this.metrics = new MetricImpl(this,qualityValues, null);
 		this.propertyBlock = new PropertyBlockImpl();
 		
-		this.metrics.registerGauge(new IGauge<Long>()
+		this.metrics.registerGauge(new IGauge<Long>()											// TODO test
 		{
 			@Override
 			public Long getValue()
@@ -96,7 +96,7 @@ public class QueueImpl implements IQueue
 			}
 		}, IMetrics.GAUGE_LAST_SEND_EVENT);
 		
-		this.metrics.registerGauge(new IGauge<Long>()
+		this.metrics.registerGauge(new IGauge<Long>()											// TODO test
 		{
 
 			@Override
@@ -179,7 +179,7 @@ public class QueueImpl implements IQueue
 		
 		try
 		{
-			eventDispatcher.getMetrics().counter(Event.class.getName(), "Scheduled").inc();
+			eventDispatcher.getMetrics().counter(Event.class.getName(), "Scheduled").inc();	// TODO test
 		}
 		catch(Exception e)
 		{
@@ -188,7 +188,7 @@ public class QueueImpl implements IQueue
 		
 		try
 		{
-			eventDispatcher.getMetrics().meter(Event.class.getName(), "Scheduled").mark();
+			eventDispatcher.getMetrics().meter(Event.class.getName(), "Scheduled").mark();	// TODO test
 		}
 		catch(Exception e)
 		{
@@ -754,7 +754,13 @@ public class QueueImpl implements IQueue
 	@Override
 	public String scheduleJob(IQueueJob job)
 	{
-		return scheduleJob(null,job, null, -1, -1, -1);
+		return scheduleJob(null,job);
+	}
+	
+	@Override
+	public String scheduleJob(String id, IQueueJob job)
+	{
+		return scheduleJob(id,job, null, -1, -1, -1);
 	}
 	
 	@Override
@@ -803,6 +809,7 @@ public class QueueImpl implements IQueue
 			if((id == null) || (id.isEmpty()))
 			{
 				id = UUID.randomUUID().toString();
+				jobContainer = new JobContainer();
 			}
 			else
 			{
@@ -830,12 +837,15 @@ public class QueueImpl implements IQueue
 						return id;
 					}
 				}
+				
+				jobContainer = new JobContainer();
+				jobContainer.setNamedJob(true);
 			}
 			
 			PropertyBlockImpl qualityValues = new PropertyBlockImpl();
 			qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
 			
-			jobContainer = new JobContainer();
+			
 			MetricImpl metric = new MetricImpl(this,qualityValues, id);
 			
 			if(propertyBlock == null)
@@ -867,45 +877,48 @@ public class QueueImpl implements IQueue
 			
 			qualityValues.setProperty(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, -1L);
 			
-			metric.registerGauge(new IGauge<Long>()
+			if(jobContainer.isNamedJob())
 			{
-
-				@Override
-				public Long getValue()
+				metric.registerGauge(new IGauge<Long>()																		// TODO test
 				{
-					return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_CREATED);
-				}
-			}, IMetrics.GAUGE_JOB_CREATED);
-			
-			metric.registerGauge(new IGauge<Long>()
-			{
-
-				@Override
-				public Long getValue()
+	
+					@Override
+					public Long getValue()
+					{
+						return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_CREATED);
+					}
+				}, IMetrics.GAUGE_JOB_CREATED);
+				
+				metric.registerGauge(new IGauge<Long>()																		// TODO test
 				{
-					return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_FINISHED_TIMESTAMP);
-				}
-			}, IMetrics.GAUGE_JOB_FINISHED);
-			
-			metric.registerGauge(new IGauge<Long>()
-			{
-
-				@Override
-				public Long getValue()
+	
+					@Override
+					public Long getValue()
+					{
+						return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_FINISHED_TIMESTAMP);
+					}
+				}, IMetrics.GAUGE_JOB_FINISHED);
+				
+				metric.registerGauge(new IGauge<Long>()																		// TODO test
 				{
-					return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_STARTED_TIMESTAMP);
-				}
-			}, IMetrics.GAUGE_JOB_STARTED);
-			
-			metric.registerGauge(new IGauge<Long>()
-			{
-
-				@Override
-				public Long getValue()
+	
+					@Override
+					public Long getValue()
+					{
+						return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_STARTED_TIMESTAMP);
+					}
+				}, IMetrics.GAUGE_JOB_STARTED);
+				
+				metric.registerGauge(new IGauge<Long>()																		// TODO test
 				{
-					return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
-				}
-			}, IMetrics.GAUGE_JOB_LAST_HEARTBEAT);
+	
+					@Override
+					public Long getValue()
+					{
+						return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
+					}
+				}, IMetrics.GAUGE_JOB_LAST_HEARTBEAT);
+			}
 		}
 		finally 
 		{
@@ -1516,6 +1529,7 @@ public class QueueImpl implements IQueue
 	@Override
 	public void sendEvent(String topic, Map<String, ?> properties)
 	{
+		// TODO test metrics
 		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_SEND_EVENT, System.currentTimeMillis());
 		
 		try
@@ -1576,7 +1590,7 @@ public class QueueImpl implements IQueue
 	@Override
 	public void postEvent(String topic, Map<String, ?> properties)
 	{
-		
+		// TODO test metrics
 		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_POST_EVENT, System.currentTimeMillis());
 		
 		try

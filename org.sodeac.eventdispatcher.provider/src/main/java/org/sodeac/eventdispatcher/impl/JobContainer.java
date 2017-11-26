@@ -21,6 +21,7 @@ public class JobContainer
 	private IPropertyBlock properties;
 	private IMetrics metrics;
 	private JobControlImpl jobControl;
+	private boolean namedJob = false;
 	
 	public IQueueJob getJob()
 	{
@@ -61,5 +62,13 @@ public class JobContainer
 	public void setJobControl(JobControlImpl jobControl)
 	{
 		this.jobControl = jobControl;
+	}
+	public boolean isNamedJob()
+	{
+		return namedJob;
+	}
+	public void setNamedJob(boolean namedJob)
+	{
+		this.namedJob = namedJob;
 	}
 }

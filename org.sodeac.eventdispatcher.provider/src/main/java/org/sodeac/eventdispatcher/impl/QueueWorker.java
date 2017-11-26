@@ -233,7 +233,7 @@ public class QueueWorker extends Thread
 							{
 								jobTimeOut = ((dueJob.getJobControl().getTimeOut() > 0) || (dueJob.getJobControl().getHeartBeatTimeOut() > 0));
 								this.currentRunningJob = dueJob;
-								this.currentRunningJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, System.currentTimeMillis());
+								dueJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, System.currentTimeMillis());
 								
 								if(jobTimeOut)
 								{
@@ -298,21 +298,28 @@ public class QueueWorker extends Thread
 									dueJob.getJobControl().preRun();
 								}
 								
-								this.currentRunningJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_STARTED_TIMESTAMP, System.currentTimeMillis());
+								dueJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_STARTED_TIMESTAMP, System.currentTimeMillis()); // TODO Test all Metrics
 								
-								dueJob.getMetrics().meter(IMetrics.METRICS_RUN_JOB).mark();
-								dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB).inc();
+								if(dueJob.isNamedJob())
+								{
+									dueJob.getMetrics().meter(IMetrics.METRICS_RUN_JOB).mark();
+									dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB).inc();
+									timerContextJob = dueJob.getMetrics().timer(IMetrics.METRICS_RUN_JOB).time();
+								}
 								eventQueue.getMetrics().meter(IMetrics.METRICS_RUN_JOB).mark();
 								eventQueue.getMetrics().counter(IMetrics.METRICS_RUN_JOB).inc();
-								timerContextJob = dueJob.getMetrics().timer(IMetrics.METRICS_RUN_JOB).time();
+								
 								timerContextQueue = eventQueue.getMetrics().timer(IMetrics.METRICS_RUN_JOB).time();
 								
 								dueJob.getJob().run(eventQueue, dueJob.getMetrics(), dueJob.getPropertyBlock(), dueJob.getJobControl() ,currentProcessedJobList);
 								
-								this.currentRunningJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_FINISHED_TIMESTAMP, System.currentTimeMillis());
-								this.currentRunningJob.getPropertyBlock().setProperty(IQueueJob.PROPERTY_KEY_THROWED_EXCEPTION, null);
+								dueJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_FINISHED_TIMESTAMP, System.currentTimeMillis());
+								dueJob.getPropertyBlock().setProperty(IQueueJob.PROPERTY_KEY_THROWED_EXCEPTION, null);
 								
-								timerContextJob.stop();
+								if(timerContextJob != null)
+								{
+									timerContextJob.stop();
+								}
 								timerContextQueue.stop();
 								
 								dueJob.getJobControl().postRun();
@@ -354,7 +361,10 @@ public class QueueWorker extends Thread
 								
 								try
 								{
-									dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+									if(dueJob.isNamedJob())
+									{
+										dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+									}
 									eventQueue.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
 								}
 								catch (Exception e2) {}
@@ -427,7 +437,10 @@ public class QueueWorker extends Thread
 								
 								try
 								{
-									dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+									if(dueJob.isNamedJob())
+									{
+										dueJob.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
+									}
 									eventQueue.getMetrics().counter(IMetrics.METRICS_RUN_JOB_ERROR).inc();
 								}
 								catch (Exception e2) {}
@@ -680,13 +693,20 @@ public class QueueWorker extends Thread
 		boolean heartBeatTimeout = false;
 		if(timeOutJob.getJobControl().getHeartBeatTimeOut() > 0)
 		{
-			long lastHeartBeat = timeOutJob.getMetrics().getGauge(Long.class, IMetrics.GAUGE_JOB_LAST_HEARTBEAT).getValue();
-			if(lastHeartBeat > 0)
+			try
 			{
-				if((lastHeartBeat + timeOutJob.getJobControl().getHeartBeatTimeOut() ) <= System.currentTimeMillis())
+				long lastHeartBeat = (Long)timeOutJob.getMetrics().getQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
+				if(lastHeartBeat > 0)
 				{
-					heartBeatTimeout = true;
+					if((lastHeartBeat + timeOutJob.getJobControl().getHeartBeatTimeOut() ) <= System.currentTimeMillis())
+					{
+						heartBeatTimeout = true;
+					}
 				}
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"Error while check heartbeat timeout",e);
 			}
 		}
 		
