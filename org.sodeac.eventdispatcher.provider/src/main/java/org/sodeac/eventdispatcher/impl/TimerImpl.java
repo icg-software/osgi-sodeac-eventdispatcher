@@ -13,6 +13,7 @@ package org.sodeac.eventdispatcher.impl;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import org.sodeac.eventdispatcher.api.IMetricSnapshot;
 import org.sodeac.eventdispatcher.api.ITimer;
 
 import com.codahale.metrics.Timer;
@@ -90,6 +91,12 @@ public class TimerImpl implements ITimer
 		{
 			return ctx.stop();
 		}
+	}
+	
+	@Override
+	public IMetricSnapshot getSnapshot()
+	{
+		return new MetricSnapshotImpl(this.timer.getSnapshot());
 	}
 
 }

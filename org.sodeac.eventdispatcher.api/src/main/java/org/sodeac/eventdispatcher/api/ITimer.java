@@ -106,4 +106,11 @@ public interface ITimer
 	 *         occurred since the meter was created
 	 */
 	public double getFifteenMinuteRate();
+	
+	/**
+	 * Returns a snapshot of values.
+	 *
+	 * @return a snapshot of values
+	 */
+	public IMetricSnapshot getSnapshot();
 }
