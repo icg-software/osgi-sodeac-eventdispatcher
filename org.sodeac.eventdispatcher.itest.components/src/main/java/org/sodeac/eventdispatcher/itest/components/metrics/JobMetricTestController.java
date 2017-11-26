@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.itest.components.metrics;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -128,16 +129,19 @@ public class JobMetricTestController implements IEventController,IOnEventSchedul
 		{
 			jobCounter++;
 			
+			if(jobCounter < repeat)
+			{
+				jobControl.setExecutionTimeStamp(System.currentTimeMillis() + ((long)sleeptime) + ((long)worktime));
+			}
+			
 			try
 			{
 				Thread.sleep(worktime);
 			}
 			catch (Exception e) {}
 			
-			if(jobCounter < repeat)
-			{
-				jobControl.setExecutionTimeStamp(System.currentTimeMillis() + sleeptime);
-			}
+			queue.sendEvent("test/topic/send", new HashMap<>());
+			queue.postEvent("test/topic/post", new HashMap<>());
 			
 		}
 		

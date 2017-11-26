@@ -83,11 +83,11 @@ public class QueueImpl implements IQueue
 		this.firedEventList = new ArrayList<Event>();
 		
 		PropertyBlockImpl qualityValues = new PropertyBlockImpl();
-		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis()); // TODO test
+		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
 		this.metrics = new MetricImpl(this,qualityValues, null);
 		this.propertyBlock = new PropertyBlockImpl();
 		
-		this.metrics.registerGauge(new IGauge<Long>()											// TODO test
+		this.metrics.registerGauge(new IGauge<Long>()
 		{
 			@Override
 			public Long getValue()
@@ -96,9 +96,8 @@ public class QueueImpl implements IQueue
 			}
 		}, IMetrics.GAUGE_LAST_SEND_EVENT);
 		
-		this.metrics.registerGauge(new IGauge<Long>()											// TODO test
+		this.metrics.registerGauge(new IGauge<Long>()
 		{
-
 			@Override
 			public Long getValue()
 			{
@@ -179,7 +178,7 @@ public class QueueImpl implements IQueue
 		
 		try
 		{
-			eventDispatcher.getMetrics().meter(Event.class.getName(), "Scheduled").mark();	// TODO test
+			getMetrics().meter(Event.class.getName(), "Scheduled").mark();	// TODO test
 		}
 		catch(Exception e)
 		{
@@ -1520,13 +1519,12 @@ public class QueueImpl implements IQueue
 	@Override
 	public void sendEvent(String topic, Map<String, ?> properties)
 	{
-		// TODO test metrics
 		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_SEND_EVENT, System.currentTimeMillis());
 		
 		ITimer.Context timerContext = null;
 		try
 		{
-			timerContext = eventDispatcher.getMetrics().timer(Event.class.getName(), IMetrics.METRICS_SEND_EVENT).time();
+			timerContext = getMetrics().timer( IMetrics.METRICS_SEND_EVENT).time();
 		}
 		catch(Exception e)
 		{
@@ -1563,13 +1561,11 @@ public class QueueImpl implements IQueue
 	@Override
 	public void postEvent(String topic, Map<String, ?> properties)
 	{
-		// TODO test metrics
 		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_POST_EVENT, System.currentTimeMillis());
-		
 		
 		try
 		{
-			eventDispatcher.getMetrics().meter(Event.class.getName(), IMetrics.METRICS_POST_EVENT).mark();
+			getMetrics().meter(IMetrics.METRICS_POST_EVENT).mark();
 		}
 		catch(Exception e)
 		{

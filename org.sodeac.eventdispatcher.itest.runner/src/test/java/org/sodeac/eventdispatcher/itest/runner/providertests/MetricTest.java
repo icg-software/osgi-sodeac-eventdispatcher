@@ -27,6 +27,7 @@ import org.sodeac.eventdispatcher.itest.components.metrics.JobMetricTestControll
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
@@ -46,6 +47,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Dictionary;
@@ -202,6 +204,16 @@ public class MetricTest extends AbstractTest
 		String jobId = "job" + repeat +"_" + sleeptime + "_" + worktime;
 		int tolerance = 50 + (3 * repeat);
 		
+		String key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, null, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_LAST_SEND_EVENT);
+		Gauge<Long> queueLastSendEventGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNotNull("queueLastSendEventGauge should not be null" ,queueLastSendEventGauge);
+		assertNull("queueLastSendEventGauge should be NULL ", queueLastSendEventGauge.getValue());
+		
+		key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, null, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_LAST_POST_EVENT);
+		Gauge<Long> queueLastPostEventGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNotNull("queueLastPostEventGauge should not be null" ,queueLastPostEventGauge);
+		assertNull("queueLastPostEventGauge should be NULL ",  queueLastPostEventGauge.getValue());
+		
 		Map<String,Object> eventProperties = new HashMap<String,Object>();
 		eventProperties.put(JobMetricTestController.EVENT_PROPERTY_LATCH, latch);
 		eventProperties.put(JobMetricTestController.EVENT_PROPERTY_JOB_ID, jobId);
@@ -223,7 +235,7 @@ public class MetricTest extends AbstractTest
 		
 		// Job Created
 		
-		String key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_CREATED);
+		key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_CREATED);
 		Gauge<Long> jobCreatedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNotNull("jobCreatedGauge should not be null" ,jobCreatedGauge);
 		long diff = jobCreatedGauge.getValue() - startTS;
@@ -245,6 +257,16 @@ public class MetricTest extends AbstractTest
 		diff = jobLastHeartbeatGauge.getValue() - ( startTS + ((repeat-1) * sleeptime) + ((repeat-1) * worktime));
 		assertTrue("diff job-lastheartbeat-gauge should be 0 (+/- " + tolerance + "): " + diff, super.checkTimeMeasure(0, diff, tolerance, -1));
 		
+		// Last SendEvent
+		
+		diff = queueLastSendEventGauge.getValue() - stopTS;
+		assertTrue("diff queue-lastsendevent-gauge should be 0 (+/- " + tolerance + "): " + diff, super.checkTimeMeasure(0, diff, tolerance, -1));
+		
+		// Last PostEvent
+		
+		diff = queueLastPostEventGauge.getValue() - stopTS;
+		assertTrue("diff queue-lastpostevent-gauge should be 0 (+/- " + tolerance + "): " + diff, super.checkTimeMeasure(0, diff, tolerance, -1));
+		
 		// Job Finished
 		
 		key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_FINISHED);
@@ -261,10 +283,29 @@ public class MetricTest extends AbstractTest
 		assertNotNull("jobRunTimer should not be null" ,runMeter);
 		assertEquals("jobRunTimer.count should equals repeat", repeat, (int)runMeter.getCount());
 
-		assertTrue("statistic (event / second) should be 2.0 (+/- 0.2) " , super.checkMetric(2.0, runMeter.getMeanRate(), 0.2, -1));
+		assertTrue("statistic runtime. (event / second) should be 2.0 (+/- 0.2): " +runMeter.getMeanRate() , super.checkMetric(2.0, runMeter.getMeanRate(), 0.2, -1));
 		Snapshot sn =  runMeter.getSnapshot();
 		double runtimeAVG = sn.getMedian() / 1000000.0;
 		assertTrue("runtime.avg should equals 20 (+/- 2)",  super.checkMetric(20.0, runtimeAVG, 2, -1));
+		
+		// Counter/Meter SendEvent
+		
+		key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, null, IMetrics.POSTFIX_TIMER, IMetrics.METRICS_SEND_EVENT);
+		Timer sendEventMeter = metricRegistry.getTimers(new MetricFilterByName(key)).get(key);
+		assertNotNull("sendEventMeter should not be null" ,sendEventMeter);
+		assertEquals("sendEventMeter.count should equals repeat", repeat, (int)sendEventMeter.getCount());
+
+		assertTrue("statistic sendEvent (event / second) should be 2.0 (+/- 0.2): " +sendEventMeter.getMeanRate(), super.checkMetric(2.0, sendEventMeter.getMeanRate(), 0.2, -1));
+		
+		// Counter/Meter SendEvent
+		
+		key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_POST_EVENT);
+		Meter postEventMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNotNull("postEventMeter should not be null" ,postEventMeter);
+		assertEquals("postEventMeter.count should equals repeat", repeat, (int)postEventMeter.getCount());
+
+		assertTrue("statistic postEvent (event / second) should be 2.0 (+/- 0.2): " +postEventMeter.getMeanRate() , super.checkMetric(2.0, postEventMeter.getMeanRate(), 0.2, -1));
+		
 	}
 	
 	
