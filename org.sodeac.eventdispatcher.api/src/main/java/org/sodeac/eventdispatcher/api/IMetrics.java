@@ -37,6 +37,8 @@ public interface IMetrics
 	
 	public static final String METRICS_RUN_JOB = "Run";
 	public static final String METRICS_RUN_JOB_ERROR = "ErrorRun";
+	public static final String METRICS_SCHEDULE_EVENT = "ScheduleEvent";
+	public static final String METRICS_SIGNAL = "Signal";
 	
 	public static final String GAUGE_JOB_CREATED = "JobCreated";
 	public static final String GAUGE_JOB_STARTED = "JobStarted";

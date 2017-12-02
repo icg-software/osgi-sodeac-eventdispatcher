@@ -142,6 +142,7 @@ public class JobMetricTestController implements IEventController,IOnEventSchedul
 			
 			queue.sendEvent("test/topic/send", new HashMap<>());
 			queue.postEvent("test/topic/post", new HashMap<>());
+			queue.signal("");
 			
 		}
 		

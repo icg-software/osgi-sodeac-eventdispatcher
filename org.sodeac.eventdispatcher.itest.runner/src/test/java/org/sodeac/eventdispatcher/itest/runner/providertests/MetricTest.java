@@ -199,10 +199,10 @@ public class MetricTest extends AbstractTest
 		
 		
 		int repeat = 21;
-		int sleeptime = 480;
-		int worktime = 20;
+		int sleeptime = 800;
+		int worktime = 200;
 		String jobId = "job" + repeat +"_" + sleeptime + "_" + worktime;
-		int tolerance = 50 + (3 * repeat);
+		int tolerance = 50 + (30 * repeat);
 		
 		String key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, null, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_LAST_SEND_EVENT);
 		Gauge<Long> queueLastSendEventGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
@@ -213,6 +213,9 @@ public class MetricTest extends AbstractTest
 		Gauge<Long> queueLastPostEventGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNotNull("queueLastPostEventGauge should not be null" ,queueLastPostEventGauge);
 		assertNull("queueLastPostEventGauge should be NULL ",  queueLastPostEventGauge.getValue());
+		
+		key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_SCHEDULE_EVENT);
+		long scheduleCountBefore = metricRegistry.meter(key).getCount();
 		
 		Map<String,Object> eventProperties = new HashMap<String,Object>();
 		eventProperties.put(JobMetricTestController.EVENT_PROPERTY_LATCH, latch);
@@ -232,6 +235,11 @@ public class MetricTest extends AbstractTest
 		catch (Exception e) {}
 		
 		long stopTS = System.currentTimeMillis();
+		
+		key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_SCHEDULE_EVENT);
+		long scheduleCountAfter = metricRegistry.meter(key).getCount();
+		
+		assertEquals("scheduled events should be 1", 1, scheduleCountAfter - scheduleCountBefore);
 		
 		// Job Created
 		
@@ -283,10 +291,10 @@ public class MetricTest extends AbstractTest
 		assertNotNull("jobRunTimer should not be null" ,runMeter);
 		assertEquals("jobRunTimer.count should equals repeat", repeat, (int)runMeter.getCount());
 
-		assertTrue("statistic runtime. (event / second) should be 2.0 (+/- 0.2): " +runMeter.getMeanRate() , super.checkMetric(2.0, runMeter.getMeanRate(), 0.2, -1));
+		assertTrue("statistic runtime. (event / second) should be 1.0 (+/- 0.3): " +runMeter.getMeanRate() , super.checkMetric(1.0, runMeter.getMeanRate(), 0.3, -1));
 		Snapshot sn =  runMeter.getSnapshot();
 		double runtimeAVG = sn.getMedian() / 1000000.0;
-		assertTrue("runtime.avg should equals 20 (+/- 2)",  super.checkMetric(20.0, runtimeAVG, 2, -1));
+		assertTrue("runtime.avg should equals 200 (+/- 20) " + runtimeAVG,  super.checkMetric(200.0, runtimeAVG, 20, -1));
 		
 		// Counter/Meter SendEvent
 		
@@ -295,7 +303,7 @@ public class MetricTest extends AbstractTest
 		assertNotNull("sendEventMeter should not be null" ,sendEventMeter);
 		assertEquals("sendEventMeter.count should equals repeat", repeat, (int)sendEventMeter.getCount());
 
-		assertTrue("statistic sendEvent (event / second) should be 2.0 (+/- 0.2): " +sendEventMeter.getMeanRate(), super.checkMetric(2.0, sendEventMeter.getMeanRate(), 0.2, -1));
+		assertTrue("statistic sendEvent (event / second) should be 1.0 (+/- 0.3): " +sendEventMeter.getMeanRate(), super.checkMetric(1.0, sendEventMeter.getMeanRate(), 0.3, -1));
 		
 		// Counter/Meter SendEvent
 		
@@ -304,7 +312,16 @@ public class MetricTest extends AbstractTest
 		assertNotNull("postEventMeter should not be null" ,postEventMeter);
 		assertEquals("postEventMeter.count should equals repeat", repeat, (int)postEventMeter.getCount());
 
-		assertTrue("statistic postEvent (event / second) should be 2.0 (+/- 0.2): " +postEventMeter.getMeanRate() , super.checkMetric(2.0, postEventMeter.getMeanRate(), 0.2, -1));
+		assertTrue("statistic postEvent (event / second) should be 1.0 (+/- 0.3): " +postEventMeter.getMeanRate() , super.checkMetric(1.0, postEventMeter.getMeanRate(), 0.3, -1));
+		
+		// Counter/Meter Signal
+		
+		key = IMetrics.metricName(JobMetricTestController.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_SIGNAL);
+		Meter signalMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNotNull("signalMeter should not be null" ,signalMeter);
+		assertEquals("signalMeter.count should equals repeat", repeat, (int)signalMeter.getCount());
+
+		assertTrue("statistic signal (event / second) should be 1.0 (+/- 0.3): " +signalMeter.getMeanRate() , super.checkMetric(1.0, signalMeter.getMeanRate(), 0.3, -1));
 		
 	}
 	

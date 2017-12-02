@@ -178,7 +178,7 @@ public class QueueImpl implements IQueue
 		
 		try
 		{
-			getMetrics().meter(Event.class.getName(), "Scheduled").mark();	// TODO test
+			getMetrics().meter(IMetrics.METRICS_SCHEDULE_EVENT).mark();
 		}
 		catch(Exception e)
 		{
@@ -1719,6 +1719,15 @@ public class QueueImpl implements IQueue
 		finally 
 		{
 			this.signalListLock.unlock();
+		}
+		
+		try
+		{
+			getMetrics().meter(IMetrics.METRICS_SIGNAL).mark();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric signal", e);
 		}
 		this.notifyOrCreateWorker(-1);
 	}
