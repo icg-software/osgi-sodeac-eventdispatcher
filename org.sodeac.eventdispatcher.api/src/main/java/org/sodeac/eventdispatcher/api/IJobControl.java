@@ -95,12 +95,13 @@ public interface IJobControl
 	 */
 	public boolean isInTimeOut();
 	
-	/**
+	// TODO
+	/*
 	 * in moment, ignore this methode
 	 * 
 	 * @return false
 	 */
-	public boolean stopOnTimeOut();
+	/*public boolean stopOnTimeOut();*/
 
 
 }

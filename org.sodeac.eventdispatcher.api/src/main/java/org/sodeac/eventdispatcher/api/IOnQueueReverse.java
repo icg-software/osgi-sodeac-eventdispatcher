@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} that makes it possible to react if stops to observe a {@link IQueue}
+ * An extension interface for {@link IEventController} to consume notifications if instance of {@link IEventController} finished observing a {@link IQueue}
  * 
  * @author Sebastian Palarus
  *

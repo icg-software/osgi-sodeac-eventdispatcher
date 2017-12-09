@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} that makes it possible to react signal
+ * An extension interface for {@link IEventController} to consume notifications if signal is fired
  * 
  * @author Sebastian Palarus
  *
@@ -20,7 +20,7 @@ package org.sodeac.eventdispatcher.api;
 public interface IOnQueueSignal extends IEventController
 {
 	/**
-	 * This is fired, if a signal is fired for this queue
+	 * This is fired, if a signal is fired for on a queue
 	 * <br>
 	 * invoked by queueworker
 	 * 

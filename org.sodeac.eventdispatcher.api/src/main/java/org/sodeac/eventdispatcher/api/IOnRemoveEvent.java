@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} that makes it possible to react on removing events
+ * An extension interface for {@link IEventController} to consume notifications if a {@link IQueuedEvent} is removed on {@link IQueue}
  * 
  * @author Sebastian Palarus
  *

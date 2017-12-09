@@ -18,7 +18,7 @@ import org.osgi.framework.Filter;
 /**
  * API for event-queues. {@link IQueue}s are configured by one or more {@link IEventController}s. 
  * All collected osgi-{@link org.osgi.service.event.Event}s are wrapped by {@link IQueuedEvent}. 
- * These {@link IQueuedEvent}s can be processed by {@link IQueueJob}s.
+ * {@link IQueuedEvent}s can be processed by {@link IQueueJob}s.
  * 
  * @author Sebastian Palarus
  *
@@ -55,13 +55,13 @@ public interface IQueue
 	public IQueuedEvent getEvent(String uuid);
 	
 	/**
-	 * returns list of {@link IQueuedEvent}s which matches filter parameter
+	 * returns list of {@link IQueuedEvent}s matched by filter parameter
 	 * 
 	 * @param topics topic-filter or null for irrelevant
 	 * @param queuedEventFilter osgi-filter for {@link IQueuedEvent}-properties
 	 * @param nativeEventFilter osgi-filter for {@link org.osgi.service.event.Event}-properties
 	 * 
-	 * @return list of {@link IQueuedEvent}s which matches filter parameter
+	 * @return list of {@link IQueuedEvent}s matched by filter parameter
 	 */
 	public List<IQueuedEvent> getEventList(String[] topics, Filter queuedEventFilter, Filter nativeEventFilter);
 	
@@ -83,18 +83,18 @@ public interface IQueue
 	public boolean removeEventList(List<String> uuidList);
 	
 	/**
-	 * returns list of scheduled {@link IQueueJob} which matches filter parameter
+	 * returns list of scheduled {@link IQueueJob} matched by filter parameter
 	 * 
 	 * @param filter osgi-filter for {@link IQueueJob}-properties
-	 * @return list of {@link IQueueJob}s which matches filter parameter
+	 * @return list of {@link IQueueJob}s matched by filter parameter
 	 */
 	public List<IQueueJob> getJobList(Filter filter);
 	
 	/**
-	 * returns map with jobid-job-pairs which matches filter parameter
+	 * returns map with jobid-job-pairs matched by filter parameter
 	 * 
 	 * @param filter osgi-filter for {@link IQueueJob}-properties
-	 * @return map with jobid-job-pairs which matches filter parameter
+	 * @return map with jobid-job-pairs matched by filter parameter
 	 */
 	public Map<String,IQueueJob> getJobIndex(Filter filter);
 	
@@ -110,17 +110,17 @@ public interface IQueue
 	public String scheduleJob(IQueueJob job);
 	
 	/**
-	 * schedule a anonymous {@link IQueueJob} to {@link IQueue}.
+	 * schedule a {@link IQueueJob} to {@link IQueue}.
 	 * 
 	 * @param id registration-id for {@link IQueueJob} to schedule
 	 * @param job {@link IQueueJob} to schedule
 	 * 
-	 * @return jobid (generated, in parameter id is null)
+	 * @return jobid (generated, if parameter id is null)
 	 */
 	public String scheduleJob(String id,IQueueJob job);
 	
 	/**
-	 * schedule a anonymous {@link IQueueJob} to {@link IQueue}.
+	 * schedule a {@link IQueueJob} to {@link IQueue}.
 	 * 
 	 * @param id registration-id for {@link IQueueJob} to schedule
 	 * @param job {@link IQueueJob} to schedule
@@ -136,7 +136,7 @@ public interface IQueue
 	/**
 	 * reset execution plan for an existing {@link IQueueJob}
 	 * 
-	 * @param id id of {@link IQueueJob} in which reset execution plan 
+	 * @param id registration-id of {@link IQueueJob} in which reset execution plan 
 	 * @param executionTimeStamp new execution time millis
 	 * @param timeOutValue new timeout value in ms, before notify for timeout
 	 * @param heartBeatTimeOut heartbeat-timeout value in ms, before notify for timeout

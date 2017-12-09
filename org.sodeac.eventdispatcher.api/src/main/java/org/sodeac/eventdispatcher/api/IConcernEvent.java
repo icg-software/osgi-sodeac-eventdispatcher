@@ -11,7 +11,7 @@
 package org.sodeac.eventdispatcher.api;
 
 /**
- * if implementing this interface it is possible to declare a relation or responsibility to an event.
+ * An extension-interface for {@link IEventController} to declare relations or responsibilities to events.
  * 
  * @author Sebastian Palarus
  *

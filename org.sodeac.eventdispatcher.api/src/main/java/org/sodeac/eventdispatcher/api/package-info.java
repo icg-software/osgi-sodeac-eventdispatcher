@@ -13,7 +13,6 @@
 /**
  * 
  * Provides an API for eventdispatcher. An eventdispatcher is a kind of control center middleware for osgi-events. 
- * The eventdispatcher can modify events by following aspects: quality, quantity, rhythm and monitoring.
  * 
  * 
  * @author Sebastian Palarus

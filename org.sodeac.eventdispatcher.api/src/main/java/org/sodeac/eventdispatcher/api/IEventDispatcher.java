@@ -43,7 +43,7 @@ public interface IEventDispatcher
 	public IPropertyBlock createPropertyBlock();
 	
 	/**
-	 * getter to request for all {@link IQueue}s
+	 * request for all {@link IQueue}-IDs
 	 * 
 	 * @return {@link java.util.List} with queueIds
 	 */

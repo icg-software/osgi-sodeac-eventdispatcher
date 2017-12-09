@@ -51,30 +51,30 @@ public interface IMetrics
 	public static final String METRICS_POST_EVENT = "PostEvent";
 	
 	/**
-	 * getter for registered qualityvalue with associated {@code key}. Qualityvalues acts as database for gauges.
+	 * getter for registered quality-value with associated {@code key}. Quality-values acts as database for gauges.
 	 * 
-	 * @param key the key whose associated qualityvalue is to be returned
+	 * @param key the key whose associated quality-value is to be returned
 	 * 
 	 * @return the quality with specified key, or null if property does not exists
 	 */
 	public Object getQualityValue(String key);
 	
 	/**
-	 * register a qualityvalue {@code value} with associated {@code key}.Qualityvalues acts as database for gauges.
+	 * register a quality-value {@code value} with associated {@code key}.Quality-values acts as database for gauges.
 	 * 
 	 * @param key key with which the specified quality is to be associated
 	 * @param value quality to be associated with the specified key 
 	 * 
-	 * @return previews qualityvalue registered with {@code key}, or null
+	 * @return previews quality-value registered with {@code key}, or null
 	 */
 	public Object setQualityValue(String key, Object value);
 	
 	/**
-	 * remove qualityvalue with associated {@code key}
+	 * remove quality-value with associated {@code key}
 	 * 
-	 * @param key key the key whose associated qualityvalue is to be removed
+	 * @param key key the key whose associated quality-value is to be removed
 	 * 
-	 * @return the removed qualityvalue with specified key, or null if qualityvalue does not exists
+	 * @return the removed quality-value with specified key, or null if quality-value does not exists
 	 */
 	public Object removeQualityValue(String key);
 	
@@ -97,7 +97,7 @@ public interface IMetrics
 	public IGauge<?> registerGauge(IGauge<?> gauge, String... names);
 	
 	/**
-	 * return the {@link IMeter} registered under {@code names}. If {@link IMeter} not registered 
+	 * return the {@link IMeter} registered under {@code names}. If {@link IMeter} is not registered, 
      * a new {@link IMeter} is created and registered before returns
 	 *  
 	 * @param names registration names of {@link IMeter}
@@ -106,7 +106,7 @@ public interface IMetrics
 	public IMeter meter(String... names);
 	
 	/**
-	 * return the {@link ITimer} registered under {@code names}. If {@link ITimer} not registered 
+	 * return the {@link ITimer} registered under {@code names}. If {@link ITimer} is not registered, 
      * a new {@link ITimer} is created and registered before returns
 	 *  
 	 * @param names registration names of {@link ITimer}
@@ -115,7 +115,7 @@ public interface IMetrics
 	public ITimer timer(String... names);
 	
 	/**
-	 * return the {@link ICounter} registered under {@code names}. If {@link ICounter} not registered 
+	 * return the {@link ICounter} registered under {@code names}. If {@link ICounter} is not registered, 
      * a new {@link ICounter} is created and registered before returns
 	 *  
 	 * @param names registration names of {@link ICounter}
@@ -124,7 +124,7 @@ public interface IMetrics
 	public ICounter counter(String... names);
 	
 	/**
-	 * return the {@link IHistogram} registered under {@code names}. If {@link IHistogram} not registered 
+	 * return the {@link IHistogram} registered under {@code names}. If {@link IHistogram} is not registered, 
      * a new {@link IHistogram} is created and registered before returns
 	 *  
 	 * @param names registration names of {@link IHistogram}

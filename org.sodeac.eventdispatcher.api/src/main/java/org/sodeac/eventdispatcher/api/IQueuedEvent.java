@@ -16,7 +16,7 @@ import java.util.Map;
 import org.osgi.service.event.Event;
 
 /**
- * wrapper object for queued events
+ * wrapper object for queued {@link org.osgi.service.event.Event}s
  * 
  * @author Sebastian Palarus
  *

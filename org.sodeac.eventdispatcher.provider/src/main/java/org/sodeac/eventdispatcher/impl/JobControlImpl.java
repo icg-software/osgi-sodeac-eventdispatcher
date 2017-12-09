@@ -132,7 +132,7 @@ public class JobControlImpl implements IJobControl
 		return old;
 	}
 	
-	@Override
+	//@Override
 	public boolean stopOnTimeOut()
 	{
 		return false;

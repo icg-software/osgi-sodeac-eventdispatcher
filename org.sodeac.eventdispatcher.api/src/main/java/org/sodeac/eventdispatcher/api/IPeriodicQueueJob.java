@@ -11,7 +11,7 @@
 package org.sodeac.eventdispatcher.api;
 
 /**
- * An extenstion interface for {@link IQueueJob}. This job is not finished by default and re-run periodically this job, until the job set done manually with state-handler {@link IJobControl}.
+ * An extenstion interface for {@link IQueueJob}. Jobs implements this interface will not finished by default and re-run periodically by worker, until the job set done manually with state-handler {@link IJobControl}.
  * 
  * @author Sebastian Palarus
  *

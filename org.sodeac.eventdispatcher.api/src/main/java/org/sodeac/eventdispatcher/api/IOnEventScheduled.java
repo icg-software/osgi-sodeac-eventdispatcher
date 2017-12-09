@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} that makes it possible to react on scheduling events
+ * An extension interface for {@link IEventController} to consume a notification if {@link IQueue} scheduled a {@link IQueuedEvent}
  * 
  * @author Sebastian Palarus
  *

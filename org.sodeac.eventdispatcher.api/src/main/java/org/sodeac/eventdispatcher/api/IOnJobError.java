@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} that makes it possible to react if a job throws an exception or an error
+ * An extension interface for {@link IEventController} to consume notifications if a job throws an exception or an error
  * 
  * @author Sebastian Palarus
  *

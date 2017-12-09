@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} that makes it possible to react on finishing a job
+ * An extension interface for {@link IEventController} to consume notifications of finishing a job
  * 
  * @author Sebastian Palarus
  *

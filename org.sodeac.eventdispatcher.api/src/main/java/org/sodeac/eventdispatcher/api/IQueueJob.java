@@ -13,7 +13,7 @@ package org.sodeac.eventdispatcher.api;
 import java.util.List;
 
 /**
- * A {@link IQueueJob} acts as processor for queued events or as service.
+ * A {@link IQueueJob} acts as processor for queued {@link IQueuedEvent}s or as service.
  * 
  * @author Sebastian Palarus
  *
@@ -33,7 +33,7 @@ public interface IQueueJob
 	/**
 	 * invoked onetime at initialization of this job
 	 * 
-	 * @param id registrationid of this job
+	 * @param id registration-id of this job
 	 * @param metrics metric-handler for this job
 	 * @param propertyBlock properties for this job
 	 * @param jobControl state-handler for this job
@@ -41,7 +41,7 @@ public interface IQueueJob
 	public void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl);
 	
 	/**
-	 * run this job, invoked by queueworker.
+	 * run this job, invoked by queue-worker.
 	 * 
 	 * @param queue parent-{@link IQueue} 
 	 * @param metrics metric-handler for this job
