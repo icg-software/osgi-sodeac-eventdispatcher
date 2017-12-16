@@ -72,6 +72,8 @@ public class EventDispatcherImpl implements IEventDispatcher
 	
 	private volatile IMetrics metrics = null; 
 	
+	private Map<String,Long> queueIsMissingLogIndex = new HashMap<String,Long>();
+	
 	// TODO replace synchronized (controllerList/serviceList) by locks ?
 	
 	public EventDispatcherImpl()
@@ -101,14 +103,26 @@ public class EventDispatcherImpl implements IEventDispatcher
 		}
 		if(queue == null)
 		{
-			// TODO oneTime - Log
-			if(this.logService != null)
+			
+			boolean log = false;
+			synchronized(this.queueIsMissingLogIndex)
 			{
-				this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "Queue is missing " + queueId);
+				if(( this.queueIsMissingLogIndex.get(queueId) == null) || (this.queueIsMissingLogIndex.get(queueId).longValue() < (System.currentTimeMillis() - 60000L)))
+				{
+					log = true;
+					this.queueIsMissingLogIndex.put(queueId,System.currentTimeMillis());
+				}
 			}
-			else
+			if(log)
 			{
-				System.err.println("Queue is missing " + queueId);
+				if(this.logService != null)
+				{
+					this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "Queue is missing " + queueId);
+				}
+				else
+				{
+					System.err.println("Queue is missing " + queueId);
+				}
 			}
 			return false; 
 		}
