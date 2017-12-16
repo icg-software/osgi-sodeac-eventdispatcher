@@ -23,6 +23,8 @@ import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
 import org.sodeac.eventdispatcher.itest.runner.MetricFilterByName;
 import org.sodeac.eventdispatcher.itest.components.MetricInstances;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTestController;
+import org.sodeac.eventdispatcher.itest.components.metrics.JobDisableMetricTestController1;
+import org.sodeac.eventdispatcher.itest.components.metrics.JobDisableMetricTestController2;
 import org.sodeac.eventdispatcher.itest.components.metrics.JobMetricTestController;
 
 import com.codahale.metrics.Counter;
@@ -322,6 +324,200 @@ public class MetricTest extends AbstractTest
 		assertEquals("signalMeter.count should equals repeat", repeat, (int)signalMeter.getCount());
 
 		assertTrue("statistic signal (event / second) should be 1.0 (+/- 0.3): " +signalMeter.getMeanRate() , super.checkMetric(1.0, signalMeter.getMeanRate(), 0.3, -1));
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void test04DisableJobMetrics1() 
+	{
+		assertNotNull("metricInstances should not be null" ,metricInstances);
+		MetricRegistry metricRegistry = metricInstances.getMetricRegistry();
+		assertNotNull("metricRegistry should not be null" ,metricRegistry);
+	
+		CountDownLatch latch = new CountDownLatch(1);
+		
+		
+		int repeat = 3;
+		int sleeptime = 100;
+		int worktime = 500;
+		String jobId = "job1" + repeat +"_" + sleeptime + "_" + worktime;
+		
+		String key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, null, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_LAST_SEND_EVENT);
+		Gauge<Long> queueLastSendEventGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("queueLastSendEventGauge  of disabled metric should not be null" ,queueLastSendEventGauge);
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, null, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_LAST_POST_EVENT);
+		Gauge<Long> queueLastPostEventGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("queueLastPostEventGauge of disabled metric should be null" ,queueLastPostEventGauge);
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_SCHEDULE_EVENT);
+		Meter scheduleCountBeforeMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNull("scheduleCountBeforeMeter of disabled metric should be null" ,scheduleCountBeforeMeter);
+		
+		Map<String,Object> eventProperties = new HashMap<String,Object>();
+		eventProperties.put(JobDisableMetricTestController1.EVENT_PROPERTY_LATCH, latch);
+		eventProperties.put(JobDisableMetricTestController1.EVENT_PROPERTY_JOB_ID, jobId);
+		eventProperties.put(JobDisableMetricTestController1.EVENT_PROPERTY_REPEAT, repeat);
+		eventProperties.put(JobDisableMetricTestController1.EVENT_PROPERTY_SLEEP_TIME, sleeptime);
+		eventProperties.put(JobDisableMetricTestController1.EVENT_PROPERTY_WORK_TIME, worktime);
+		Event event =  new Event(JobDisableMetricTestController1.RUN_EVENT,eventProperties);
+		eventAdmin.sendEvent(event);
+		
+		try
+		{
+			latch.await(108, TimeUnit.SECONDS);
+		}
+		catch (Exception e) {}
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_SCHEDULE_EVENT);
+		Meter scheduleCountAfterMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNull("scheduleCountAfterMeter of disabled metric should be null" ,scheduleCountAfterMeter);
+		
+		// Job Created
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_CREATED);
+		Gauge<Long> jobCreatedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("jobCreatedGauge of disabled metric should be null" ,jobCreatedGauge);
+		
+		// Job Started
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_STARTED);
+		Gauge<Long> jobStartedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("jobStartedGauge of disabled metric should be null" ,jobStartedGauge);
+		
+		// Last Heartbeat
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_LAST_HEARTBEAT);
+		Gauge<Long> jobLastHeartbeatGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("jobLastHeartbeatGauge of disabled metric should be null" ,jobLastHeartbeatGauge);
+		
+		// Job Finished
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_FINISHED);
+		Gauge<Long> jobFinishedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("jobFinishedGauge of disabled metric should be null" ,jobFinishedGauge);
+		
+		// Counter/Meter/Timer Run Job
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_TIMER, IMetrics.METRICS_RUN_JOB);
+		Timer runMeter = metricRegistry.getTimers(new MetricFilterByName(key)).get(key);
+		assertNull("disabled jobRunTimer should be null" ,runMeter);
+		
+		// Counter/Meter SendEvent
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, null, IMetrics.POSTFIX_TIMER, IMetrics.METRICS_SEND_EVENT);
+		Timer sendEventMeter = metricRegistry.getTimers(new MetricFilterByName(key)).get(key);
+		assertNull("sendEventMeter should be null" ,sendEventMeter);
+		
+		// Counter/Meter SendEvent
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_POST_EVENT);
+		Meter postEventMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNull("postEventMeter should be null" ,postEventMeter);
+		
+		// Counter/Meter Signal
+		
+		key = IMetrics.metricName(JobDisableMetricTestController1.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_SIGNAL);
+		Meter signalMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNull("signalMeter should be null" ,signalMeter);
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void test05DisableJobMetrics2() 
+	{
+		assertNotNull("metricInstances should not be null" ,metricInstances);
+		MetricRegistry metricRegistry = metricInstances.getMetricRegistry();
+		assertNotNull("metricRegistry should not be null" ,metricRegistry);
+	
+		CountDownLatch latch = new CountDownLatch(1);
+		
+		
+		int repeat = 3;
+		int sleeptime = 100;
+		int worktime = 500;
+		String jobId = "job2" + repeat +"_" + sleeptime + "_" + worktime;
+		
+		String key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, null, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_LAST_SEND_EVENT);
+		Gauge<Long> queueLastSendEventGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("queueLastSendEventGauge  of disabled metric should not be null" ,queueLastSendEventGauge);
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, null, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_LAST_POST_EVENT);
+		Gauge<Long> queueLastPostEventGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("queueLastPostEventGauge of disabled metric should be null" ,queueLastPostEventGauge);
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_SCHEDULE_EVENT);
+		Meter scheduleCountBeforeMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNull("scheduleCountBeforeMeter of disabled metric should be null" ,scheduleCountBeforeMeter);
+		
+		Map<String,Object> eventProperties = new HashMap<String,Object>();
+		eventProperties.put(JobDisableMetricTestController2.EVENT_PROPERTY_LATCH, latch);
+		eventProperties.put(JobDisableMetricTestController2.EVENT_PROPERTY_JOB_ID, jobId);
+		eventProperties.put(JobDisableMetricTestController2.EVENT_PROPERTY_REPEAT, repeat);
+		eventProperties.put(JobDisableMetricTestController2.EVENT_PROPERTY_SLEEP_TIME, sleeptime);
+		eventProperties.put(JobDisableMetricTestController2.EVENT_PROPERTY_WORK_TIME, worktime);
+		Event event =  new Event(JobDisableMetricTestController2.RUN_EVENT,eventProperties);
+		eventAdmin.sendEvent(event);
+		
+		try
+		{
+			latch.await(108, TimeUnit.SECONDS);
+		}
+		catch (Exception e) {}
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_SCHEDULE_EVENT);
+		Meter scheduleCountAfterMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNull("scheduleCountAfterMeter of disabled metric should be null" ,scheduleCountAfterMeter);
+		
+		// Job Created
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_CREATED);
+		Gauge<Long> jobCreatedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("jobCreatedGauge of disabled metric should be null" ,jobCreatedGauge);
+		
+		// Job Started
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_STARTED);
+		Gauge<Long> jobStartedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("jobStartedGauge of disabled metric should be null" ,jobStartedGauge);
+		
+		// Last Heartbeat
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_LAST_HEARTBEAT);
+		Gauge<Long> jobLastHeartbeatGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("jobLastHeartbeatGauge of disabled metric should be null" ,jobLastHeartbeatGauge);
+		
+		// Job Finished
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_FINISHED);
+		Gauge<Long> jobFinishedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
+		assertNull("jobFinishedGauge of disabled metric should be null" ,jobFinishedGauge);
+		
+		// Counter/Meter/Timer Run Job
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, jobId, IMetrics.POSTFIX_TIMER, IMetrics.METRICS_RUN_JOB);
+		Timer runMeter = metricRegistry.getTimers(new MetricFilterByName(key)).get(key);
+		assertNull("disabled jobRunTimer should be null" ,runMeter);
+		
+		// Counter/Meter SendEvent
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, null, IMetrics.POSTFIX_TIMER, IMetrics.METRICS_SEND_EVENT);
+		Timer sendEventMeter = metricRegistry.getTimers(new MetricFilterByName(key)).get(key);
+		assertNull("sendEventMeter should be null" ,sendEventMeter);
+		
+		// Counter/Meter SendEvent
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_POST_EVENT);
+		Meter postEventMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNull("postEventMeter should be null" ,postEventMeter);
+		
+		// Counter/Meter Signal
+		
+		key = IMetrics.metricName(JobDisableMetricTestController2.QUEUE_ID, null, IMetrics.POSTFIX_METER, IMetrics.METRICS_SIGNAL);
+		Meter signalMeter = metricRegistry.getMeters(new MetricFilterByName(key)).get(key);
+		assertNull("signalMeter should be null" ,signalMeter);
 		
 	}
 	

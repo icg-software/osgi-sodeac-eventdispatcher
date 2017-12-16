@@ -31,10 +31,11 @@ import com.codahale.metrics.MetricRegistry;
 
 public class MetricImpl implements IMetrics
 {
-	public MetricImpl(QueueImpl queue, IPropertyBlock qualityValues, String jobId)
+	public MetricImpl(QueueImpl queue, IPropertyBlock qualityValues, String jobId, boolean enabled)
 	{
 		super();
 		this.queue = queue;
+		this.enabled = enabled;
 		this.dispatcher = (EventDispatcherImpl)queue.getEventDispatcher();
 		this.gaugeIndex = new HashMap<String,IGauge<?>>();
 		this.meterIndex = new HashMap<String,IMeter>();
@@ -49,10 +50,11 @@ public class MetricImpl implements IMetrics
 		this.metricsWriteLock = this.metricsLock.writeLock();
 	}
 	
-	public MetricImpl(EventDispatcherImpl dispatcher, IPropertyBlock qualityValues)
+	public MetricImpl(EventDispatcherImpl dispatcher, IPropertyBlock qualityValues, boolean enabled)
 	{
 		super();
 		this.queue = null;
+		this.enabled = enabled;
 		this.dispatcher = dispatcher;
 		this.gaugeIndex = new HashMap<String,IGauge<?>>();
 		this.meterIndex = new HashMap<String,IMeter>();
@@ -69,6 +71,7 @@ public class MetricImpl implements IMetrics
 	
 	private String jobId = null;
 	private QueueImpl queue = null;
+	private boolean enabled = true;
 	private EventDispatcherImpl dispatcher = null;
 	private IPropertyBlock qualityValues = null;
 	private Map<String,IGauge<?>> gaugeIndex = null;
@@ -79,6 +82,11 @@ public class MetricImpl implements IMetrics
 	private ReentrantReadWriteLock metricsLock;
 	private ReadLock metricsReadLock;
 	private WriteLock metricsWriteLock;
+	
+	private volatile MeterImpl disabledMeter = null;
+	private volatile TimerImpl disabledTimer = null;
+	private volatile CounterImpl disabledCounter = null;
+	private volatile HistogramImpl disabledHistogram = null; 
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
@@ -98,6 +106,11 @@ public class MetricImpl implements IMetrics
 		finally 
 		{
 			this.metricsReadLock.unlock();
+		}
+		
+		if(! this.enabled)
+		{
+			return null;
 		}
 		
 		SortedMap<String,Gauge> matches = this.dispatcher.getMetricRegistry().getGauges(new MetricFilterByName(key));
@@ -165,7 +178,10 @@ public class MetricImpl implements IMetrics
 				gauge = new SodeacGaugeWrapper<>(gauge);
 			}
 			
-			this.dispatcher.getMetricRegistry().register(key, (Gauge<?>)gauge);
+			if(this.enabled)
+			{
+				this.dispatcher.getMetricRegistry().register(key, (Gauge<?>)gauge);
+			}
 			this.gaugeIndex.put(key, gauge);
 			
 		}
@@ -194,6 +210,80 @@ public class MetricImpl implements IMetrics
 	public Object removeQualityValue(String key)
 	{
 		return this.qualityValues.removeProperty(key);
+	}
+	
+	public void enable()
+	{
+		try
+		{
+			this.metricsWriteLock.lock();
+			if(this.enabled)
+			{
+				return;
+			}
+			
+			this.enabled = true;
+			
+			for(Entry<String,IGauge<?>> entry : this.gaugeIndex.entrySet())
+			{
+				this.dispatcher.getMetricRegistry().register(entry.getKey(), (Gauge<?>)entry.getValue());
+			}
+		}
+		finally
+		{
+			this.metricsWriteLock.unlock();
+		}
+			
+	}
+	
+	public void disable()
+	{
+		try
+		{
+			this.metricsWriteLock.lock();
+			if(! this.enabled)
+			{
+				return;
+			}
+			
+			this.enabled = false;
+			
+			MetricRegistry metricRegistry = dispatcher.getMetricRegistry();
+			
+			for(Entry<String, IMeter> entry : meterIndex.entrySet())
+			{
+				metricRegistry.remove(entry.getKey());
+			}
+			meterIndex.clear();
+			for(Entry<String, ITimer> entry : timerIndex.entrySet())
+			{
+				metricRegistry.remove(entry.getKey());
+			}
+			timerIndex.clear();
+			
+			meterIndex.clear();
+			for(Entry<String, ICounter> entry : counterIndex.entrySet())
+			{
+				metricRegistry.remove(entry.getKey());
+			}
+			counterIndex.clear();
+			
+			for(Entry<String, IHistogram> entry : histogramIndex.entrySet())
+			{
+				metricRegistry.remove(entry.getKey());
+			}
+			histogramIndex.clear();
+			
+			for(Entry<String, IGauge<?>> entry : gaugeIndex.entrySet())
+			{
+				metricRegistry.remove(entry.getKey());
+			}
+			// keep Gauges
+		}
+		finally
+		{
+			this.metricsWriteLock.unlock();
+		}
 	}
 	
 	public void dispose()
@@ -253,6 +343,16 @@ public class MetricImpl implements IMetrics
 		try
 		{
 			this.metricsReadLock.lock();
+			
+			if(! this.enabled)
+			{
+				if(this.disabledMeter == null)
+				{
+					this.disabledMeter = new MeterImpl(null);
+				}
+				return this.disabledMeter;
+			}
+			
 			IMeter meter = this.meterIndex.get(key);
 			if(meter != null)
 			{
@@ -267,6 +367,16 @@ public class MetricImpl implements IMetrics
 		try
 		{
 			this.metricsWriteLock.lock();
+			
+			if(! this.enabled)
+			{
+				if(this.disabledMeter == null)
+				{
+					this.disabledMeter = new MeterImpl(null);
+				}
+				return this.disabledMeter;
+			}
+			
 			IMeter meter = this.meterIndex.get(key);
 			if(meter != null)
 			{
@@ -291,6 +401,16 @@ public class MetricImpl implements IMetrics
 		try
 		{
 			this.metricsReadLock.lock();
+			
+			if(! this.enabled)
+			{
+				if(this.disabledTimer == null)
+				{
+					this.disabledTimer = new TimerImpl(null);
+				}
+				return this.disabledTimer;
+			}
+			
 			ITimer timer = this.timerIndex.get(key);
 			if(timer != null)
 			{
@@ -305,6 +425,16 @@ public class MetricImpl implements IMetrics
 		try
 		{
 			this.metricsWriteLock.lock();
+			
+			if(! this.enabled)
+			{
+				if(this.disabledTimer == null)
+				{
+					this.disabledTimer = new TimerImpl(null);
+				}
+				return this.disabledTimer;
+			}
+			
 			ITimer timer = this.timerIndex.get(key);
 			if(timer != null)
 			{
@@ -328,6 +458,16 @@ public class MetricImpl implements IMetrics
 		try
 		{
 			this.metricsReadLock.lock();
+			
+			if(! this.enabled)
+			{
+				if(this.disabledCounter == null)
+				{
+					this.disabledCounter = new CounterImpl(null);
+				}
+				return this.disabledCounter;
+			}
+			
 			ICounter counter = this.counterIndex.get(key);
 			if(counter != null)
 			{
@@ -342,6 +482,16 @@ public class MetricImpl implements IMetrics
 		try
 		{
 			this.metricsWriteLock.lock();
+			
+			if(! this.enabled)
+			{
+				if(this.disabledCounter == null)
+				{
+					this.disabledCounter = new CounterImpl(null);
+				}
+				return this.disabledCounter;
+			}
+			
 			ICounter counter = this.counterIndex.get(key);
 			if(counter != null)
 			{
@@ -365,6 +515,16 @@ public class MetricImpl implements IMetrics
 		try
 		{
 			this.metricsReadLock.lock();
+			
+			if(! this.enabled)
+			{
+				if(this.disabledHistogram == null)
+				{
+					this.disabledHistogram = new HistogramImpl(null);
+				}
+				return this.disabledHistogram;
+			}
+			
 			IHistogram histogram = this.histogramIndex.get(key);
 			if(histogram != null)
 			{
@@ -379,6 +539,16 @@ public class MetricImpl implements IMetrics
 		try
 		{
 			this.metricsWriteLock.lock();
+			
+			if(! this.enabled)
+			{
+				if(this.disabledHistogram == null)
+				{
+					this.disabledHistogram = new HistogramImpl(null);
+				}
+				return this.disabledHistogram;
+			}
+			
 			IHistogram histogram = this.histogramIndex.get(key);
 			if(histogram != null)
 			{

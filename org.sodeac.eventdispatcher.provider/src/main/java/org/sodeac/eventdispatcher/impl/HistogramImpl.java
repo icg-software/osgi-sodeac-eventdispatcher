@@ -28,25 +28,39 @@ public class HistogramImpl implements IHistogram
 	@Override
 	public void update(int value)
 	{
-		this.histogram.update(value);
+		if(this.histogram != null)
+		{
+			this.histogram.update(value);
+		}
 	}
 
 	@Override
 	public void update(long value)
 	{
-		this.histogram.update(value);
+		if(this.histogram != null)
+		{
+			this.histogram.update(value);
+		}
 	}
 
 	@Override
 	public long getCount()
 	{
-		return this.histogram.getCount();
+		if(this.histogram != null)
+		{
+			return this.histogram.getCount();
+		}
+		return 0L;
 	}
 
 	@Override
 	public IMetricSnapshot getSnapshot()
 	{
-		return new MetricSnapshotImpl(this.histogram.getSnapshot());
+		if(this.histogram != null)
+		{
+			return new MetricSnapshotImpl(this.histogram.getSnapshot());
+		}
+		return new MetricSnapshotImpl(null);
 	}
 
 }

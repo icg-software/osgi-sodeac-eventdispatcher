@@ -27,31 +27,47 @@ public class CounterImpl implements ICounter
 	@Override
 	public void inc()
 	{
-		this.counter.inc();
+		if(this.counter != null)
+		{
+			this.counter.inc();
+		}
 	}
 
 	@Override
 	public void inc(long n)
 	{
-		this.counter.inc(n);
+		if(this.counter != null)
+		{
+			this.counter.inc(n);
+		}
 	}
 
 	@Override
 	public void dec()
 	{
-		this.counter.dec();
+		if(this.counter != null)
+		{
+			this.counter.dec();
+		}
 	}
 
 	@Override
 	public void dec(long n)
 	{
-		this.counter.dec(n);
+		if(this.counter != null)
+		{
+			this.counter.dec(n);
+		}
 	}
 
 	@Override
 	public long getCount()
 	{
-		return this.counter.getCount();
+		if(this.counter != null)
+		{
+			return this.counter.getCount();
+		}
+		return 0L;
 	}
 
 }

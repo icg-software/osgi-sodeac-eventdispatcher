@@ -101,7 +101,7 @@ public class JobMetricTestController implements IEventController,IOnEventSchedul
 	
 	// Job
 	
-	private class Job implements IQueueJob
+	protected class Job implements IQueueJob
 	{
 		private int repeat;
 		private int sleeptime;

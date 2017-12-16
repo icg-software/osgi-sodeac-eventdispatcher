@@ -15,72 +15,120 @@ public class MetricSnapshotImpl implements IMetricSnapshot
 	@Override
 	public double getValue(double quantile)
 	{
+		if(this.snapshot == null)
+		{
+			return 0.0;
+		}
 		return this.snapshot.getValue(quantile);
 	}
 
 	@Override
 	public long[] getValues()
 	{
+		if(this.snapshot == null)
+		{
+			return new long[0];
+		}
 		return this.snapshot.getValues();
 	}
 
 	@Override
 	public int size()
 	{
+		if(this.snapshot == null)
+		{
+			return 0;
+		}
 		return this.snapshot.size();
 	}
 
 	@Override
 	public double getMedian()
 	{
+		if(this.snapshot == null)
+		{
+			return 0.0;
+		}
 		return this.snapshot.getMedian();
 	}
 
 	@Override
 	public double get75thPercentile()
 	{
+		if(this.snapshot == null)
+		{
+			return 0.0;
+		}
 		return this.snapshot.get75thPercentile();
 	}
 
 	@Override
 	public double get95thPercentile()
 	{
+		if(this.snapshot == null)
+		{
+			return 0.0;
+		}
 		return this.snapshot.get95thPercentile();
 	}
 
 	@Override
 	public double get98thPercentile()
 	{
+		if(this.snapshot == null)
+		{
+			return 0.0;
+		}
 		return this.snapshot.get98thPercentile();
 	}
 
 	@Override
 	public double get99thPercentile()
 	{
+		if(this.snapshot == null)
+		{
+			return 0.0;
+		}
 		return this.snapshot.get99thPercentile();
 	}
 
 	@Override
 	public double get999thPercentile()
 	{
+		if(this.snapshot == null)
+		{
+			return 0.0;
+		}
 		return this.snapshot.get999thPercentile();
 	}
 
 	@Override
 	public long getMax()
 	{
+		if(this.snapshot == null)
+		{
+			return 0L;
+		}
 		return this.snapshot.getMax();
 	}
 
 	@Override
 	public double getMean()
 	{
+		if(this.snapshot == null)
+		{
+			return 0.0;
+		}
 		return this.snapshot.getMean();
 	}
 
 	@Override
 	public long getMin()
 	{
+		if(this.snapshot == null)
+		{
+			return 0L;
+		}
 		return this.snapshot.getMin();
 	}
 }

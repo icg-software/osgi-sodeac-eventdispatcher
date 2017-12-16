@@ -31,42 +31,69 @@ public class TimerImpl implements ITimer
 	@Override
 	public void update(long duration, TimeUnit unit)
 	{
-		this.timer.update(duration, unit);
+		if(this.timer != null)
+		{
+			this.timer.update(duration, unit);
+		}
 	}
 
 	@Override
 	public Context time()
 	{
+		if(this.timer == null)
+		{
+			return new Context(null);
+		}
 		return new Context(this.timer.time());
 	}
 
 	@Override
 	public long getCount()
 	{
+		if(this.timer == null)
+		{
+			return 0L;
+		}
 		return this.timer.getCount();
 	}
 
 	@Override
 	public double getMeanRate()
 	{
+		if(this.timer == null)
+		{
+			return 0.0;
+		}
 		return this.timer.getMeanRate();
 	}
 
 	@Override
 	public double getOneMinuteRate()
 	{
+		if(this.timer == null)
+		{
+			return 0.0;
+		}
 		return this.timer.getOneMinuteRate();
 	}
 
 	@Override
 	public double getFiveMinuteRate()
 	{
+		if(this.timer == null)
+		{
+			return 0.0;
+		}
 		return this.timer.getFiveMinuteRate();
 	}
 
 	@Override
 	public double getFifteenMinuteRate()
 	{
+		if(this.timer == null)
+		{
+			return 0.0;
+		}
 		return this.timer.getFifteenMinuteRate();
 	}
 	
@@ -83,19 +110,30 @@ public class TimerImpl implements ITimer
 		@Override
 		public void close() throws IOException
 		{
-			ctx.close();
+			if(ctx != null)
+			{
+				ctx.close();
+			}
 		}
 
 		@Override
 		public long stop()
 		{
-			return ctx.stop();
+			if(ctx != null)
+			{
+				return ctx.stop();
+			}
+			return 0L;
 		}
 	}
 	
 	@Override
 	public IMetricSnapshot getSnapshot()
 	{
+		if(this.timer ==  null)
+		{
+			return new MetricSnapshotImpl(null);
+		}
 		return new MetricSnapshotImpl(this.timer.getSnapshot());
 	}
 

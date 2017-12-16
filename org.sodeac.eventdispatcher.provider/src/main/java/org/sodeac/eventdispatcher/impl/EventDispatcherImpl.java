@@ -42,6 +42,8 @@ import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.ICounter;
+import org.sodeac.eventdispatcher.api.IDisableMetricsOnQueueObserve;
+import org.sodeac.eventdispatcher.api.IEnableMetricsOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IEventController;
 
 import com.codahale.metrics.MetricRegistry;
@@ -80,7 +82,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		this.queueIndexWriteLock = this.queueIndexLock.writeLock();
 		this.controllerList = new ArrayList<ControllerContainer>();
 		this.serviceList = new ArrayList<ServiceContainer>();
-		this.metrics = new MetricImpl(this, new PropertyBlockImpl());
+		this.metrics = new MetricImpl(this, new PropertyBlockImpl(),true);
 	}
 	
 	@Override
@@ -413,10 +415,35 @@ public class EventDispatcherImpl implements IEventDispatcher
 			this.queueIndexReadLock.unlock();
 		}
 		
+		boolean enableMetrics = (eventController instanceof IEnableMetricsOnQueueObserve);
+		boolean disableMetrics = (eventController instanceof IDisableMetricsOnQueueObserve);
+		if(! disableMetrics)
+		{
+			Object disableMetricsProperty = properties.get(IEventController.PROPERTY_DISABLE_METRICS);
+			if(disableMetricsProperty != null)
+			{
+				 if(disableMetricsProperty instanceof Boolean)
+				 {
+					 disableMetrics = (Boolean)disableMetricsProperty;
+				}
+				 else if (disableMetricsProperty instanceof String)
+				 {
+					 disableMetrics = ((String)disableMetricsProperty).equalsIgnoreCase("true");
+				}
+				 else
+				 {
+					 disableMetrics = disableMetricsProperty.toString().equalsIgnoreCase("true");
+				 }
+			}
+		}
+		if(disableMetrics)
+		{
+			enableMetrics = false;
+		}
 		
 		if(queue == null)
 		{
-			queue = new QueueImpl(queueId,this);
+			queue = new QueueImpl(queueId,this, ! disableMetrics);
 			this.queueIndexWriteLock.lock();
 			try
 			{
@@ -454,8 +481,47 @@ public class EventDispatcherImpl implements IEventDispatcher
 		}
 		
 		queue.addConfiguration(eventController, properties);
-		if(eventController instanceof IOnQueueObserve)
+		
+		
+		if(disableMetrics)
 		{
+			try
+			{
+				queue.setMetricsEnabled(false);
+			}
+			catch (Exception e) 
+			{
+				if(logService != null)
+				{
+					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "queue.setMetricsEnabled(false)", e);
+				}
+				else
+				{
+					System.err.println("queue.setMetricsEnabled(false) " + e.getMessage());
+				}
+			}
+		}
+		else if(enableMetrics)
+		{
+			try
+			{
+				queue.setMetricsEnabled(true);
+			}
+			catch (Exception e) 
+			{
+				if(logService != null)
+				{
+					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "queue.setMetricsEnabled(true)", e);
+				}
+				else
+				{
+					System.err.println("queue.setMetricsEnabled(true) " + e.getMessage());
+				}
+			}
+		}
+		
+		if(eventController instanceof IOnQueueObserve)
+		{	
 			// TODO move to worker
 			try
 			{
@@ -627,7 +693,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
 	public void bindQueueService(IQueueService queueService,Map<String, ?> properties)
 	{
-		synchronized (this.serviceList)// sync
+		synchronized (this.serviceList)
 		{
 			ServiceContainer serviceContainer = new ServiceContainer();
 			serviceContainer.setQueueService(queueService);

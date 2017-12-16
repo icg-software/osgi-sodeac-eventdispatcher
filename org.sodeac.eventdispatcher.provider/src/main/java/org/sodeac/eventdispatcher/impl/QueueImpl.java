@@ -45,12 +45,13 @@ import org.sodeac.eventdispatcher.api.ITimer;
 
 public class QueueImpl implements IQueue
 {
-	public QueueImpl(String queueId,EventDispatcherImpl eventDispatcher)
+	public QueueImpl(String queueId,EventDispatcherImpl eventDispatcher, boolean enableMetrics)
 	{
 		super();
 	
 		this.queueId = queueId;
 		this.eventDispatcher = eventDispatcher;
+		this.enableMetrics = enableMetrics;
 		
 		this.genericQueueSpoolLock = new ReentrantLock();
 		
@@ -84,7 +85,7 @@ public class QueueImpl implements IQueue
 		
 		PropertyBlockImpl qualityValues = new PropertyBlockImpl();
 		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
-		this.metrics = new MetricImpl(this,qualityValues, null);
+		this.metrics = new MetricImpl(this,qualityValues, null,enableMetrics);
 		this.propertyBlock = new PropertyBlockImpl();
 		
 		this.metrics.registerGauge(new IGauge<Long>()
@@ -149,6 +150,7 @@ public class QueueImpl implements IQueue
 	
 	private ReentrantLock genericQueueSpoolLock = null;
 	
+	private volatile boolean enableMetrics = true;
 	private volatile boolean disposed = false; 
 	
 	public void scheduleEvent(Event event)
@@ -353,6 +355,74 @@ public class QueueImpl implements IQueue
 		{
 			configurationListReadLock.unlock();
 		}
+	}
+	
+
+
+	@Override
+	public void setMetricsEnabled(boolean enabled)
+	{
+		try
+		{
+			jobListWriteLock.lock();
+			
+			this.enableMetrics = enabled;
+			
+			for(JobContainer jobContainer : jobList)
+			{
+				try
+				{
+					IMetrics jobMetrics = jobContainer.getMetrics();
+					if(jobMetrics == null)
+					{
+						continue;
+					}
+					if(jobMetrics instanceof MetricImpl)
+					{
+						if(enabled)
+						{
+							((MetricImpl)jobMetrics).enable();
+						}
+						else
+						{
+							((MetricImpl)jobMetrics).disable();
+						}
+					}
+				}
+				catch (Exception e) 
+				{
+					log(LogService.LOG_ERROR, "enable/disable job metrics", e);
+				}
+				
+				try
+				{
+					if(enabled)
+					{
+						this.metrics.enable();
+					}
+					else
+					{
+						this.metrics.disable();
+					}
+				}
+				catch (Exception e) 
+				{
+					log(LogService.LOG_ERROR, "enable/disable metrics", e);
+				}
+			
+			}
+		}
+		finally 
+		{
+			jobListWriteLock.unlock();
+		}
+	}
+
+
+	@Override
+	public boolean isMetricsEnabled()
+	{
+		return this.enableMetrics;
 	}
 	
 	public void addService(IQueueService queueService,Map<String, ?> properties)
@@ -836,7 +906,7 @@ public class QueueImpl implements IQueue
 			qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
 			
 			
-			MetricImpl metric = new MetricImpl(this,qualityValues, id);
+			MetricImpl metric = new MetricImpl(this,qualityValues, id, this.enableMetrics);
 			
 			if(propertyBlock == null)
 			{

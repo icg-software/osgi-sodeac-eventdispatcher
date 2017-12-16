@@ -193,4 +193,17 @@ public interface IQueue
 	 */
 	public void postEvent(String topic, Map<String, ?> properties);
 	
+	/**
+	 * setter to enable or disable metrics capabilities
+	 * 
+	 * @param enabled enable metrics capabilities if true, otherwise disable metrics capabilities
+	 */
+	public void  setMetricsEnabled(boolean enabled);
+	
+	/**
+	 * 
+	 * @return true if metrics capabilities is enabled , otherwise false
+	 */
+	public boolean isMetricsEnabled();
+	
 }

@@ -22,5 +22,11 @@ public interface IEventController
 	/**
 	 * configuration property key to declare an {@link IEventController} as consumer of {@link org.osgi.service.event.Event} with given topics (value of property)
 	 */
-	public static final String CONSUME_EVENT_TOPIC = "consume.event.topic";
+	public static final String CONSUME_EVENT_TOPIC 			= "consume.event.topic";
+	
+	/**
+	 * configuration property key to declare an {@link IEventController} for disabling metrics on observe {@link IQueue} ( alternative {@link IDisableMetricsOnQueueObserve})
+	 */
+	public static final String PROPERTY_DISABLE_METRICS		= "queue.disable.metrics";
+	
 }
