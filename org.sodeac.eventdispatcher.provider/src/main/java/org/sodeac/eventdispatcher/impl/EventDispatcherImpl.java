@@ -482,7 +482,6 @@ public class EventDispatcherImpl implements IEventDispatcher
 		
 		queue.addConfiguration(eventController, properties);
 		
-		
 		if(disableMetrics)
 		{
 			try
@@ -521,23 +520,8 @@ public class EventDispatcherImpl implements IEventDispatcher
 		}
 		
 		if(eventController instanceof IOnQueueObserve)
-		{	
-			// TODO move to worker
-			try
-			{
-				((IOnQueueObserve)eventController).onQueueObserve( queue);
-			}
-			catch (Exception e) 
-			{
-				if(logService != null)
-				{
-					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on on-create() event controller", e);
-				}
-				else
-				{
-					System.err.println("Exception on onQueueObserve() event controller " + e.getMessage());
-				}
-			}
+		{
+			queue.addOnQueueObserver((IOnQueueObserve)eventController);
 		}
 		
 		return true;

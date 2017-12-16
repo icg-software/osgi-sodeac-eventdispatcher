@@ -32,6 +32,7 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IMetrics;
+import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IEventController;
@@ -78,6 +79,9 @@ public class QueueImpl implements IQueue
 		
 		this.signalList = new ArrayList<String>();
 		this.signalListLock = new ReentrantLock(true);
+		
+		this.onQueueObserveList = new ArrayList<IOnQueueObserve>();
+		this.onQueueObserveListLock = new ReentrantLock(true);
 		
 		this.newScheduledList = new ArrayList<QueuedEventImpl>();
 		this.removedEventList = new ArrayList<QueuedEventImpl>();
@@ -137,6 +141,10 @@ public class QueueImpl implements IQueue
 	private volatile boolean signalListUpdate = false;
 	private List<String> signalList = null;
 	private ReentrantLock signalListLock = null;
+	
+	private volatile boolean onQueueObserveListUpdate = false;
+	private List<IOnQueueObserve> onQueueObserveList = null;
+	private ReentrantLock onQueueObserveListLock = null;
 	
 	private volatile QueueWorker queueWorker = null;
 	private PropertyBlockImpl propertyBlock = null;
@@ -1799,6 +1807,45 @@ public class QueueImpl implements IQueue
 		{
 			log(LogService.LOG_ERROR, "mark metric signal", e);
 		}
+		this.notifyOrCreateWorker(-1);
+	}
+	
+	public void fetchOnQueueObserveList(List<IOnQueueObserve> fillList)
+	{
+		if(! onQueueObserveListUpdate)
+		{
+			return;
+		}
+		
+		this.onQueueObserveListLock.lock();
+		try
+		{
+			onQueueObserveListUpdate = false;
+			for(IOnQueueObserve onQueueObserve : this.onQueueObserveList)
+			{
+				fillList.add(onQueueObserve);
+			}
+			this.onQueueObserveList.clear();
+		}
+		finally 
+		{
+			this.onQueueObserveListLock.unlock();
+		}
+	}
+	
+	public void addOnQueueObserver(IOnQueueObserve onQueueObserve)
+	{
+		this.onQueueObserveListLock.lock();
+		try
+		{
+			onQueueObserveListUpdate = true;
+			this.onQueueObserveList.add(onQueueObserve);
+		}
+		finally 
+		{
+			this.onQueueObserveListLock.unlock();
+		}
+		
 		this.notifyOrCreateWorker(-1);
 	}
 	

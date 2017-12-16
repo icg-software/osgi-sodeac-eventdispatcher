@@ -20,6 +20,7 @@ import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IOnJobError;
 import org.sodeac.eventdispatcher.api.IOnJobTimeout;
+import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
 import org.sodeac.eventdispatcher.api.IPeriodicQueueJob;
@@ -45,6 +46,7 @@ public class QueueWorker extends Thread
 	private List<QueuedEventImpl> removedEventList = null;
 	private List<Event> firedEventList = null;
 	private List<String> signalList = null;
+	private List<IOnQueueObserve> onQueueObserveList = null;
 	
 	private volatile Long currentTimeOutTimeStamp = null;
 	private volatile JobContainer currentRunningJob = null;
@@ -59,34 +61,97 @@ public class QueueWorker extends Thread
 		this.removedEventList = new ArrayList<QueuedEventImpl>();
 		this.firedEventList = new ArrayList<Event>();
 		this.signalList = new ArrayList<String>();
+		this.onQueueObserveList = new ArrayList<IOnQueueObserve>();
 	}
 
+	private void checkQueueObserve()
+	{
+		try
+		{
+			if(! this.onQueueObserveList.isEmpty())
+			{
+				this.onQueueObserveList.clear();
+			}
+			eventQueue.fetchOnQueueObserveList(this.onQueueObserveList);
+			if(this.onQueueObserveList.isEmpty())
+			{
+				return;
+			}
+			for(IOnQueueObserve onQueueObserve : this.onQueueObserveList)
+			{
+				try
+				{
+					onQueueObserve.onQueueObserve(this.eventQueue);
+				}
+				catch (Exception e) 
+				{
+					this.onQueueObserveList.clear();
+					log(LogService.LOG_ERROR,"Exception on on-create() event controller",e);
+				}
+				catch (Error e) 
+				{
+					this.onQueueObserveList.clear();
+					log(LogService.LOG_ERROR,"Exception on on-create() event controller",e);
+				}
+			}
+			this.onQueueObserveList.clear();
+		}
+		catch (Exception e) 
+		{
+			this.onQueueObserveList.clear();
+			log(LogService.LOG_ERROR,"Exception while check queueObserve",e);
+		}
+		catch (Error e) 
+		{
+			this.onQueueObserveList.clear();
+			log(LogService.LOG_ERROR,"Exception while check queueObserve",e);
+		}
+	}
 	@Override
 	public void run()
 	{
 		long lastAction = System.currentTimeMillis();
 		while(go)
 		{
+			
+			try
+			{
+				checkQueueObserve();
+			}
+			catch(Exception ex) {}
+			catch(Error ex) {}
+			
 			try
 			{
 				this.newScheduledList.clear();
 				eventQueue.fetchNewScheduledList(this.newScheduledList);
-				for(QueuedEventImpl event : this.newScheduledList)
+				if(! this.newScheduledList.isEmpty())
 				{
-					lastAction = System.currentTimeMillis();
-					for(ControllerContainer conf : eventQueue.getConfigurationList())
+
+					try
 					{
-						try
+						checkQueueObserve();
+					}
+					catch(Exception ex) {}
+					catch(Error ex) {}
+					
+					for(QueuedEventImpl event : this.newScheduledList)
+					{
+						lastAction = System.currentTimeMillis();
+						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
-							if(go)
+							try
 							{
-								if(conf.getEventController() instanceof IOnEventScheduled)
+								if(go)
 								{
-									((IOnEventScheduled)conf.getEventController()).onEventScheduled(event);
+									if(conf.getEventController() instanceof IOnEventScheduled)
+									{
+										((IOnEventScheduled)conf.getEventController()).onEventScheduled(event);
+									}
 								}
 							}
+							catch (Exception e) {}
 						}
-						catch (Exception e) {}
 					}
 				}
 				this.newScheduledList.clear();
@@ -104,22 +169,33 @@ public class QueueWorker extends Thread
 			{
 				this.firedEventList.clear();
 				eventQueue.fetchFiredEventList(this.firedEventList);
-				for(Event event : this.firedEventList)
+				if(! this.firedEventList.isEmpty())
 				{
-					lastAction = System.currentTimeMillis();
-					for(ControllerContainer conf : eventQueue.getConfigurationList())
+
+					try
 					{
-						try
+						checkQueueObserve();
+					}
+					catch(Exception ex) {}
+					catch(Error ex) {}
+					
+					for(Event event : this.firedEventList)
+					{
+						lastAction = System.currentTimeMillis();
+						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
-							if(go)
+							try
 							{
-								if(conf.getEventController() instanceof IOnFireEvent)
+								if(go)
 								{
-									((IOnFireEvent)conf.getEventController()).onFireEvent(event,this.eventQueue);
+									if(conf.getEventController() instanceof IOnFireEvent)
+									{
+										((IOnFireEvent)conf.getEventController()).onFireEvent(event,this.eventQueue);
+									}
 								}
 							}
+							catch (Exception e) {}
 						}
-						catch (Exception e) {}
 					}
 				}
 				this.firedEventList.clear();
@@ -137,22 +213,33 @@ public class QueueWorker extends Thread
 			{
 				this.removedEventList.clear();
 				eventQueue.fetchRemovedEventList(this.removedEventList);
-				for(QueuedEventImpl event : this.removedEventList)
+				if(! this.removedEventList.isEmpty())
 				{
-					lastAction = System.currentTimeMillis();
-					for(ControllerContainer conf : eventQueue.getConfigurationList())
+
+					try
 					{
-						try
+						checkQueueObserve();
+					}
+					catch(Exception ex) {}
+					catch(Error ex) {}
+					
+					for(QueuedEventImpl event : this.removedEventList)
+					{
+						lastAction = System.currentTimeMillis();
+						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
-							if(go)
+							try
 							{
-								if(conf.getEventController() instanceof IOnRemoveEvent)
+								if(go)
 								{
-									((IOnRemoveEvent)conf.getEventController()).onRemoveEvent(event);
+									if(conf.getEventController() instanceof IOnRemoveEvent)
+									{
+										((IOnRemoveEvent)conf.getEventController()).onRemoveEvent(event);
+									}
 								}
 							}
+							catch (Exception e) {}
 						}
-						catch (Exception e) {}
 					}
 				}
 				this.removedEventList.clear();
@@ -170,20 +257,31 @@ public class QueueWorker extends Thread
 			{
 				this.signalList.clear();
 				eventQueue.fetchSignalList(this.signalList);
-				for(String signal : this.signalList)
+				if(! this.signalList.isEmpty())
 				{
-					lastAction = System.currentTimeMillis();
-					for(ControllerContainer conf : eventQueue.getConfigurationList())
+
+					try
 					{
-						try
+						checkQueueObserve();
+					}
+					catch(Exception ex) {}
+					catch(Error ex) {}
+					
+					for(String signal : this.signalList)
+					{
+						lastAction = System.currentTimeMillis();
+						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
-							if(go)
+							try
 							{
-								if(conf.getEventController() instanceof IOnQueueSignal)
-								((IOnQueueSignal)conf.getEventController()).onQueueSignal(eventQueue, signal);
+								if(go)
+								{
+									if(conf.getEventController() instanceof IOnQueueSignal)
+									((IOnQueueSignal)conf.getEventController()).onQueueSignal(eventQueue, signal);
+								}
 							}
+							catch (Exception e) {}
 						}
-						catch (Exception e) {}
 					}
 				}
 				this.signalList.clear();
@@ -214,6 +312,14 @@ public class QueueWorker extends Thread
 			
 			if(! dueJobList.isEmpty())
 			{
+
+				try
+				{
+					checkQueueObserve();
+				}
+				catch(Exception ex) {}
+				catch(Error ex) {}
+				
 				lastAction = System.currentTimeMillis();
 				boolean jobTimeOut  = false;
 				List<IQueueJob> currentProcessedJobList = null;
@@ -524,22 +630,33 @@ public class QueueWorker extends Thread
 							{
 								this.removedEventList.clear();
 								eventQueue.fetchRemovedEventList(this.removedEventList);
-								for(QueuedEventImpl event : this.removedEventList)
+								if(! this.removedEventList.isEmpty())
 								{
-									lastAction = System.currentTimeMillis();
-									for(ControllerContainer conf : eventQueue.getConfigurationList())
+
+									try
 									{
-										try
+										checkQueueObserve();
+									}
+									catch(Exception ex) {}
+									catch(Error ex) {}
+									
+									for(QueuedEventImpl event : this.removedEventList)
+									{
+										lastAction = System.currentTimeMillis();
+										for(ControllerContainer conf : eventQueue.getConfigurationList())
 										{
-											if(go)
+											try
 											{
-												if(conf.getEventController() instanceof IOnRemoveEvent)
+												if(go)
 												{
-													((IOnRemoveEvent)conf.getEventController()).onRemoveEvent(event);
+													if(conf.getEventController() instanceof IOnRemoveEvent)
+													{
+														((IOnRemoveEvent)conf.getEventController()).onRemoveEvent(event);
+													}
 												}
 											}
+											catch (Exception e) {}
 										}
-										catch (Exception e) {}
 									}
 								}
 								this.removedEventList.clear();
@@ -557,20 +674,31 @@ public class QueueWorker extends Thread
 							{
 								this.signalList.clear();
 								eventQueue.fetchSignalList(this.signalList);
-								for(String signal : this.signalList)
+								if(! this.signalList.isEmpty())
 								{
-									lastAction = System.currentTimeMillis();
-									for(ControllerContainer conf : eventQueue.getConfigurationList())
+
+									try
 									{
-										try
+										checkQueueObserve();
+									}
+									catch(Exception ex) {}
+									catch(Error ex) {}
+									
+									for(String signal : this.signalList)
+									{
+										lastAction = System.currentTimeMillis();
+										for(ControllerContainer conf : eventQueue.getConfigurationList())
 										{
-											if(go)
+											try
 											{
-												if(conf.getEventController() instanceof IOnQueueSignal)
-												((IOnQueueSignal)conf.getEventController()).onQueueSignal(eventQueue, signal);
+												if(go)
+												{
+													if(conf.getEventController() instanceof IOnQueueSignal)
+													((IOnQueueSignal)conf.getEventController()).onQueueSignal(eventQueue, signal);
+												}
 											}
+											catch (Exception e) {}
 										}
-										catch (Exception e) {}
 									}
 								}
 								this.signalList.clear();
@@ -638,6 +766,15 @@ public class QueueWorker extends Thread
 					this.eventQueue.checkWorkerShutdown(this);
 					lastAction = System.currentTimeMillis();
 				}
+				
+
+				try
+				{
+					checkQueueObserve();
+				}
+				catch(Exception ex) {}
+				catch(Error ex) {}
+				
 				synchronized (this.waitMonitor)
 				{
 					if(go)
