@@ -112,7 +112,7 @@ public abstract class AbstractTest
 		MavenUrlReference karafStandardRepo = maven()
 			.groupId("org.apache.karaf.features")
 			.artifactId("standard")
-			.version("4.1.2")
+			.version("4.1.3")
 			.classifier("features")
 			.type("xml");
 		
@@ -131,6 +131,7 @@ public abstract class AbstractTest
 			mavenBundle("org.easymock", "easymock", "3.4").start(),
 			reactorBundle("org.sodeac.eventdispatcher.api","0.9.0").start(),
 			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.0").start(),
+			reactorBundle("org.sodeac.eventdispatcher.extension.jmx","0.9.0").start(),
 			reactorBundle("org.sodeac.eventdispatcher.common","0.9.0").start(),
 			reactorBundle("org.sodeac.eventdispatcher.itest.components","0.9.0").start()
 		};

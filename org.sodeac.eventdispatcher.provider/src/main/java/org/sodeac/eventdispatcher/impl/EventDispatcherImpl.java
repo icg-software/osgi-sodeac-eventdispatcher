@@ -41,6 +41,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueService;
+import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.api.ICounter;
 import org.sodeac.eventdispatcher.api.IDisableMetricsOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IEnableMetricsOnQueueObserve;
@@ -72,6 +73,8 @@ public class EventDispatcherImpl implements IEventDispatcher
 	
 	private volatile IMetrics metrics = null; 
 	
+	private List<IEventDispatcherExtension>  eventDispatcherExtensionList = null;
+	
 	private Map<String,Long> queueIsMissingLogIndex = new HashMap<String,Long>();
 	
 	// TODO replace synchronized (controllerList/serviceList) by locks ?
@@ -83,6 +86,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		this.queueIndexReadLock = this.queueIndexLock.readLock();
 		this.queueIndexWriteLock = this.queueIndexLock.writeLock();
 		this.controllerList = new ArrayList<ControllerContainer>();
+		this.eventDispatcherExtensionList = new ArrayList<IEventDispatcherExtension>();
 		this.serviceList = new ArrayList<ServiceContainer>();
 		this.metrics = new MetricImpl(this, new PropertyBlockImpl(),true);
 	}
@@ -362,7 +366,52 @@ public class EventDispatcherImpl implements IEventDispatcher
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
+	
+	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
+	public void bindEventDispatcherExtension(IEventDispatcherExtension eventDispatcherExtension)
+	{
+		List<ControllerContainer> copy = new ArrayList<ControllerContainer>();
+		synchronized (this.eventDispatcherExtensionList)
+		{
+			boolean alreadyConnected = false;
+			for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
+			{
+				if(extension == eventDispatcherExtension)
+				{
+					alreadyConnected = true;
+					break;
+				}
+			}
+			if(! alreadyConnected)
+			{
+				this.eventDispatcherExtensionList.add(eventDispatcherExtension);
+			}
+			eventDispatcherExtension.setConnected(true);
+		
+			synchronized (this.controllerList)
+			{
+				for (ControllerContainer controllerContainer :this.controllerList)
+				{
+					copy.add(controllerContainer);
+				}
+			}
+		}
+		
+		for(ControllerContainer controllerContainer : copy)
+		{
+			eventDispatcherExtension.registerEventController(controllerContainer.getEventController(), controllerContainer.getProperties());
+		}
+	}
 
+	public void unbindEventDispatcherExtension(IEventDispatcherExtension eventDispatcherExtension)
+	{
+		synchronized (this.eventDispatcherExtensionList)
+		{
+			while(this.eventDispatcherExtensionList.remove(eventDispatcherExtension)) {}
+			eventDispatcherExtension.setConnected(false);
+		}
+	}
+	
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
 	public void bindEventController(IEventController eventController,Map<String, ?> properties)
 	{
@@ -377,6 +426,26 @@ public class EventDispatcherImpl implements IEventDispatcher
 			if(this.counterConfigurationSize != null)
 			{
 				this.counterConfigurationSize.inc();
+			}
+		}
+		
+		List<IEventDispatcherExtension>  copy = new ArrayList<IEventDispatcherExtension>(); // globalCopy
+		synchronized (this.eventDispatcherExtensionList)
+		{
+			for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
+			{
+				copy.add(extension);
+			}
+		}
+		for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
+		{
+			try
+			{
+				extension.registerEventController(eventController, properties);
+			}
+			catch (Exception e) 
+			{
+				// TODO: handle exception
 			}
 		}
 		
@@ -574,9 +643,28 @@ public class EventDispatcherImpl implements IEventDispatcher
 		{
 			this.unregisterEventController(eventController);
 		}
+		List<IEventDispatcherExtension>  copy = new ArrayList<IEventDispatcherExtension>(); // globalCopy
+		synchronized (this.eventDispatcherExtensionList)
+		{
+			for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
+			{
+				copy.add(extension);
+			}
+		}
+		for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
+		{
+			try
+			{
+				extension.unregisterEventController(eventController);
+			}
+			catch (Exception e) 
+			{
+				// TODO: handle exception
+			}
+		}
 	}
 	
-	private boolean unregisterEventController(IEventController eventQueueConfiguration)
+	private boolean unregisterEventController(IEventController eventController)
 	{
 		if(this.context == null)
 		{
@@ -591,7 +679,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		{
 			for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet() )
 			{
-				if(entry.getValue().removeConfiguration(eventQueueConfiguration))
+				if(entry.getValue().removeConfiguration(eventController))
 				{
 					if(registeredOnQueueList == null)
 					{
@@ -616,7 +704,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 			this.queueIndexReadLock.unlock();
 		}
 		
-		if(eventQueueConfiguration instanceof IOnQueueReverse)
+		if(eventController instanceof IOnQueueReverse)
 		{
 			try
 			{
@@ -624,7 +712,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 				{
 					for(QueueImpl queue : registeredOnQueueList)
 					{	
-						((IOnQueueReverse)eventQueueConfiguration).onQueueReverse(queue);
+						((IOnQueueReverse)eventController).onQueueReverse(queue);
 					}
 				}
 			}

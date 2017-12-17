@@ -112,7 +112,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.6.1</version>
+        <version>3.7.0</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
@@ -189,6 +189,7 @@
   <modules>
     <module>org.sodeac.eventdispatcher.api</module>
     <module>org.sodeac.eventdispatcher.provider</module>
+    <module>org.sodeac.eventdispatcher.extension.jmx</module>
     <module>org.sodeac.eventdispatcher.common</module>
     <module>org.sodeac.eventdispatcher.itest.components</module>
     <module>org.sodeac.eventdispatcher.itest.runner</module>
