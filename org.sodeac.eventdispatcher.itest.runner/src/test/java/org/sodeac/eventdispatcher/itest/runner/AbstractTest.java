@@ -152,14 +152,22 @@ public abstract class AbstractTest
 	
 	public boolean checkTimeMeasure(long idealValue, long realValue, long absoluteTolerance, double relativeToleranceInPercent )
 	{
+		// sometimes travis-ci lacks => running stops for more than on second
+		return checkTimeMeasure(idealValue, realValue, absoluteTolerance, relativeToleranceInPercent, 3000);
+	}
+	
+	public boolean checkTimeMeasure(long idealValue, long realValue, long absoluteTolerance, double relativeToleranceInPercent, long notRealtimeSystemOffsetTolerance )
+	{
 		if(idealValue == realValue)
 		{
 			return true;
 		}
 		
+		boolean neg = false;
 		long diff = realValue - idealValue;
 		if(diff < 0)
 		{
+			neg = true;
 			diff = -1 * diff;
 		}
 		if(absoluteTolerance > 0)
@@ -167,6 +175,13 @@ public abstract class AbstractTest
 			if(diff <= absoluteTolerance)
 			{
 				return true;
+			}
+			if(! neg)
+			{
+				if(diff <= ( absoluteTolerance + notRealtimeSystemOffsetTolerance))
+				{
+					return true;
+				}
 			}
 		}
 		
