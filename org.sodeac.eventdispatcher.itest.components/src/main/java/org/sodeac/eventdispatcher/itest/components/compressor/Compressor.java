@@ -37,9 +37,9 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 		IEventDispatcher.PROPERTY_QUEUE_ID + "=" + CompressorStatics.QUEUE_ID,
 		IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL+"="+ CompressorStatics.SERVICE_REPETITION_INTERVAL,
 		IQueueService.PROPERTY_SERVICE_ID+"=" + CompressorStatics.COMPRESSOR_SERVICE_ID,
-		IEventController.CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_START_COMPRESSOR,
-		IEventController.CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_STOP_COMPRESSOR,
-		IEventController.CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_RAW_EVENT
+		IEventController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_START_COMPRESSOR,
+		IEventController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_STOP_COMPRESSOR,
+		IEventController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_RAW_EVENT
 	}
 )
 public class Compressor implements IQueueService,IEventController,IOnEventScheduled

@@ -161,7 +161,8 @@ public class QueueImpl implements IQueue
 	private volatile boolean enableMetrics = true;
 	private volatile boolean disposed = false; 
 	
-	public void scheduleEvent(Event event)
+	@Override
+	public boolean scheduleEvent(Event event)
 	{
 		QueuedEventImpl queuedEvent = null;
 		eventListWriteLock.lock();
@@ -196,6 +197,8 @@ public class QueueImpl implements IQueue
 		}
 		
 		this.notifyOrCreateWorker(-1);
+		
+		return true;
 	}
 	
 	
@@ -217,11 +220,11 @@ public class QueueImpl implements IQueue
 			configurationContainer.setProperties(properties);
 			configurationContainer.setEventController(eventQueueConfiguration);
 			
-			if(properties.get(IEventController.CONSUME_EVENT_TOPIC) != null)
+			if(properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC) != null)
 			{
-				if(properties.get(IEventController.CONSUME_EVENT_TOPIC) instanceof String)
+				if(properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC) instanceof String)
 				{
-					String topic = (String)properties.get(IEventController.CONSUME_EVENT_TOPIC);
+					String topic = (String)properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC);
 					if(! topic.isEmpty())
 					{
 						ConsumeEventHandler handler = configurationContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId, topic));
@@ -234,9 +237,9 @@ public class QueueImpl implements IQueue
 				else
 				{
 					List<String> topicList = new ArrayList<String>();
-					if(properties.get(IEventController.CONSUME_EVENT_TOPIC) instanceof List)
+					if(properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC) instanceof List)
 					{
-						for(Object item : (List<?>)properties.get(IEventController.CONSUME_EVENT_TOPIC))
+						for(Object item : (List<?>)properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC))
 						{
 							if(item == null)
 							{
@@ -255,9 +258,9 @@ public class QueueImpl implements IQueue
 						}
 					}
 					
-					if(properties.get(IEventController.CONSUME_EVENT_TOPIC) instanceof String[])
+					if(properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC) instanceof String[])
 					{
-						for(Object item : (String[])properties.get(IEventController.CONSUME_EVENT_TOPIC))
+						for(Object item : (String[])properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC))
 						{
 							if(item == null)
 							{
@@ -633,9 +636,10 @@ public class QueueImpl implements IQueue
 	}
 	
 
+	@Override
 	public String getQueueId()
 	{
-		return queueId;
+		return this.queueId;
 	}
 
 	protected int cleanDoneJobs()

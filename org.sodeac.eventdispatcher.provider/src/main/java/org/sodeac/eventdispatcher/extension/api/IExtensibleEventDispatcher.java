@@ -10,14 +10,12 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.extension.api;
 
-import java.util.Map;
+import org.sodeac.eventdispatcher.api.IEventDispatcher;
 
-import org.sodeac.eventdispatcher.api.IEventController;
-
-public interface IEventDispatcherExtension
+public interface IExtensibleEventDispatcher extends IEventDispatcher
 {
-	public void registerEventDispatcher(IExtensibleEventDispatcher dispatcher);
-	public void unregisterEventDispatcher(IExtensibleEventDispatcher dispatcher);
-	public void registerEventController(IExtensibleEventDispatcher dispatcher, IEventController eventController,Map<String, ?> properties);
-	public void unregisterEventController(IExtensibleEventDispatcher dispatcher, IEventController eventController);
+	public String getId();
+	public String getBundleId();
+	public String getBundleVersion();
+	// TODO Properties / Metrics
 }

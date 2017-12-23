@@ -1,90 +1,200 @@
 package org.sodeac.eventdispatcher.extension.jmx;
 
-import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IEventController;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
 
 @Component(service=IEventDispatcherExtension.class,immediate=true)
 public class EventDispatcherJavaManagementExtension implements IEventDispatcherExtension
 {
-
-	private List<EventController> eventControllerList = new ArrayList<EventController>();
-	
-	@Override
-	public void setConnected(boolean connected)
+	public EventDispatcherJavaManagementExtension()
 	{
-		System.out.println("Connected: " + connected);
+		super();
 		
-		if(! connected)
+		this.eventDispatcherIndex = new HashMap<IExtensibleEventDispatcher,EventDispatcher>(); 
+		this.lock = new ReentrantReadWriteLock(true);
+		this.readLock = this.lock.readLock();
+		this.writeLock = this.lock.writeLock();
+	}
+	
+	private volatile ComponentContext context = null;
+	
+	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
+	protected volatile LogService logService = null;
+	
+	private Map<IExtensibleEventDispatcher,EventDispatcher> eventDispatcherIndex = null;
+	
+	private ReentrantReadWriteLock lock = null;
+	private ReadLock readLock = null;
+	private WriteLock writeLock = null;
+	
+	@Activate
+	private void activate(ComponentContext context, Map<String, ?> properties)
+	{
+		this.context = context;
+	}
+	
+	@Deactivate
+	private void deactivate(ComponentContext context)
+	{
+		this.context = null;
+	}
+	
+	
+
+	@Override
+	public void registerEventDispatcher(IExtensibleEventDispatcher dispatcher)
+	{
+		writeLock.lock();
+		try
 		{
-			for(EventController eventControllerBean : eventControllerList)
+			try
 			{
-				try
+				EventDispatcher found = this.eventDispatcherIndex.get(dispatcher);
+				if(found != null)
 				{
-					ManagementFactory.getPlatformMBeanServer().unregisterMBean(eventControllerBean.name);
+					found.setConnected(false);
+					this.eventDispatcherIndex.remove(dispatcher);
 				}
-				catch (Exception e) 
+			
+				EventDispatcher eventDispatcherBean = new EventDispatcher(this,dispatcher);
+				this.eventDispatcherIndex.put(dispatcher,eventDispatcherBean);
+				eventDispatcherBean.setConnected(true);
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"register event dispatcher",e);
+			}
+		}
+		finally 
+		{
+			writeLock.unlock();
+		}
+	}
+
+	@Override
+	public void unregisterEventDispatcher(IExtensibleEventDispatcher dispatcher)
+	{
+		writeLock.lock();
+		try
+		{
+			try
+			{
+				EventDispatcher found = this.eventDispatcherIndex.get(dispatcher);
+				if(found != null)
+				{
+					found.setConnected(false);
+					this.eventDispatcherIndex.remove(dispatcher);
+				}
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"unregister event dispatcher",e);
+			}
+		}
+		finally 
+		{
+			writeLock.unlock();
+		}
+	}
+
+	@Override
+	public void registerEventController(IExtensibleEventDispatcher dispatcher, IEventController eventController,Map<String, ?> properties)
+	{
+		readLock.lock();
+		try
+		{
+			try
+			{
+				EventDispatcher found = this.eventDispatcherIndex.get(dispatcher);
+				if(found == null)
+				{
+					return;
+				}
+				
+				found.registerEventController(eventController, properties);
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"register event controller",e);
+			}
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+	}
+
+	@Override
+	public void unregisterEventController(IExtensibleEventDispatcher dispatcher, IEventController eventController)
+	{
+		readLock.lock();
+		try
+		{
+			try
+			{
+				EventDispatcher found = this.eventDispatcherIndex.get(dispatcher);
+				if(found == null)
+				{
+					return;
+				}
+				
+				found.unregisterEventController(eventController);
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"register event controller",e);
+			}
+			
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+	}
+	
+	protected void log(int logServiceLevel,String logMessage, Throwable e)
+	{
+		
+		try
+		{
+			LogService logService = this.logService;
+			ComponentContext context = this.context;
+			
+			if(logService != null)
+			{
+				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
+			}
+			else
+			{
+				if(logServiceLevel == LogService.LOG_ERROR)
+				{
+					System.err.println(logMessage);
+				}
+				if(e != null)
 				{
 					e.printStackTrace();
 				}
 			}
-			eventControllerList.clear();
 		}
-	}
-
-	@Override
-	public void registerEventController(IEventController eventController, Map<String, ?> properties)
-	{
-		try
+		catch (Exception ie) 
 		{
-			MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-			ObjectName name = new ObjectName("test:type=EventController_"+ eventController.toString());
-			EventController eventControllerBean = new EventController(eventController,properties,name);
-			eventControllerList.add(eventControllerBean);
-			mBeanServer.registerMBean(eventControllerBean, name);
-		}
-		catch (Exception e) 
-		{
-			e.printStackTrace();
-		}
-		System.out.println("Register EventController: " + eventController);
-
-	}
-
-	@Override
-	public void unregisterEventController(IEventController eventController)
-	{
-		System.out.println("Unregister EventController: " + eventController);
-		
-		EventController ec = null;
-		for(EventController eventControllerBean : eventControllerList)
-		{
-			if(eventControllerBean.eventController == eventController)
-			{
-				ec = eventControllerBean;
-				break;
-			}
-		}
-		if(ec == null)
-		{
-			return;
-		}
-		try
-		{
-			ManagementFactory.getPlatformMBeanServer().unregisterMBean(ec.name);
-			while(eventControllerList.remove(ec)) {}
-		}
-		catch (Exception e) 
-		{
-			e.printStackTrace();
+			ie.printStackTrace();
 		}
 	}
 

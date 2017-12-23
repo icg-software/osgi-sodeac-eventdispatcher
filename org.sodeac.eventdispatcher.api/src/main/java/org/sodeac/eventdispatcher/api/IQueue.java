@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.osgi.framework.Filter;
+import org.osgi.service.event.Event;
 
 /**
  * API for event-queues. {@link IQueue}s are configured by one or more {@link IEventController}s. 
@@ -25,6 +26,23 @@ import org.osgi.framework.Filter;
  */
 public interface IQueue
 {
+	/**
+	 * getter for queue id
+	 * 
+	 * @return id of queue
+	 */
+	public String getQueueId();
+	
+	
+	/**
+	 * schedule an osgi event to queue
+	 * 
+	 * @param event osgi-event to schedule 
+	 * 
+	 * @return true
+	 */
+	public boolean scheduleEvent(Event event);
+	
 	/**
 	 * getter for propertyblock of queue
 	 * 

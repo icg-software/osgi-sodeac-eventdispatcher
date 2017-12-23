@@ -23,7 +23,10 @@ import org.osgi.service.event.Event;
  */
 public interface IEventDispatcher
 {
+	public static final String PROPERTY_ID = "id";
 	public static final String PROPERTY_QUEUE_ID = "queueid";
+	public static final String PROPERTY_DISPATCHER_ID = "dispatcherid";
+	public static final String DEFAULT_DISPATCHER_ID = "default";
 	
 	/**
 	 * schedule an osgi event to eventdispatcher queue

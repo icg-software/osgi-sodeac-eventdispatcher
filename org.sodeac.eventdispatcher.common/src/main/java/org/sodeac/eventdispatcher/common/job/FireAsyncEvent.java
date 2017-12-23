@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common;
+package org.sodeac.eventdispatcher.common.job;
 
 import java.util.List;
 import java.util.Map;
@@ -21,19 +21,40 @@ import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 
-public class FireSyncEvent implements IQueueJob,IConcernEvent
+public class FireAsyncEvent implements IQueueJob,IConcernEvent
 {
 	private IQueuedEvent event = null;
 	private String topic =  null;
 	private Map<String,Object> properties = null;
 	private boolean removeEvent = true;
 	
-	public FireSyncEvent(IQueuedEvent event, String topic, Map<String,Object> properties)
+	public FireAsyncEvent(IQueuedEvent event, String topic, Map<String,Object> properties,boolean removeEvent)
 	{
 		super();
 		this.event = event;
 		this.topic = topic;
 		this.properties = properties;
+		
+		if(this.topic == null)
+		{
+			this.topic = event.getEvent().getTopic();
+		}
+		if(this.properties == null)
+		{
+			this.properties = event.getNativeEventProperties();
+		}
+		
+		this.removeEvent = removeEvent;
+	}
+	
+	public FireAsyncEvent(IQueuedEvent event, boolean removeEvent)
+	{
+		this(event, null, null, removeEvent);
+	}
+	
+	public FireAsyncEvent(IQueuedEvent event)
+	{
+		this(event, null, null, true);
 	}
 	
 	@Override
@@ -50,7 +71,7 @@ public class FireSyncEvent implements IQueueJob,IConcernEvent
 			}
 			catch (Exception e) {}
 		}
-		queue.sendEvent(this.topic, this.properties);	
+		queue.postEvent(this.topic, this.properties);	
 	}
 
 	@Override

@@ -42,6 +42,7 @@ import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
 import org.sodeac.eventdispatcher.api.ICounter;
 import org.sodeac.eventdispatcher.api.IDisableMetricsOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IEnableMetricsOnQueueObserve;
@@ -49,8 +50,8 @@ import org.sodeac.eventdispatcher.api.IEventController;
 
 import com.codahale.metrics.MetricRegistry;
 
-@Component(name="EventDispatcherProvider" ,service=IEventDispatcher.class,immediate=true)
-public class EventDispatcherImpl implements IEventDispatcher
+@Component(name="EventDispatcherProvider" ,service=IEventDispatcher.class,immediate=true,property={IEventDispatcher.PROPERTY_ID + "=" + IEventDispatcher.DEFAULT_DISPATCHER_ID})
+public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDispatcher
 {
 	private Map<String,QueueImpl> queueIndex = new HashMap<String,QueueImpl>();
 	private ReentrantReadWriteLock queueIndexLock;
@@ -59,6 +60,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 	private DispatcherGuardian dispatcherGuardian;
 	private List<ControllerContainer> controllerList = null;
 	private List<ServiceContainer> serviceList = null;
+	private String id = IEventDispatcher.DEFAULT_DISPATCHER_ID;
 	
 	private volatile ComponentContext context = null;
 	
@@ -77,8 +79,35 @@ public class EventDispatcherImpl implements IEventDispatcher
 	
 	private Map<String,Long> queueIsMissingLogIndex = new HashMap<String,Long>();
 	
+	
 	// TODO replace synchronized (controllerList/serviceList) by locks ?
 	
+	@Override
+	public String getId()
+	{
+		return this.id;
+	}
+	
+	@Override
+	public String getBundleId()
+	{
+		if(this.context == null)
+		{
+			return new String();
+		}
+		return this.context.getBundleContext().getBundle().getSymbolicName();
+	}
+	
+	@Override
+	public String getBundleVersion()
+	{
+		if(this.context == null)
+		{
+			return new String();
+		}
+		return this.context.getBundleContext().getBundle().getVersion().toString();
+	}
+
 	public EventDispatcherImpl()
 	{
 		super();
@@ -131,10 +160,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 			return false; 
 		}
 		
-		queue.scheduleEvent(event);
-		
-		
-		return true;
+		return queue.scheduleEvent(event);
 	}
 	
 	
@@ -189,6 +215,11 @@ public class EventDispatcherImpl implements IEventDispatcher
 	{
 		this.context = context;
 		
+		if((properties.get(IEventDispatcher.PROPERTY_ID) != null) && (properties.get(IEventDispatcher.PROPERTY_ID).toString().length() > 0))
+		{
+			this.id = properties.get(IEventDispatcher.PROPERTY_ID).toString();
+		}
+		
 		this.queueIndexReadLock.lock();
 		try
 		{
@@ -201,6 +232,25 @@ public class EventDispatcherImpl implements IEventDispatcher
 		finally 
 		{
 			this.queueIndexReadLock.unlock();
+		}
+		
+		for(IEventDispatcherExtension eventDispatcherExtension : this.eventDispatcherExtensionList)
+		{
+			try
+			{
+				eventDispatcherExtension.registerEventDispatcher(this);
+			}
+			catch (Exception e) 
+			{
+				if(logService != null)
+				{
+					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on register dispatcher to extension", e);
+				}
+				else
+				{
+					System.err.println("Exception on register dispatcher to extension " + e.getMessage());
+				}
+			}
 		}
 		
 		synchronized (this.controllerList)
@@ -301,7 +351,6 @@ public class EventDispatcherImpl implements IEventDispatcher
 			}
 		}
 		
-		this.context = null;
 		this.queueIndexReadLock.lock();
 		try
 		{
@@ -365,6 +414,26 @@ public class EventDispatcherImpl implements IEventDispatcher
 			((MetricImpl)this.metrics).dispose();
 		}
 		catch (Exception e) {e.printStackTrace();}
+		
+		for(IEventDispatcherExtension eventDispatcherExtension : this.eventDispatcherExtensionList)
+		{
+			try
+			{
+				eventDispatcherExtension.unregisterEventDispatcher(this);
+			}
+			catch (Exception e) 
+			{
+				if(logService != null)
+				{
+					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on unregister dispatcher to extension", e);
+				}
+				else
+				{
+					System.err.println("Exception on unregister dispatcher to extension " + e.getMessage());
+				}
+			}
+		}
+		this.context = null;
 	}
 	
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
@@ -386,7 +455,6 @@ public class EventDispatcherImpl implements IEventDispatcher
 			{
 				this.eventDispatcherExtensionList.add(eventDispatcherExtension);
 			}
-			eventDispatcherExtension.setConnected(true);
 		
 			synchronized (this.controllerList)
 			{
@@ -397,24 +465,70 @@ public class EventDispatcherImpl implements IEventDispatcher
 			}
 		}
 		
+		if(this.context != null)
+		{
+			try
+			{
+				eventDispatcherExtension.registerEventDispatcher(this);
+			}
+			catch (Exception e) 
+			{
+				if(logService != null)
+				{
+					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on register dispatcher to extension", e);
+				}
+				else
+				{
+					System.err.println("Exception on register dispatcher to extension " + e.getMessage());
+				}
+			}
+		}
+		
 		for(ControllerContainer controllerContainer : copy)
 		{
-			eventDispatcherExtension.registerEventController(controllerContainer.getEventController(), controllerContainer.getProperties());
+			eventDispatcherExtension.registerEventController(this,controllerContainer.getEventController(), controllerContainer.getProperties());
 		}
 	}
 
 	public void unbindEventDispatcherExtension(IEventDispatcherExtension eventDispatcherExtension)
 	{
+		if(this.context != null)
+		{
+			try
+			{
+				eventDispatcherExtension.unregisterEventDispatcher(this);
+			}
+			catch (Exception e) 
+			{
+				if(logService != null)
+				{
+					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on unregister dispatcher to extension", e);
+				}
+				else
+				{
+					System.err.println("Exception on unregister dispatcher to extension " + e.getMessage());
+				}
+			}
+		}
+		
 		synchronized (this.eventDispatcherExtensionList)
 		{
 			while(this.eventDispatcherExtensionList.remove(eventDispatcherExtension)) {}
-			eventDispatcherExtension.setConnected(false);
 		}
 	}
 	
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
 	public void bindEventController(IEventController eventController,Map<String, ?> properties)
 	{
+		String dispatcherId = IEventDispatcher.DEFAULT_DISPATCHER_ID;
+		if((properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID) != null) && (properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID).toString().length() > 0))
+		{
+			dispatcherId = properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID).toString();
+		}
+		if(! dispatcherId.equals(this.id))
+		{
+			return;
+		}
 		synchronized (this.controllerList)
 		{
 			ControllerContainer controllerContainer = new ControllerContainer();
@@ -441,7 +555,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		{
 			try
 			{
-				extension.registerEventController(eventController, properties);
+				extension.registerEventController(this,eventController, properties);
 			}
 			catch (Exception e) 
 			{
@@ -655,7 +769,7 @@ public class EventDispatcherImpl implements IEventDispatcher
 		{
 			try
 			{
-				extension.unregisterEventController(eventController);
+				extension.unregisterEventController(this,eventController);
 			}
 			catch (Exception e) 
 			{
@@ -779,6 +893,15 @@ public class EventDispatcherImpl implements IEventDispatcher
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
 	public void bindQueueService(IQueueService queueService,Map<String, ?> properties)
 	{
+		String dispatcherId = IEventDispatcher.DEFAULT_DISPATCHER_ID;
+		if((properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID) != null) && (properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID).toString().length() > 0))
+		{
+			dispatcherId = properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID).toString();
+		}
+		if(! dispatcherId.equals(this.id))
+		{
+			return;
+		}
 		synchronized (this.serviceList)
 		{
 			ServiceContainer serviceContainer = new ServiceContainer();

@@ -36,7 +36,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID+"="+BaseEventRegistrationTestController.QUEUE_ID,
-		IEventController.CONSUME_EVENT_TOPIC +"=" + BaseEventRegistrationTestController.EVENT
+		IEventController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + BaseEventRegistrationTestController.EVENT
 	}
 )
 public class BaseEventRegistrationTestController extends AbstractBaseTestController implements IEventController,IOnEventScheduled,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
