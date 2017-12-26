@@ -22,13 +22,15 @@ public class EventController implements EventControllerMBean
 	public IEventController eventController;
 	public Map<String,?> properties;
 	public ObjectName controllerObjectName;
+	public String objectNamePrefix; 
 	
-	public EventController(IEventController eventController,Map<String,?> properties,ObjectName name)
+	public EventController(IEventController eventController,Map<String,?> properties,ObjectName name, String objectNamePrefix)
 	{
 		super();
 		this.eventController = eventController;
 		this.properties = properties;
 		this.controllerObjectName = name;
+		this.objectNamePrefix = objectNamePrefix;
 	}
 
 	@Override

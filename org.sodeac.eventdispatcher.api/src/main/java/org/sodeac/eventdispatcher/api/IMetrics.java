@@ -135,6 +135,7 @@ public interface IMetrics
 	/**
 	 * return common metric key 
 	 * 
+	 * @param dispatcherId id of dispatcher or null
 	 * @param queueId id of queue or null
 	 * @param jobId id of job or null
 	 * @param postfix Counter/Gauge/Histogram/Meter/Timer
@@ -142,22 +143,27 @@ public interface IMetrics
 	 * 
 	 * @return common metric key 
 	 */
-	public static String metricName(String queueId, String jobId, String postfix, String... names)
+	public static String metricName(String dispatcherId,String queueId, String jobId, String postfix, String... names)
 	{
 		StringBuilder builder = new StringBuilder();
+		
+		builder.append(IEventDispatcher.class.getName());
+		builder.append("." + dispatcherId );
+		
 		if((queueId != null) && (!queueId.isEmpty()))
 		{
-			builder.append(IQueue.class.getName());
+			builder.append(IQueue.class.getSimpleName());
 			builder.append("." + queueId);
 			
 			if((jobId != null) && (!jobId.isEmpty()))
 			{
+				builder.append(IQueueJob.class.getSimpleName());
 				builder.append("." + jobId);
 			}
 		}
 		else
 		{
-			builder.append(IEventDispatcher.class.getName());
+			
 		}
 		
 		if(names != null)

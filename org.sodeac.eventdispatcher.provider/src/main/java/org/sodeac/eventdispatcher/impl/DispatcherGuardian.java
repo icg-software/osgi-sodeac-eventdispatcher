@@ -401,62 +401,9 @@ public class DispatcherGuardian extends Thread
 		}
 	}
 	
-	private void log(int logServiceLevel,String logMessage, Exception e)
+	private void log(int logServiceLevel,String logMessage, Throwable e)
 	{
-		try
-		{
-			LogService logService = this.eventDispatcher.getLogService();
-			ComponentContext context = this.eventDispatcher.getContext();
-			
-			if(logService != null)
-			{
-				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
-			}
-			else
-			{
-				if(logServiceLevel == LogService.LOG_ERROR)
-				{
-					System.err.println(logMessage);
-				}
-				if(e != null)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
-		catch (Exception ie) 
-		{
-			ie.printStackTrace();
-		}
-	}
-	
-	private void log(int logServiceLevel,String logMessage, Error e)
-	{
-		try
-		{
-			LogService logService = this.eventDispatcher.getLogService();
-			ComponentContext context = this.eventDispatcher.getContext();
-			
-			if(logService != null)
-			{
-				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
-			}
-			else
-			{
-				if(logServiceLevel == LogService.LOG_ERROR)
-				{
-					System.err.println(logMessage);
-				}
-				if(e != null)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
-		catch (Exception ie) 
-		{
-			ie.printStackTrace();
-		}
+		this.eventDispatcher.log(logServiceLevel, logMessage, e);
 	}
 	
 	private class JobObservable

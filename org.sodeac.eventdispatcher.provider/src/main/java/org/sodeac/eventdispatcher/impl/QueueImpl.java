@@ -26,7 +26,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.framework.Filter;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
@@ -43,13 +42,18 @@ import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.ITimer;
+import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleQueue;
 
-public class QueueImpl implements IQueue
+public class QueueImpl implements IQueue,IExtensibleQueue
 {
-	public QueueImpl(String queueId,EventDispatcherImpl eventDispatcher, boolean enableMetrics)
+	public QueueImpl(String queueId,EventDispatcherImpl eventDispatcher, boolean enableMetrics, String name, String category)
 	{
 		super();
 	
+		this.name = name;
+		this.category = category;
+		
 		this.queueId = queueId;
 		this.eventDispatcher = eventDispatcher;
 		this.enableMetrics = enableMetrics;
@@ -110,6 +114,9 @@ public class QueueImpl implements IQueue
 			}
 		}, IMetrics.GAUGE_LAST_POST_EVENT);
 	}
+	
+	private String category = null;
+	private String name = null;
 	
 	private MetricImpl metrics;
 	private EventDispatcherImpl eventDispatcher = null;
@@ -1853,68 +1860,36 @@ public class QueueImpl implements IQueue
 		this.notifyOrCreateWorker(-1);
 	}
 	
-	protected void log(int logServiceLevel,String logMessage, Exception e)
+	protected void log(int logServiceLevel,String logMessage, Throwable e)
 	{
-		try
-		{
-			LogService logService = null;
-			ComponentContext context = null;
-			
-			if(eventDispatcher != null){logService = eventDispatcher.logService;}
-			if(eventDispatcher != null){context = eventDispatcher.getContext();}
-			
-			if(logService != null)
-			{
-				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
-			}
-			else
-			{
-				if(logServiceLevel == LogService.LOG_ERROR)
-				{
-					System.err.println(logMessage);
-				}
-				if(e != null)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
-		catch (Exception ie) 
-		{
-			ie.printStackTrace();
-		}
+		this.eventDispatcher.log(logServiceLevel, logMessage, e);
 	}
 	
-	protected void log(int logServiceLevel,String logMessage, Error e)
+	public void registerOnExtension(IEventDispatcherExtension extension)
 	{
-		
-		try
-		{
-			LogService logService = null;
-			ComponentContext context = null;
-			
-			if(eventDispatcher != null){logService = eventDispatcher.logService;}
-			if(eventDispatcher != null){context = eventDispatcher.getContext();}
-			
-			if(logService != null)
-			{
-				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
-			}
-			else
-			{
-				if(logServiceLevel == LogService.LOG_ERROR)
-				{
-					System.err.println(logMessage);
-				}
-				if(e != null)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
-		catch (Exception ie) 
-		{
-			ie.printStackTrace();
-		}
+		this.metrics.registerOnExtension(extension);
 	}
+
+
+	public String getCategory()
+	{
+		return category;
+	}
+
+	public void setCategory(String category)
+	{
+		this.category = category;
+	}
+
+	public String getName()
+	{
+		return name;
+	}
+
+	public void setName(String name)
+	{
+		this.name = name;
+	}
+	
+	
 }

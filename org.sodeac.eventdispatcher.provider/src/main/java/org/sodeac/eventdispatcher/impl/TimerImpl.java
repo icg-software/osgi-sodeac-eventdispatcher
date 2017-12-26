@@ -15,17 +15,27 @@ import java.util.concurrent.TimeUnit;
 
 import org.sodeac.eventdispatcher.api.IMetricSnapshot;
 import org.sodeac.eventdispatcher.api.ITimer;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleMetrics;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleTimer;
 
 import com.codahale.metrics.Timer;
 
-public class TimerImpl implements ITimer
+public class TimerImpl implements ITimer,IExtensibleTimer
 {
 	private Timer timer;
 	
-	public TimerImpl(Timer timer)
+	private String key;
+	private String name;
+	private MetricImpl metrics;
+	
+	public TimerImpl(Timer timer,String key, String name, MetricImpl metric)
 	{
 		super();
 		this.timer = timer;
+		
+		this.key = key;
+		this.name = name;
+		this.metrics = metric;
 	}
 	
 	@Override
@@ -34,6 +44,7 @@ public class TimerImpl implements ITimer
 		if(this.timer != null)
 		{
 			this.timer.update(duration, unit);
+			this.metrics.updateTimer(this);
 		}
 	}
 
@@ -42,9 +53,9 @@ public class TimerImpl implements ITimer
 	{
 		if(this.timer == null)
 		{
-			return new Context(null);
+			return new Context(null,null);
 		}
-		return new Context(this.timer.time());
+		return new Context(this.timer.time(),this);
 	}
 
 	@Override
@@ -100,11 +111,13 @@ public class TimerImpl implements ITimer
 	private static final class Context implements ITimer.Context
 	{
 		private Timer.Context ctx;
+		private TimerImpl timer;
 		
-		private Context(Timer.Context ctx)
+		private Context(Timer.Context ctx,TimerImpl timer)
 		{
 			super();
 			this.ctx = ctx;
+			this.timer = timer;
 		}
 
 		@Override
@@ -121,7 +134,9 @@ public class TimerImpl implements ITimer
 		{
 			if(ctx != null)
 			{
-				return ctx.stop();
+				long time = ctx.stop();
+				this.timer.metrics.updateTimer(this.timer);
+				return time;
 			}
 			return 0L;
 		}
@@ -136,5 +151,24 @@ public class TimerImpl implements ITimer
 		}
 		return new MetricSnapshotImpl(this.timer.getSnapshot());
 	}
+	
+	@Override
+	public String getKey()
+	{
+		return this.key;
+	}
+
+	@Override
+	public IExtensibleMetrics getMetrics()
+	{
+		return this.metrics;
+	}
+
+	@Override
+	public String getName()
+	{
+		return this.name;
+	}
+
 
 }

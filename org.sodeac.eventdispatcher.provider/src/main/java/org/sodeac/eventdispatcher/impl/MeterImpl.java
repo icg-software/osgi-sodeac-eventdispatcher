@@ -11,18 +11,27 @@
 package org.sodeac.eventdispatcher.impl;
 
 import org.sodeac.eventdispatcher.api.IMeter;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleMeter;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleMetrics;
 
 import com.codahale.metrics.Meter;
 
-public class MeterImpl implements IMeter
+public class MeterImpl implements IMeter,IExtensibleMeter
 {
 
 	private Meter meter = null;
+	private String key;
+	private String name;
+	private MetricImpl metrics;
 	
-	public MeterImpl(Meter meter)
+	public MeterImpl(Meter meter,String key, String name, MetricImpl metric)
 	{
 		super();
 		this.meter = meter;
+		
+		this.key = key;
+		this.name = name;
+		this.metrics = metric;
 	}
 	
 	@Override
@@ -31,6 +40,7 @@ public class MeterImpl implements IMeter
 		if(this.meter != null)
 		{
 			this.meter.mark();
+			this.metrics.updateMeter(this);
 		}
 	}
 
@@ -40,6 +50,7 @@ public class MeterImpl implements IMeter
 		if(this.meter != null)
 		{
 			this.meter.mark(n);
+			this.metrics.updateMeter(this);
 		}
 	}
 
@@ -91,6 +102,24 @@ public class MeterImpl implements IMeter
 			return 0.0;
 		}
 		return this.meter.getFifteenMinuteRate();
+	}
+	
+	@Override
+	public String getKey()
+	{
+		return this.key;
+	}
+
+	@Override
+	public IExtensibleMetrics getMetrics()
+	{
+		return this.metrics;
+	}
+
+	@Override
+	public String getName()
+	{
+		return this.name;
 	}
 
 }

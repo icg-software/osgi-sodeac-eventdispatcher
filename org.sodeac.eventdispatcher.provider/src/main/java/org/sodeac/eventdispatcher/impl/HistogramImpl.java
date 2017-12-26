@@ -12,17 +12,26 @@ package org.sodeac.eventdispatcher.impl;
 
 import org.sodeac.eventdispatcher.api.IHistogram;
 import org.sodeac.eventdispatcher.api.IMetricSnapshot;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleHistogram;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleMetrics;
 
 import com.codahale.metrics.Histogram;
 
-public class HistogramImpl implements IHistogram
+public class HistogramImpl implements IHistogram,IExtensibleHistogram
 {
 	private Histogram histogram;
+	private String key;
+	private String name;
+	private MetricImpl metrics;
 	
-	public HistogramImpl(Histogram histogram)
+	public HistogramImpl(Histogram histogram,String key, String name, MetricImpl metric)
 	{
 		super();
 		this.histogram = histogram;
+		
+		this.key = key;
+		this.name = name;
+		this.metrics = metric;
 	}
 
 	@Override
@@ -31,6 +40,7 @@ public class HistogramImpl implements IHistogram
 		if(this.histogram != null)
 		{
 			this.histogram.update(value);
+			this.metrics.updateHistogram(this);
 		}
 	}
 
@@ -40,6 +50,7 @@ public class HistogramImpl implements IHistogram
 		if(this.histogram != null)
 		{
 			this.histogram.update(value);
+			this.metrics.updateHistogram(this);
 		}
 	}
 
@@ -61,6 +72,24 @@ public class HistogramImpl implements IHistogram
 			return new MetricSnapshotImpl(this.histogram.getSnapshot());
 		}
 		return new MetricSnapshotImpl(null);
+	}
+	
+	@Override
+	public String getKey()
+	{
+		return this.key;
+	}
+
+	@Override
+	public IExtensibleMetrics getMetrics()
+	{
+		return this.metrics;
+	}
+
+	@Override
+	public String getName()
+	{
+		return this.name;
 	}
 
 }

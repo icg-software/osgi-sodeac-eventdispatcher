@@ -20,7 +20,7 @@ import com.codahale.metrics.MetricRegistry;
 @Component(immediate=true,service=MetricInstances.class)
 public class MetricInstances
 {
-	@Reference(cardinality=ReferenceCardinality.MANDATORY,policy=ReferencePolicy.STATIC,target = "(name=sodeac)")
+	@Reference(cardinality=ReferenceCardinality.MANDATORY,policy=ReferencePolicy.STATIC,target = "(name=sodeac-eventdispatcher-default)")
 	protected volatile MetricRegistry metricRegistry;
 	
 	public MetricRegistry getMetricRegistry()

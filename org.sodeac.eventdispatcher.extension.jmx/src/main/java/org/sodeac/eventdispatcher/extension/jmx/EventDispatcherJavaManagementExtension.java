@@ -16,7 +16,14 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IEventController;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleCounter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleGauge;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleHistogram;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleMeter;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleMetrics;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleQueue;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleTimer;
 
 @Component(service=IEventDispatcherExtension.class,immediate=true)
 public class EventDispatcherJavaManagementExtension implements IEventDispatcherExtension
@@ -196,6 +203,267 @@ public class EventDispatcherJavaManagementExtension implements IEventDispatcherE
 		{
 			ie.printStackTrace();
 		}
+	}
+
+	@Override
+	public void registerEventQueue(IExtensibleEventDispatcher dispatcher, IExtensibleQueue extensibleQueue)
+	{
+		readLock.lock();
+		try
+		{
+			try
+			{
+				EventDispatcher found = this.eventDispatcherIndex.get(dispatcher);
+				if(found == null)
+				{
+					return;
+				}
+				
+				found.registerEventQueue(extensibleQueue);
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"register event queue",e);
+			}
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+	}
+
+	@Override
+	public void unregisterEventQueue(IExtensibleEventDispatcher dispatcher, IExtensibleQueue extensibleQueue)
+	{
+		readLock.lock();
+		try
+		{
+			try
+			{
+				EventDispatcher found = this.eventDispatcherIndex.get(dispatcher);
+				if(found == null)
+				{
+					return;
+				}
+				
+				found.unregisterEventQueue(extensibleQueue);
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"register event queue",e);
+			}
+			
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+	}
+
+	@Override
+	public void registerCounter(IExtensibleEventDispatcher dispatcher, IExtensibleCounter counter)
+	{
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.registerCounter(counter);
+	}
+	
+	
+	public void updateCounter(IExtensibleEventDispatcher dispatcher, IExtensibleCounter counter)
+	{
+	}
+	
+	public void unregisterCounter(IExtensibleEventDispatcher dispatcher, IExtensibleCounter counter)
+	{
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.unregisterCounter(counter);
+	}
+	
+	@Override
+	public void registerMeter(IExtensibleEventDispatcher dispatcher, IExtensibleMeter meter)
+	{
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.registerMeter(meter);
+	}
+	
+	
+	public void updateMeter(IExtensibleEventDispatcher dispatcher, IExtensibleMeter meter)
+	{
+	}
+	
+	public void unregisterMeter(IExtensibleEventDispatcher dispatcher, IExtensibleMeter meter)
+	{
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.unregisterMeter(meter);
+	}
+	
+	@Override
+	public void registerHistogram(IExtensibleEventDispatcher dispatcher, IExtensibleHistogram histogram)
+	{
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.registerHistogram(histogram);
+	}
+	
+	
+	public void updateHistogram(IExtensibleEventDispatcher dispatcher, IExtensibleHistogram histogram)
+	{
+	}
+	
+	public void unregisterHistogram(IExtensibleEventDispatcher dispatcher, IExtensibleHistogram histogram)
+	{
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.unregisterHistogram(histogram);
+	}
+
+	@Override
+	public void registerTimer(IExtensibleEventDispatcher dispatcher, IExtensibleTimer timer)
+	{
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.registerTimer(timer);
+	}
+	
+	
+	public void updateTimer(IExtensibleEventDispatcher dispatcher, IExtensibleTimer timer)
+	{
+	}
+	
+	public void unregisterTimer(IExtensibleEventDispatcher dispatcher, IExtensibleTimer timer)
+	{
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.unregisterTimer(timer);
+	}
+
+	@Override
+	public void registerGauge(IExtensibleEventDispatcher dispatcher, IExtensibleGauge<?> gauge)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void unregisterGauge(IExtensibleEventDispatcher dispatcher, IExtensibleGauge<?> gauge)
+	{
+		// TODO Auto-generated method stub
+		
 	}
 
 }

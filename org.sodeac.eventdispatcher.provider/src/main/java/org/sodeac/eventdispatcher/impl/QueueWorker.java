@@ -1001,26 +1001,7 @@ public class QueueWorker extends Thread
 		}
 	}
 	
-	private void log(int logServiceLevel,String logMessage, Exception e)
-	{
-		if(eventQueue != null)
-		{
-			eventQueue.log(logServiceLevel, logMessage, e);
-		}
-		else
-		{
-			if(logServiceLevel == LogService.LOG_ERROR)
-			{
-				System.err.println(logMessage);
-			}
-			if(e != null)
-			{
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	private void log(int logServiceLevel,String logMessage, Error e)
+	private void log(int logServiceLevel,String logMessage, Throwable e)
 	{
 		if(eventQueue != null)
 		{

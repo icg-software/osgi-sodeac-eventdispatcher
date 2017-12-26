@@ -76,6 +76,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private volatile IMetrics metrics = null; 
 	
 	private List<IEventDispatcherExtension>  eventDispatcherExtensionList = null;
+	private volatile List<IEventDispatcherExtension>  eventDispatcherExtensionListCopy = null;
 	
 	private Map<String,Long> queueIsMissingLogIndex = new HashMap<String,Long>();
 	
@@ -116,6 +117,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		this.queueIndexWriteLock = this.queueIndexLock.writeLock();
 		this.controllerList = new ArrayList<ControllerContainer>();
 		this.eventDispatcherExtensionList = new ArrayList<IEventDispatcherExtension>();
+		this.eventDispatcherExtensionListCopy = Collections.unmodifiableList(new ArrayList<IEventDispatcherExtension>());
 		this.serviceList = new ArrayList<ServiceContainer>();
 		this.metrics = new MetricImpl(this, new PropertyBlockImpl(),true);
 	}
@@ -220,6 +222,26 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			this.id = properties.get(IEventDispatcher.PROPERTY_ID).toString();
 		}
 		
+		for(IEventDispatcherExtension eventDispatcherExtension : this.eventDispatcherExtensionList)
+		{
+			try
+			{
+				eventDispatcherExtension.registerEventDispatcher(this);
+				((MetricImpl)this.metrics).registerOnExtension(eventDispatcherExtension);
+			}
+			catch (Exception e) 
+			{
+				if(logService != null)
+				{
+					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on register dispatcher to extension", e);
+				}
+				else
+				{
+					System.err.println("Exception on register dispatcher to extension " + e.getMessage());
+				}
+			}
+		}
+		
 		this.queueIndexReadLock.lock();
 		try
 		{
@@ -234,24 +256,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			this.queueIndexReadLock.unlock();
 		}
 		
-		for(IEventDispatcherExtension eventDispatcherExtension : this.eventDispatcherExtensionList)
-		{
-			try
-			{
-				eventDispatcherExtension.registerEventDispatcher(this);
-			}
-			catch (Exception e) 
-			{
-				if(logService != null)
-				{
-					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on register dispatcher to extension", e);
-				}
-				else
-				{
-					System.err.println("Exception on register dispatcher to extension " + e.getMessage());
-				}
-			}
-		}
+		
 		
 		synchronized (this.controllerList)
 		{
@@ -301,9 +306,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 		
 		Dictionary<String, Object> metricRegistryProperties = new Hashtable<>();
-		metricRegistryProperties.put(Constants.SERVICE_DESCRIPTION, "Sodeac Metrics Registry");
+		metricRegistryProperties.put(Constants.SERVICE_DESCRIPTION, "Sodeac Metrics Registry for EventDispatcher");
 		metricRegistryProperties.put(Constants.SERVICE_VENDOR, "Sodeac Framework");
-		metricRegistryProperties.put("name", "sodeac"); // analog sling metrics
+		metricRegistryProperties.put("name", "sodeac-eventdispatcher-" + this.id); 
 		registrationList.add(context.getBundleContext().registerService(MetricRegistry.class.getName(), metricRegistry, metricRegistryProperties));
 		
 	}
@@ -415,7 +420,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 		catch (Exception e) {e.printStackTrace();}
 		
-		for(IEventDispatcherExtension eventDispatcherExtension : this.eventDispatcherExtensionList)
+		for(IEventDispatcherExtension eventDispatcherExtension : this.eventDispatcherExtensionListCopy)
 		{
 			try
 			{
@@ -439,7 +444,6 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
 	public void bindEventDispatcherExtension(IEventDispatcherExtension eventDispatcherExtension)
 	{
-		List<ControllerContainer> copy = new ArrayList<ControllerContainer>();
 		synchronized (this.eventDispatcherExtensionList)
 		{
 			boolean alreadyConnected = false;
@@ -454,39 +458,73 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			if(! alreadyConnected)
 			{
 				this.eventDispatcherExtensionList.add(eventDispatcherExtension);
+				this.eventDispatcherExtensionListCopy = Collections.unmodifiableList(new ArrayList<IEventDispatcherExtension>(this.eventDispatcherExtensionList));
 			}
-		
-			synchronized (this.controllerList)
+			else
 			{
-				for (ControllerContainer controllerContainer :this.controllerList)
-				{
-					copy.add(controllerContainer);
-				}
+				return;
 			}
 		}
-		
-		if(this.context != null)
+		this.registerDispatcherExtension(eventDispatcherExtension);
+	}
+	
+	public void registerDispatcherExtension(IEventDispatcherExtension eventDispatcherExtension)
+	{
+		if(this.context == null)
 		{
-			try
+			return;
+		}
+		
+		List<ControllerContainer> controllerListCopy = new ArrayList<ControllerContainer>();
+		List<QueueImpl> queueListCopy = new ArrayList<QueueImpl>();
+		
+		synchronized (this.controllerList)
+		{
+			for (ControllerContainer controllerContainer :this.controllerList)
 			{
-				eventDispatcherExtension.registerEventDispatcher(this);
+				controllerListCopy.add(controllerContainer);
 			}
-			catch (Exception e) 
+		}
+			
+		this.queueIndexReadLock.lock();
+		try
+		{
+			for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet())
 			{
-				if(logService != null)
-				{
-					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on register dispatcher to extension", e);
-				}
-				else
-				{
-					System.err.println("Exception on register dispatcher to extension " + e.getMessage());
-				}
+				queueListCopy.add(entry.getValue());
+			}
+		}
+		finally 
+		{
+			this.queueIndexReadLock.unlock();
+		}
+		
+		try
+		{
+			eventDispatcherExtension.registerEventDispatcher(this);
+		}
+		catch (Exception e) 
+		{
+			if(logService != null)
+			{
+				logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on register dispatcher to extension", e);
+			}
+			else
+			{
+				System.err.println("Exception on register dispatcher to extension " + e.getMessage());
 			}
 		}
 		
-		for(ControllerContainer controllerContainer : copy)
+		
+		for(ControllerContainer controllerContainer : controllerListCopy)
 		{
 			eventDispatcherExtension.registerEventController(this,controllerContainer.getEventController(), controllerContainer.getProperties());
+		}
+		
+		for(QueueImpl queue : queueListCopy)
+		{
+			eventDispatcherExtension.registerEventQueue(this,queue);
+			queue.registerOnExtension(eventDispatcherExtension);
 		}
 	}
 
@@ -514,6 +552,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		synchronized (this.eventDispatcherExtensionList)
 		{
 			while(this.eventDispatcherExtensionList.remove(eventDispatcherExtension)) {}
+			this.eventDispatcherExtensionListCopy = Collections.unmodifiableList(new ArrayList<IEventDispatcherExtension>(this.eventDispatcherExtensionList));
 		}
 	}
 	
@@ -543,15 +582,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			}
 		}
 		
-		List<IEventDispatcherExtension>  copy = new ArrayList<IEventDispatcherExtension>(); // globalCopy
-		synchronized (this.eventDispatcherExtensionList)
-		{
-			for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
-			{
-				copy.add(extension);
-			}
-		}
-		for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
+		for(IEventDispatcherExtension extension : this.eventDispatcherExtensionListCopy)
 		{
 			try
 			{
@@ -559,7 +590,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			}
 			catch (Exception e) 
 			{
-				// TODO: handle exception
+				if(logService != null)
+				{
+					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "register eventcontroller to extension", e);
+				}
+				else
+				{
+					System.err.println("Exception on register eventcontroller to extension" + e.getMessage());
+				}
 			}
 		}
 		
@@ -619,18 +657,18 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			Object disableMetricsProperty = properties.get(IEventController.PROPERTY_DISABLE_METRICS);
 			if(disableMetricsProperty != null)
 			{
-				 if(disableMetricsProperty instanceof Boolean)
-				 {
-					 disableMetrics = (Boolean)disableMetricsProperty;
+				if(disableMetricsProperty instanceof Boolean)
+				{
+					disableMetrics = (Boolean)disableMetricsProperty;
 				}
-				 else if (disableMetricsProperty instanceof String)
-				 {
-					 disableMetrics = ((String)disableMetricsProperty).equalsIgnoreCase("true");
+				else if (disableMetricsProperty instanceof String)
+				{
+					disableMetrics = ((String)disableMetricsProperty).equalsIgnoreCase("true");
 				}
-				 else
-				 {
-					 disableMetrics = disableMetricsProperty.toString().equalsIgnoreCase("true");
-				 }
+				else
+				{
+					disableMetrics = disableMetricsProperty.toString().equalsIgnoreCase("true");
+				}
 			}
 		}
 		if(disableMetrics)
@@ -640,11 +678,24 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		if(queue == null)
 		{
-			queue = new QueueImpl(queueId,this, ! disableMetrics);
+			String name  = eventController.getClass().getSimpleName();
+			if((properties.get(IEventController.PROPERTY_JMX_NAME) != null) && (! properties.get(IEventController.PROPERTY_JMX_NAME).toString().isEmpty()))
+			{
+				name = properties.get(IEventController.PROPERTY_JMX_NAME).toString();
+			}
+			
+			String category = null;
+			if((properties.get(IEventController.PROPERTY_JMX_CATEGORY) != null) && (! properties.get(IEventController.PROPERTY_JMX_CATEGORY).toString().isEmpty()))
+			{
+				category = properties.get(IEventController.PROPERTY_JMX_CATEGORY).toString();
+			}
+			
+			
+			queue = new QueueImpl(queueId,this, ! disableMetrics, name,category);
 			this.queueIndexWriteLock.lock();
 			try
 			{
-				this.queueIndex.put(queueId,queue );
+				this.queueIndex.put(queueId,queue);
 				if(this.counterQueueSize != null)
 				{
 					this.counterQueueSize.inc();
@@ -653,6 +704,27 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			finally 
 			{
 				this.queueIndexWriteLock.unlock();
+			}
+			
+			for(IEventDispatcherExtension extension : this.eventDispatcherExtensionListCopy)
+			{
+				try
+				{
+					extension.registerEventQueue(this, queue);
+					queue.registerOnExtension(extension);
+				}
+				catch (Exception e) 
+				{
+					if(this.logService != null)
+					{
+						this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "register new queue to extension");
+					}
+					else
+					{
+						System.err.println("register new queue to extension");
+						e.printStackTrace();
+					}
+				}
 			}
 			
 			this.queueIndexReadLock.lock();
@@ -757,15 +829,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			this.unregisterEventController(eventController);
 		}
-		List<IEventDispatcherExtension>  copy = new ArrayList<IEventDispatcherExtension>(); // globalCopy
-		synchronized (this.eventDispatcherExtensionList)
-		{
-			for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
-			{
-				copy.add(extension);
-			}
-		}
-		for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
+		for(IEventDispatcherExtension extension : this.eventDispatcherExtensionListCopy)
 		{
 			try
 			{
@@ -773,7 +837,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			}
 			catch (Exception e) 
 			{
-				// TODO: handle exception
+				if(logService != null)
+				{
+					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "unregister eventcontroller from extension", e);
+				}
+				else
+				{
+					System.err.println("Exception on unregister eventcontroller from extension" + e.getMessage());
+				}
 			}
 		}
 	}
@@ -850,6 +921,26 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				for(QueueImpl queue : removeList)
 				{
+					for(IEventDispatcherExtension extension : this.eventDispatcherExtensionListCopy)
+					{
+						try
+						{
+							extension.unregisterEventQueue(this, queue);
+						}
+						catch (Exception e) 
+						{
+							if(this.logService != null)
+							{
+								this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "register new queue to extension");
+							}
+							else
+							{
+								System.err.println("unregister new queue to extension");
+								e.printStackTrace();
+							}
+						}
+					}
+					
 					try
 					{
 						if(queue.getMetrics() != null)
@@ -1027,6 +1118,36 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		return registered;
 	}
+	
+	protected void log(int logServiceLevel,String logMessage, Throwable e)
+	{
+		
+		try
+		{
+			LogService logService = this.logService;
+			ComponentContext context = this.context;
+			
+			if(logService != null)
+			{
+				logService.log(context == null ? null : context.getServiceReference(), logServiceLevel, logMessage, e);
+			}
+			else
+			{
+				if(logServiceLevel == LogService.LOG_ERROR)
+				{
+					System.err.println(logMessage);
+				}
+				if(e != null)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+		catch (Exception ie) 
+		{
+			ie.printStackTrace();
+		}
+	}
 
 	public ComponentContext getContext()
 	{
@@ -1052,6 +1173,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	public IPropertyBlock createPropertyBlock()
 	{
 		return new PropertyBlockImpl();
+	}
+
+	public List<IEventDispatcherExtension> getEventDispatcherExtensionList()
+	{
+		return eventDispatcherExtensionListCopy;
 	}
 	
 }
