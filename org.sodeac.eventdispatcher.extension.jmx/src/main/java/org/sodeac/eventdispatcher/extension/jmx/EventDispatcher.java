@@ -16,6 +16,7 @@ import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IEventController;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleCounter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleGauge;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleHistogram;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleMeter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleMetrics;
@@ -734,6 +735,94 @@ public class EventDispatcher implements EventDispatcherMBean
 		catch (Exception e) 
 		{
 			this.eventDispatcherExtension.log(LogService.LOG_ERROR,"unregister timer",e);
+		}
+	}
+	
+	public void registerGauge(IExtensibleGauge<?> gauge)
+	{
+		IExtensibleMetrics metrics = gauge.getMetrics();
+		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		
+		if(extensibleQueue == null)
+		{
+			try
+			{
+				this.metricContainer.registerGauge(gauge);
+			}
+			catch (Exception e) 
+			{
+				this.eventDispatcherExtension.log(LogService.LOG_ERROR,"register gauge",e);
+			}
+			return;
+		}
+		
+		EventQueue eventQueueBean = null;
+		readLock.lock();
+		try
+		{
+			eventQueueBean = eventQueueIndex.get(extensibleQueue);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(eventQueueBean == null)
+		{
+			return;
+		}
+		
+		try
+		{
+			eventQueueBean.registerGauge(gauge);
+		}
+		catch (Exception e) 
+		{
+			this.eventDispatcherExtension.log(LogService.LOG_ERROR,"register gauge",e);
+		}
+	}
+
+	public void unregisterGauge(IExtensibleGauge<?> gauge)
+	{
+		IExtensibleMetrics metrics = gauge.getMetrics();
+		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		
+		if(extensibleQueue == null)
+		{
+			try
+			{
+				this.metricContainer.unregisterGauge(gauge);
+			}
+			catch (Exception e) 
+			{
+				this.eventDispatcherExtension.log(LogService.LOG_ERROR,"unregister gauge",e);
+			}
+			return;
+		}
+		
+		EventQueue eventQueueBean = null;
+		readLock.lock();
+		try
+		{
+			eventQueueBean = eventQueueIndex.get(extensibleQueue);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(eventQueueBean == null)
+		{
+			return;
+		}
+		
+		try
+		{
+			eventQueueBean.unregisterGauge(gauge);
+		}
+		catch (Exception e) 
+		{
+			this.eventDispatcherExtension.log(LogService.LOG_ERROR,"unregister gauge",e);
 		}
 	}
 }

@@ -19,7 +19,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
-import org.osgi.service.component.ComponentContext;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IMetrics;
 

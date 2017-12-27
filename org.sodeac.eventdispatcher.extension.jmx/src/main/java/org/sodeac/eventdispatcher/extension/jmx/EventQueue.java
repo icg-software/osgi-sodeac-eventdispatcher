@@ -1,12 +1,19 @@
 package org.sodeac.eventdispatcher.extension.jmx;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import javax.management.ObjectName;
 
+import org.sodeac.eventdispatcher.api.IPropertyBlock;
+import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleCounter;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleGauge;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleHistogram;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleMeter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleQueue;
@@ -93,5 +100,54 @@ public class EventQueue implements EventQueueMBean
 	public void unregisterTimer(IExtensibleTimer timer)
 	{
 		this.metricContainer.unregisterTimer(timer);
+	}
+	
+	public void registerGauge(IExtensibleGauge<?> gauge)
+	{
+		this.metricContainer.registerGauge(gauge);
+	}
+	
+	public void unregisterGauge(IExtensibleGauge<?> gauge)
+	{
+		this.metricContainer.unregisterGauge(gauge);
+	}
+
+	@Override
+	public String showStateInfo()
+	{
+		StringBuilder info = new StringBuilder();
+		
+		IPropertyBlock properties = this.queue.getPropertyBlock();
+		info.append("Properties:\n");
+		{
+			for(String key : properties.getPropertyKeys())
+			{
+				info.append("\t" + key + " :: " + properties.getProperty(key) + "\n");
+			}
+		}
+		info.append("\n");
+		
+		List<IQueuedEvent> eventList = this.queue.getEventList(null, null, null);
+		info.append("Scheduled Events (" + eventList.size() + "):\n");
+		for(IQueuedEvent event : eventList)
+		{
+			info.append("\t" + event.getUUID() +" :: " + event.getEvent().getTopic() + "\n" );
+		}
+		info.append("\n");
+		
+		Map<String,IQueueJob> jobIndex = this.queue.getJobIndex(null);
+		info.append("Scheduled jobs (" + jobIndex.size() + "):\n");
+		for(Entry<String,IQueueJob> entry: jobIndex.entrySet())
+		{
+			info.append("\t" + entry.getKey() +" :: " + entry.getValue() + "\n" );
+		}
+		info.append("\n");
+		return info.toString();
+	}
+
+	@Override
+	public String showDescription()
+	{
+		return new String();
 	}
 }

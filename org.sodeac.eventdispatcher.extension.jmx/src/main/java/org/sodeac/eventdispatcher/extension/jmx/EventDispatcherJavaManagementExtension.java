@@ -21,7 +21,6 @@ import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleGauge;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleHistogram;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleMeter;
-import org.sodeac.eventdispatcher.extension.api.IExtensibleMetrics;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleQueue;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleTimer;
 
@@ -455,15 +454,44 @@ public class EventDispatcherJavaManagementExtension implements IEventDispatcherE
 	@Override
 	public void registerGauge(IExtensibleEventDispatcher dispatcher, IExtensibleGauge<?> gauge)
 	{
-		// TODO Auto-generated method stub
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
 		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.registerGauge(gauge);
 	}
-
-	@Override
+	
 	public void unregisterGauge(IExtensibleEventDispatcher dispatcher, IExtensibleGauge<?> gauge)
 	{
-		// TODO Auto-generated method stub
+		EventDispatcher found = null;
+		readLock.lock();
+		try
+		{
+			found = this.eventDispatcherIndex.get(dispatcher);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
 		
+		if(found == null)
+		{
+			return;
+		}
+		
+		found.unregisterGauge(gauge);
 	}
 
 }

@@ -12,6 +12,7 @@ import javax.management.ObjectName;
 
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleCounter;
+import org.sodeac.eventdispatcher.extension.api.IExtensibleGauge;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleHistogram;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleMeter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleTimer;
@@ -24,6 +25,7 @@ public class MetricContainer
 	private Map<IExtensibleMeter,Meter> meterIndex = null;
 	private Map<IExtensibleHistogram,Histogram> histogramIndex = null;
 	private Map<IExtensibleTimer,Timer> timerIndex = null;
+	private Map<IExtensibleGauge<?>,Gauge> gaugeIndex = null;
 	
 	private ReentrantReadWriteLock lock = null;
 	private ReadLock readLock = null;
@@ -44,6 +46,7 @@ public class MetricContainer
 		this.meterIndex = new HashMap<IExtensibleMeter,Meter>();
 		this.histogramIndex = new HashMap<IExtensibleHistogram,Histogram>();
 		this.timerIndex = new HashMap<IExtensibleTimer,Timer>();
+		this.gaugeIndex = new HashMap<IExtensibleGauge<?>,Gauge>();
 	}
 	
 	public void dispose()
@@ -102,6 +105,19 @@ public class MetricContainer
 				}
 			}
 			this.timerIndex.clear();
+			
+			for(Entry<IExtensibleGauge<?>,Gauge> entry : this.gaugeIndex.entrySet())
+			{
+				try
+				{
+					ManagementFactory.getPlatformMBeanServer().unregisterMBean(entry.getValue().gaugeObjectName);
+				}
+				catch (Exception e) 
+				{
+					extension.log(LogService.LOG_ERROR,"clean gauge",e);
+				}
+			}
+			this.timerIndex.clear();
 		}
 		finally 
 		{
@@ -139,7 +155,7 @@ public class MetricContainer
 					}
 					catch (Exception e) 
 					{
-						extension.log(LogService.LOG_ERROR,"register dispatchercounter",e);
+						extension.log(LogService.LOG_ERROR,"register counter",e);
 					}
 				}
 			}
@@ -415,6 +431,86 @@ public class MetricContainer
 					catch (Exception e) 
 					{
 						extension.log(LogService.LOG_ERROR,"unregister timer",e);
+					}
+				}
+			}
+			finally 
+			{
+				writeLock.unlock();
+			}
+		}
+	}
+	
+	
+	public void registerGauge(IExtensibleGauge<?> gauge)
+	{
+		Gauge gaugeBean = null;
+		readLock.lock();
+		try
+		{
+			gaugeBean = this.gaugeIndex.get(gauge);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(gaugeBean == null)
+		{
+			writeLock.lock();
+			try
+			{
+				gaugeBean = this.gaugeIndex.get(gauge);
+				if(gaugeBean == null)
+				{
+					try
+					{
+						ObjectName objectName = new ObjectName(this.objectNamePrefix + ",metric=gauge,name=" + gauge.getName());
+						gaugeBean = new Gauge(objectName,gauge);
+						this.gaugeIndex.put(gauge,gaugeBean);
+						ManagementFactory.getPlatformMBeanServer().registerMBean(gaugeBean,objectName);
+					}
+					catch (Exception e) 
+					{
+						extension.log(LogService.LOG_ERROR,"register gauge",e);
+					}
+				}
+			}
+			finally 
+			{
+				writeLock.unlock();
+			}
+		}
+	}
+	
+	public void unregisterGauge(IExtensibleGauge<?> gauge)
+	{
+		Gauge gaugeBean = null;
+		readLock.lock();
+		try
+		{
+			gaugeBean = this.gaugeIndex.get(gauge);
+		}
+		finally 
+		{
+			readLock.unlock();
+		}
+		
+		if(gaugeBean == null)
+		{
+			writeLock.lock();
+			try
+			{
+				gaugeBean = this.gaugeIndex.remove(gauge);
+				if(gaugeBean != null)
+				{
+					try
+					{
+						ManagementFactory.getPlatformMBeanServer().unregisterMBean(gaugeBean.gaugeObjectName);
+					}
+					catch (Exception e) 
+					{
+						extension.log(LogService.LOG_ERROR,"unregister gauge",e);
 					}
 				}
 			}

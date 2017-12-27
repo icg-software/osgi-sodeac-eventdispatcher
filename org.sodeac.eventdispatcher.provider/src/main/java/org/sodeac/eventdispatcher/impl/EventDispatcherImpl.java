@@ -81,7 +81,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private Map<String,Long> queueIsMissingLogIndex = new HashMap<String,Long>();
 	
 	
-	// TODO replace synchronized (controllerList/serviceList) by locks ?
+	// TODO replace synchronized (controllerList/serviceList) by locks ? // unmodifiableList ??
 	
 	@Override
 	public String getId()
@@ -475,6 +475,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			return;
 		}
 		
+		System.out.println("Register Extension");
+		
 		List<ControllerContainer> controllerListCopy = new ArrayList<ControllerContainer>();
 		List<QueueImpl> queueListCopy = new ArrayList<QueueImpl>();
 		
@@ -502,6 +504,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		try
 		{
 			eventDispatcherExtension.registerEventDispatcher(this);
+			((MetricImpl)this.metrics).registerOnExtension(eventDispatcherExtension);
+			
 		}
 		catch (Exception e) 
 		{
