@@ -53,13 +53,22 @@ import com.codahale.metrics.MetricRegistry;
 @Component(name="EventDispatcherProvider" ,service=IEventDispatcher.class,immediate=true,property={IEventDispatcher.PROPERTY_ID + "=" + IEventDispatcher.DEFAULT_DISPATCHER_ID})
 public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDispatcher
 {
-	private Map<String,QueueImpl> queueIndex = new HashMap<String,QueueImpl>();
+	private Map<String,QueueImpl> queueIndex;
 	private ReentrantReadWriteLock queueIndexLock;
 	private ReadLock queueIndexReadLock;
 	private WriteLock queueIndexWriteLock;
+	
+	private List<QueueWorker> workerPool;
+	private ReentrantReadWriteLock workerPoolLock;
+	private ReadLock workerPoolReadLock;
+	private WriteLock workerPoolWriteLock;
+	
 	private DispatcherGuardian dispatcherGuardian;
+	private SpooledQueueWorkerScheduler spooledQueueWorkerScheduler;
+	
 	private List<ControllerContainer> controllerList = null;
 	private List<ServiceContainer> serviceList = null;
+	
 	private String id = IEventDispatcher.DEFAULT_DISPATCHER_ID;
 	
 	private volatile ComponentContext context = null;
@@ -73,7 +82,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	protected volatile MetricRegistry metricRegistry = new  MetricRegistry();
 	private List<ServiceRegistration<?>> registrationList = new ArrayList<ServiceRegistration<?>>();
 	
-	private volatile IMetrics metrics = null; 
+	private volatile MetricImpl metrics = null; 
 	
 	private List<IEventDispatcherExtension>  eventDispatcherExtensionList = null;
 	private volatile List<IEventDispatcherExtension>  eventDispatcherExtensionListCopy = null;
@@ -112,12 +121,20 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	public EventDispatcherImpl()
 	{
 		super();
+		this.queueIndex = new HashMap<String,QueueImpl>();
 		this.queueIndexLock = new ReentrantReadWriteLock(true);
 		this.queueIndexReadLock = this.queueIndexLock.readLock();
 		this.queueIndexWriteLock = this.queueIndexLock.writeLock();
+		
 		this.controllerList = new ArrayList<ControllerContainer>();
 		this.eventDispatcherExtensionList = new ArrayList<IEventDispatcherExtension>();
 		this.eventDispatcherExtensionListCopy = Collections.unmodifiableList(new ArrayList<IEventDispatcherExtension>());
+		
+		this.workerPool = new ArrayList<QueueWorker>();
+		this.workerPoolLock = new ReentrantReadWriteLock(true);
+		this.workerPoolReadLock = this.workerPoolLock.readLock();
+		this.workerPoolWriteLock = this.workerPoolLock.writeLock();
+		
 		this.serviceList = new ArrayList<ServiceContainer>();
 		this.metrics = new MetricImpl(this, new PropertyBlockImpl(),true);
 	}
@@ -227,7 +244,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			try
 			{
 				eventDispatcherExtension.registerEventDispatcher(this);
-				((MetricImpl)this.metrics).registerOnExtension(eventDispatcherExtension);
+				this.metrics.registerOnExtension(eventDispatcherExtension);
 			}
 			catch (Exception e) 
 			{
@@ -269,6 +286,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 		this.dispatcherGuardian = new DispatcherGuardian(this);
 		this.dispatcherGuardian.start();
+		
+		this.spooledQueueWorkerScheduler = new SpooledQueueWorkerScheduler(this);
+		this.spooledQueueWorkerScheduler.start();
 		
 		List<ControllerContainer> controllerContainerCopy = null;
 		synchronized (this.controllerList)
@@ -408,7 +428,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		try
 		{
-			this.dispatcherGuardian.stopWatchDog();
+			this.dispatcherGuardian.stopGuardian();
+		}
+		catch (Exception e) {}
+		
+		try
+		{
+			this.spooledQueueWorkerScheduler.stopScheduler();
 		}
 		catch (Exception e) {}
 		
@@ -416,7 +442,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		counterConfigurationSize = null;
 		try
 		{
-			((MetricImpl)this.metrics).dispose();
+			this.metrics.dispose();
 		}
 		catch (Exception e) {e.printStackTrace();}
 		
@@ -438,6 +464,26 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				}
 			}
 		}
+		
+		this.workerPoolWriteLock.lock();
+		try
+		{
+			for(QueueWorker worker : this.workerPool)
+			{
+				try
+				{
+					worker.stopWorker();
+				}
+				catch (Exception e) {}
+			}
+			this.workerPool.clear();
+			this.workerPool = null;
+		}
+		finally 
+		{
+			this.workerPoolWriteLock.unlock();
+		}
+		
 		this.context = null;
 	}
 	
@@ -475,8 +521,6 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			return;
 		}
 		
-		System.out.println("Register Extension");
-		
 		List<ControllerContainer> controllerListCopy = new ArrayList<ControllerContainer>();
 		List<QueueImpl> queueListCopy = new ArrayList<QueueImpl>();
 		
@@ -504,7 +548,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		try
 		{
 			eventDispatcherExtension.registerEventDispatcher(this);
-			((MetricImpl)this.metrics).registerOnExtension(eventDispatcherExtension);
+			this.metrics.registerOnExtension(eventDispatcherExtension);
 			
 		}
 		catch (Exception e) 
@@ -1184,4 +1228,110 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		return eventDispatcherExtensionListCopy;
 	}
 	
+	protected boolean addToWorkerPool(QueueWorker worker)
+	{
+		if(! worker.isGo())
+		{
+			return false;
+		}
+		if(worker.getEventQueue() != null)
+		{
+			return false;
+		}
+		worker.setSpoolTimeStamp(System.currentTimeMillis());
+		this.workerPoolWriteLock.lock();
+		try
+		{
+			this.workerPool.add(0, worker);
+		}
+		finally 
+		{
+			this.workerPoolWriteLock.unlock();
+		}
+		
+		return true;
+	}
+	
+	protected QueueWorker getFromWorkerPool()
+	{
+		this.workerPoolWriteLock.lock();
+		try
+		{
+			QueueWorker foundWorker = null;
+			while(! this.workerPool.isEmpty())
+			{
+				foundWorker = this.workerPool.remove(0);
+				if(! foundWorker.isGo())
+				{
+					continue;
+				}
+				if(foundWorker.getEventQueue() != null)
+				{
+					continue;
+				}
+				if(! foundWorker.isAlive())
+				{
+					continue;
+				}
+				return foundWorker;
+			}
+			return null;
+		}
+		finally 
+		{
+			this.workerPoolWriteLock.unlock();
+		}
+	}
+	
+	protected void checkTimeoutWorker()
+	{
+		this.workerPoolWriteLock.lock();
+		try
+		{
+			long shutdownTimeStamp = System.currentTimeMillis() - QueueWorker.DEFAULT_SHUTDOWN_TIME;
+			List<QueueWorker> removeList = new ArrayList<QueueWorker>();
+			for(QueueWorker worker : this.workerPool)
+			{
+				try
+				{
+					if(worker.getEventQueue() != null)
+					{
+						removeList.add(worker);
+						continue;
+					}
+					if(! worker.isGo())
+					{
+						removeList.add(worker);
+						continue;
+					}
+					if(worker.getSpoolTimeStamp() < shutdownTimeStamp)
+					{
+						removeList.add(worker);
+						continue;
+					}
+				}
+				catch (Exception e) {}
+				catch (Error e) {}
+			}
+			for(QueueWorker remove : removeList)
+			{
+				try
+				{
+					this.workerPool.remove(remove);
+					remove.stopWorker();
+				}
+				catch (Exception e) {this.log(LogService.LOG_ERROR, "remove spooled worker", e);}
+				catch (Error e) {this.log(LogService.LOG_ERROR, "remove spooled worker", e);}
+			}
+		}
+		finally 
+		{
+			this.workerPoolWriteLock.unlock();
+		}
+	}
+	
+	protected SpooledQueueWorker scheduleQueueWorker(QueueImpl queue, long wakeUpTime)
+	{
+		return this.spooledQueueWorkerScheduler.scheduleQueueWorker(queue, wakeUpTime);
+	}
 }

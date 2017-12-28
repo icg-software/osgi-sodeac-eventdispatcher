@@ -35,6 +35,8 @@ public class DispatcherGuardian extends Thread
 		this.jobTimeOutIndexLock = new ReentrantReadWriteLock(true);
 		this.jobTimeOutIndexReadLock = this.jobTimeOutIndexLock.readLock();
 		this.jobTimeOutIndexWriteLock = this.jobTimeOutIndexLock.writeLock();
+		super.setDaemon(true);
+		super.setName(DispatcherGuardian.class.getSimpleName() + " " + dispatcher.getId());
 	}
 	
 	private volatile EventDispatcherImpl eventDispatcher = null;
@@ -384,7 +386,7 @@ public class DispatcherGuardian extends Thread
 		catch (Error e) {}
 	}
 	
-	public void stopWatchDog()
+	public void stopGuardian()
 	{
 		this.go = false;
 		synchronized (this.waitMonitor)
@@ -395,7 +397,7 @@ public class DispatcherGuardian extends Thread
 			}
 			catch (Exception e) 
 			{
-				log(LogService.LOG_ERROR,"Exception while stop Event Dispatcher DispatcherGuardian",e);
+				log(LogService.LOG_ERROR,"Exception while stop DispatcherGuardian",e);
 			}
 		}
 	}

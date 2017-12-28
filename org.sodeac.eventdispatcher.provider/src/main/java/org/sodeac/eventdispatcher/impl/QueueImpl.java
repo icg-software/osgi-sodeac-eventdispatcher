@@ -59,6 +59,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.enableMetrics = enableMetrics;
 		
 		this.genericQueueSpoolLock = new ReentrantLock();
+		this.workerSpoolLock = new ReentrantLock();
 		
 		this.configurationList = new ArrayList<ControllerContainer>();
 		this.configurationListLock = new ReentrantReadWriteLock(true);
@@ -90,6 +91,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.newScheduledList = new ArrayList<QueuedEventImpl>();
 		this.removedEventList = new ArrayList<QueuedEventImpl>();
 		this.firedEventList = new ArrayList<Event>();
+		
+		this.lastWorkerAction = System.currentTimeMillis();
 		
 		PropertyBlockImpl qualityValues = new PropertyBlockImpl();
 		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
@@ -154,6 +157,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	private ReentrantLock onQueueObserveListLock = null;
 	
 	private volatile QueueWorker queueWorker = null;
+	private volatile SpooledQueueWorker currentSpooledQueueWorker = null;
+	private volatile long lastWorkerAction;
 	private PropertyBlockImpl propertyBlock = null;
 	
 	private volatile boolean newScheduledListUpdate = false;
@@ -164,9 +169,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	private List<Event> firedEventList = null;
 	
 	private ReentrantLock genericQueueSpoolLock = null;
+	private ReentrantLock workerSpoolLock = null;
 	
 	private volatile boolean enableMetrics = true;
 	private volatile boolean disposed = false; 
+	private volatile boolean privateWorker = false;
 	
 	@Override
 	public boolean scheduleEvent(Event event)
@@ -1453,14 +1460,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	public boolean checkTimeOut()
 	{
 		QueueWorker worker = null;
-		this.genericQueueSpoolLock.lock();
+		this.workerSpoolLock.lock();
 		try
 		{
 			worker = this.queueWorker;
 		}
 		finally 
 		{
-			this.genericQueueSpoolLock.unlock();
+			this.workerSpoolLock.unlock();
 		}
 		
 		boolean timeOut = false;
@@ -1469,7 +1476,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			timeOut = worker.checkTimeOut();
 			if(timeOut)
 			{
-				this.genericQueueSpoolLock.lock();
+				this.workerSpoolLock.lock();
 				try
 				{
 					if(worker == this.queueWorker)
@@ -1479,7 +1486,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				}
 				finally 
 				{
-					this.genericQueueSpoolLock.unlock();
+					this.workerSpoolLock.unlock();
 				}
 			}
 		}
@@ -1493,7 +1500,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	public void stopQueueWorker()
 	{
-		this.genericQueueSpoolLock.lock();
+		this.workerSpoolLock.lock();
 		try
 		{
 			if(this.queueWorker != null)
@@ -1504,7 +1511,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 		finally 
 		{
-			this.genericQueueSpoolLock.unlock();
+			this.workerSpoolLock.unlock();
 		}
 	}
 
@@ -1676,9 +1683,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.notifyOrCreateWorker(-1);
 	}
 	
-	private void notifyOrCreateWorker(long nextRuntimeStamp)
+	protected void notifyOrCreateWorker(long nextRuntimeStamp)
 	{
-		this.genericQueueSpoolLock.lock();
+		boolean notify = false;
+		QueueWorker worker = null;
+		
+		this.workerSpoolLock.lock(); //genericQueueSpoolLock
+		
 		try
 		{
 			if(this.queueWorker == null)
@@ -1687,54 +1698,145 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				{
 					return;
 				}
-				this.queueWorker = new QueueWorker(this);
-				this.queueWorker.start();
-			}
-			else
-			{
-				if(nextRuntimeStamp < 1)
+				
+				if(this.currentSpooledQueueWorker != null)
 				{
-					this.queueWorker.notifyUpdate();
+					this.currentSpooledQueueWorker.setValid(false);
+					this.currentSpooledQueueWorker = null;
+				}
+				
+				QueueWorker queueWorker = this.eventDispatcher.getFromWorkerPool();
+				if
+				(
+					(queueWorker != null) && 
+					(queueWorker.isGo()) && 
+					(queueWorker.getEventQueue() == null) && 
+					queueWorker.setEventQueue(this)
+				)
+				{
+					notify = true;
+					this.queueWorker = queueWorker;
 				}
 				else
 				{
-					this.queueWorker.notifyUpdate(nextRuntimeStamp);
+					if(queueWorker != null)
+					{
+						// something goes wrong with spooled worker
+						try
+						{
+							queueWorker.stopWorker();
+						}
+						catch (Exception e) {this.log(LogService.LOG_ERROR, "stop worker", e);}
+						catch (Error e) {this.log(LogService.LOG_ERROR, "stop worker", e);}
+					}
+					
+					queueWorker = new QueueWorker(this);
+					queueWorker.start();
+					
+					this.queueWorker = queueWorker;
 				}
 			}
+			else
+			{
+				notify = true;
+			}
+			worker = this.queueWorker;
 		}
 		finally 
 		{
-			this.genericQueueSpoolLock.unlock();
+			this.workerSpoolLock.unlock();
+		}
+		
+		if(notify)
+		{
+			if(nextRuntimeStamp < 1)
+			{
+				worker.notifyUpdate();
+			}
+			else
+			{
+				worker.notifyUpdate(nextRuntimeStamp);
+			}
 		}
 	}
 	
-	protected void checkWorkerShutdown(QueueWorker worker)
+	protected boolean checkFreeWorker(QueueWorker worker, long waitTime)
 	{
 		if(worker == null)
 		{
-			return;
+			return false;
 		}
 		
-		this.genericQueueSpoolLock.lock();
+		if(this.privateWorker)
+		{
+			return false;
+		}
+		
+		this.workerSpoolLock.lock();
 		try
 		{
 			if(worker != this.queueWorker)
 			{
 				worker.stopWorker();
-				return;
+				return false;
+			}
+			
+			if (waitTime < QueueWorker.FREE_TIME)
+			{
+				return false;
+			}
+			if(! worker.setEventQueue(null))
+			{
+				return false;
+			}
+			
+			if(this.currentSpooledQueueWorker != null)
+			{
+				this.currentSpooledQueueWorker.setValid(false);
+			}
+			this.currentSpooledQueueWorker = this.eventDispatcher.scheduleQueueWorker(this, System.currentTimeMillis() + waitTime - QueueWorker.RESCHEDULE_BUFFER_TIME);
+			this.queueWorker = null;
+			this.eventDispatcher.addToWorkerPool(worker);
+			return true;
+		}
+		finally 
+		{
+			this.workerSpoolLock.unlock();
+		}
+	}
+	
+	protected boolean checkWorkerShutdown(QueueWorker worker)
+	{
+		if(worker == null)
+		{
+			return false;
+		}
+		
+		if(this.privateWorker)
+		{
+			return false;
+		}
+		
+		this.workerSpoolLock.lock();
+		try
+		{
+			if(worker != this.queueWorker)
+			{
+				worker.stopWorker();
+				return false;
 			}
 			
 			if(! this.newScheduledList.isEmpty())
 			{
-				return;
+				return false;
 			}
 			if(! this.removedEventList.isEmpty())
 			{
-				return;
+				return false;
 			}
 			if(! this.firedEventList.isEmpty())
 			{
-				return;
+				return false;
 			}
 			
 			jobListReadLock.lock();
@@ -1742,7 +1844,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				if(! jobList.isEmpty())
 				{
-					return;
+					return false;
 				}
 			}
 			finally 
@@ -1750,12 +1852,22 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				jobListReadLock.unlock();
 			}
 			
-			this.queueWorker.stopWorker();
+			if(this.currentSpooledQueueWorker != null)
+			{
+				this.currentSpooledQueueWorker.setValid(false);
+			}
+			if(!worker.setEventQueue(null))
+			{
+				return false;
+			}
+			this.eventDispatcher.addToWorkerPool(worker);
 			this.queueWorker = null;
+			
+			return true;
 		}
 		finally 
 		{
-			this.genericQueueSpoolLock.unlock();
+			this.workerSpoolLock.unlock();
 		}
 	}
 	
@@ -1764,20 +1876,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		QueueWorker worker = this.queueWorker;
 		if(worker == null)
 		{
-			this.genericQueueSpoolLock.lock();
+			this.workerSpoolLock.lock();
 			try
 			{
 				worker = this.queueWorker;
-				if((worker == null) && (! this.disposed))
-				{
-					this.queueWorker = new QueueWorker(this);
-					this.queueWorker.start();
-					worker = this.queueWorker;
-				}
 			}
 			finally 
 			{
-				this.genericQueueSpoolLock.unlock();
+				this.workerSpoolLock.unlock();
 			}
 		}
 		if(worker == null)
@@ -1794,7 +1900,6 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	{
 		return this.eventDispatcher;
 	}
-
 
 	@Override
 	public void signal(String signal)
@@ -1870,7 +1975,6 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.metrics.registerOnExtension(extension);
 	}
 
-
 	public String getCategory()
 	{
 		return category;
@@ -1891,5 +1995,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.name = name;
 	}
 	
+	public void touchLastWorkerAction()
+	{
+		this.lastWorkerAction = System.currentTimeMillis();
+	}
 	
+	public long getLastWorkerAction()
+	{
+		return this.lastWorkerAction;
+	}
 }

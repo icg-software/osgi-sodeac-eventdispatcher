@@ -34,7 +34,11 @@ import org.sodeac.eventdispatcher.api.ITimer;
 public class QueueWorker extends Thread
 {
 	public static final long DEFAULT_WAIT_TIME = 108 * 108;
+	public static final long FREE_TIME = 108;
+	public static final long RESCHEDULE_BUFFER_TIME = 13;
 	public static final long DEFAULT_SHUTDOWN_TIME = 1080 * 54;
+	
+	private long spoolTimeStamp = 0;
 	
 	private QueueImpl eventQueue = null;
 	private volatile boolean go = true;
@@ -50,7 +54,8 @@ public class QueueWorker extends Thread
 	
 	private volatile Long currentTimeOutTimeStamp = null;
 	private volatile JobContainer currentRunningJob = null;
-	private long wakeUpTimeStamp = -1;
+	private volatile long wakeUpTimeStamp = -1;
+	private volatile boolean inFreeingArea = false;
 	
 	public QueueWorker(QueueImpl impl)
 	{
@@ -62,6 +67,8 @@ public class QueueWorker extends Thread
 		this.firedEventList = new ArrayList<Event>();
 		this.signalList = new ArrayList<String>();
 		this.onQueueObserveList = new ArrayList<IOnQueueObserve>();
+		super.setDaemon(true);
+		super.setName(QueueWorker.class.getSimpleName() + " " + this.eventQueue.getQueueId());
 	}
 
 	private void checkQueueObserve()
@@ -110,7 +117,6 @@ public class QueueWorker extends Thread
 	@Override
 	public void run()
 	{
-		long lastAction = System.currentTimeMillis();
 		while(go)
 		{
 			
@@ -137,7 +143,7 @@ public class QueueWorker extends Thread
 					
 					for(QueuedEventImpl event : this.newScheduledList)
 					{
-						lastAction = System.currentTimeMillis();
+						eventQueue.touchLastWorkerAction();
 						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
 							try
@@ -181,7 +187,7 @@ public class QueueWorker extends Thread
 					
 					for(Event event : this.firedEventList)
 					{
-						lastAction = System.currentTimeMillis();
+						eventQueue.touchLastWorkerAction();
 						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
 							try
@@ -225,7 +231,7 @@ public class QueueWorker extends Thread
 					
 					for(QueuedEventImpl event : this.removedEventList)
 					{
-						lastAction = System.currentTimeMillis();
+						eventQueue.touchLastWorkerAction();
 						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
 							try
@@ -269,7 +275,7 @@ public class QueueWorker extends Thread
 					
 					for(String signal : this.signalList)
 					{
-						lastAction = System.currentTimeMillis();
+						eventQueue.touchLastWorkerAction();
 						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
 							try
@@ -320,7 +326,7 @@ public class QueueWorker extends Thread
 				catch(Exception ex) {}
 				catch(Error ex) {}
 				
-				lastAction = System.currentTimeMillis();
+				eventQueue.touchLastWorkerAction();
 				boolean jobTimeOut  = false;
 				List<IQueueJob> currentProcessedJobList = null;
 				for(JobContainer dueJob : this.dueJobList)
@@ -404,7 +410,7 @@ public class QueueWorker extends Thread
 									dueJob.getJobControl().preRun();
 								}
 								
-								dueJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_STARTED_TIMESTAMP, System.currentTimeMillis()); // TODO Test all Metrics
+								dueJob.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_STARTED_TIMESTAMP, System.currentTimeMillis());
 								
 								if(dueJob.isNamedJob())
 								{
@@ -599,7 +605,7 @@ public class QueueWorker extends Thread
 								eventQueue.fetchFiredEventList(this.firedEventList);
 								for(Event event : this.firedEventList)
 								{
-									lastAction = System.currentTimeMillis();
+									eventQueue.touchLastWorkerAction();
 									for(ControllerContainer conf : eventQueue.getConfigurationList())
 									{
 										try
@@ -642,7 +648,7 @@ public class QueueWorker extends Thread
 									
 									for(QueuedEventImpl event : this.removedEventList)
 									{
-										lastAction = System.currentTimeMillis();
+										eventQueue.touchLastWorkerAction();
 										for(ControllerContainer conf : eventQueue.getConfigurationList())
 										{
 											try
@@ -686,7 +692,7 @@ public class QueueWorker extends Thread
 									
 									for(String signal : this.signalList)
 									{
-										lastAction = System.currentTimeMillis();
+										eventQueue.touchLastWorkerAction();
 										for(ControllerContainer conf : eventQueue.getConfigurationList())
 										{
 											try
@@ -761,13 +767,45 @@ public class QueueWorker extends Thread
 			
 			try
 			{
-				if(System.currentTimeMillis() > (lastAction + DEFAULT_SHUTDOWN_TIME))
+				boolean shutdownWorker = false;
+				if(System.currentTimeMillis() > (eventQueue.getLastWorkerAction() + DEFAULT_SHUTDOWN_TIME))
 				{
-					this.eventQueue.checkWorkerShutdown(this);
-					lastAction = System.currentTimeMillis();
+					this.inFreeingArea = true;
+					shutdownWorker = this.eventQueue.checkWorkerShutdown(this);
+					if(! shutdownWorker)
+					{
+						this.inFreeingArea = false;
+					}
 				}
 				
-
+				if(shutdownWorker)
+				{
+					synchronized (this.waitMonitor)
+					{
+						while((this.eventQueue == null) && (this.go))
+						{
+							try
+							{
+								waitMonitor.wait(DEFAULT_WAIT_TIME);
+							}
+							catch (Exception e) {}
+							catch (ThreadDeath e) {this.go = false;}
+							catch (Error e) {}
+						}
+						
+						this.inFreeingArea = false;
+						
+						if(! go)
+						{
+							return;
+						}
+						
+						eventQueue.touchLastWorkerAction();
+						
+						continue;
+					}
+				}
+				
 				try
 				{
 					checkQueueObserve();
@@ -792,8 +830,34 @@ public class QueueWorker extends Thread
 							}
 							if(waitTime > 0)
 							{
-								this.wakeUpTimeStamp = System.currentTimeMillis() + waitTime;
-								waitMonitor.wait(waitTime);
+								this.wakeUpTimeStamp = System.currentTimeMillis() + waitTime ;
+								this.inFreeingArea = true;
+								boolean freeWorker = false;
+								if(waitTime >= FREE_TIME)
+								{
+									freeWorker = this.eventQueue.checkFreeWorker(this, waitTime);
+								}
+								if(freeWorker)
+								{
+									while((this.eventQueue == null) && (this.go))
+									{
+										try
+										{
+											waitMonitor.wait(DEFAULT_WAIT_TIME);
+										}
+										catch (Exception e) {}
+										catch (ThreadDeath e) {this.go = false;}
+										catch (Error e) {}
+									}
+									
+									this.inFreeingArea = false;
+									
+								}
+								else
+								{
+									this.inFreeingArea = false;
+									waitMonitor.wait(waitTime);
+								}
 							}
 						}
 					}
@@ -804,6 +868,10 @@ public class QueueWorker extends Thread
 			catch (Exception e) 
 			{
 				log(LogService.LOG_ERROR,"Exception while run QueueWorker",e);
+			}
+			catch (ThreadDeath e) 
+			{
+				this.go = false;
 			}
 			catch (Error e) 
 			{
@@ -852,7 +920,6 @@ public class QueueWorker extends Thread
 			{
 				return false;
 			}
-			
 			
 			// check timeOut and timeOutJob again to prevent working with values don't match
 			
@@ -1001,6 +1068,41 @@ public class QueueWorker extends Thread
 		}
 	}
 	
+	public QueueImpl getEventQueue()
+	{
+		return eventQueue;
+	}
+
+	protected boolean setEventQueue(QueueImpl eventQueue)
+	{
+		if(! this.go)
+		{
+			return false;
+		}
+		
+		if((eventQueue != null) && (this.eventQueue != null))
+		{
+			return false;
+		}
+		
+		if(! inFreeingArea)
+		{
+			return false;
+		}
+		
+		this.eventQueue = eventQueue;
+		if(this.eventQueue == null)
+		{
+			super.setName(QueueWorker.class.getSimpleName() + " IDLE");
+		}
+		else
+		{
+			super.setName(QueueWorker.class.getSimpleName() + " " + this.eventQueue.getQueueId());
+		}
+		
+		return true;
+	}
+
 	private void log(int logServiceLevel,String logMessage, Throwable e)
 	{
 		if(eventQueue != null)
@@ -1023,6 +1125,21 @@ public class QueueWorker extends Thread
 	public JobContainer getCurrentRunningJob()
 	{
 		return currentRunningJob;
+	}
+
+	public boolean isGo()
+	{
+		return go;
+	}
+
+	public long getSpoolTimeStamp()
+	{
+		return spoolTimeStamp;
+	}
+
+	public void setSpoolTimeStamp(long spoolTimeStamp)
+	{
+		this.spoolTimeStamp = spoolTimeStamp;
 	}
 	
 }
