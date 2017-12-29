@@ -57,7 +57,7 @@ public class QueuedEventImpl implements IQueuedEvent
 			{
 				if(this.propertyBlock == null)
 				{
-					this.propertyBlock =  new PropertyBlockImpl();
+					this.propertyBlock =  (PropertyBlockImpl)queue.getDispatcher().createPropertyBlock();
 					this.emptyKeyList = null;
 					this.emptyProperties = null;
 				}

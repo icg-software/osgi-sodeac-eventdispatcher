@@ -136,7 +136,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		this.workerPoolWriteLock = this.workerPoolLock.writeLock();
 		
 		this.serviceList = new ArrayList<ServiceContainer>();
-		this.metrics = new MetricImpl(this, new PropertyBlockImpl(),true);
+		this.metrics = new MetricImpl(this, new PropertyBlockImpl(this),true);
 	}
 	
 	@Override
@@ -1220,7 +1220,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	@Override
 	public IPropertyBlock createPropertyBlock()
 	{
-		return new PropertyBlockImpl();
+		return new PropertyBlockImpl(this);
 	}
 
 	public List<IEventDispatcherExtension> getEventDispatcherExtensionList()

@@ -94,10 +94,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		this.lastWorkerAction = System.currentTimeMillis();
 		
-		PropertyBlockImpl qualityValues = new PropertyBlockImpl();
+		PropertyBlockImpl qualityValues = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
 		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
 		this.metrics = new MetricImpl(this,qualityValues, null,enableMetrics);
-		this.propertyBlock = new PropertyBlockImpl();
+		this.propertyBlock = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
 		
 		this.metrics.registerGauge(new IGauge<Long>()
 		{
@@ -928,7 +928,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				jobContainer.setNamedJob(true);
 			}
 			
-			PropertyBlockImpl qualityValues = new PropertyBlockImpl();
+			PropertyBlockImpl qualityValues = (PropertyBlockImpl)this.getDispatcher().createPropertyBlock();
 			qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
 			
 			
@@ -936,7 +936,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			
 			if(propertyBlock == null)
 			{
-				propertyBlock = new PropertyBlockImpl();
+				propertyBlock = (PropertyBlockImpl)this.getDispatcher().createPropertyBlock();
 			}
 			
 			JobControlImpl jobControl = new JobControlImpl(propertyBlock);
