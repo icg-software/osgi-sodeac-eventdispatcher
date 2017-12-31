@@ -22,6 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -74,7 +75,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private SpooledQueueWorkerScheduler spooledQueueWorkerScheduler;
 	
 	private List<ControllerContainer> controllerList = null;
-	private List<ServiceContainer> serviceList = null;
+	private volatile List<ControllerContainer> controllerListCopy =  null;
+	private ReentrantLock controllerListLock =  null;
+	
+	private List<ServiceContainer> serviceList = null; 
+	private ReentrantLock serviceListListLock =  null;
 	
 	private String id = IEventDispatcher.DEFAULT_DISPATCHER_ID;
 	
@@ -92,15 +97,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private volatile MetricImpl metrics = null; 
 	
 	private List<IEventDispatcherExtension>  eventDispatcherExtensionList = null;
+	private ReentrantLock eventDispatcherExtensionLock = null;
 	private volatile List<IEventDispatcherExtension>  eventDispatcherExtensionListCopy = null;
 	
-	private Map<String,Long> queueIsMissingLogIndex = new HashMap<String,Long>();
+	private Map<String,Long> queueIsMissingLogIndex = null;
+	private ReentrantLock queueIsMissingLogIndexLock = null;
 	
 	private ExecutorService onJobTimeOutExecuterService = null;
 	private ExecutorService onJobStopExecuterService = null;
-	
-	
-	// TODO replace synchronized (controllerList/serviceList) by locks ? // unmodifiableList ??
 	
 	@Override
 	public String getId()
@@ -137,15 +141,22 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		this.queueIndexWriteLock = this.queueIndexLock.writeLock();
 		
 		this.controllerList = new ArrayList<ControllerContainer>();
+		this.controllerListCopy = Collections.unmodifiableList( new ArrayList<ControllerContainer>());
+		this.controllerListLock = new ReentrantLock();
 		this.eventDispatcherExtensionList = new ArrayList<IEventDispatcherExtension>();
 		this.eventDispatcherExtensionListCopy = Collections.unmodifiableList(new ArrayList<IEventDispatcherExtension>());
+		this.eventDispatcherExtensionLock = new ReentrantLock();
 		
 		this.workerPool = new ArrayList<QueueWorker>();
 		this.workerPoolLock = new ReentrantReadWriteLock(true);
 		this.workerPoolReadLock = this.workerPoolLock.readLock();
 		this.workerPoolWriteLock = this.workerPoolLock.writeLock();
 		
+		this.queueIsMissingLogIndex = new HashMap<String,Long>();
+		this.queueIsMissingLogIndexLock = new ReentrantLock();
+		
 		this.serviceList = new ArrayList<ServiceContainer>();
+		this.serviceListListLock = new ReentrantLock();
 		this.metrics = new MetricImpl(this, new PropertyBlockImpl(this),true);
 	}
 	
@@ -167,13 +178,18 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			
 			boolean log = false;
-			synchronized(this.queueIsMissingLogIndex)
+			this.queueIsMissingLogIndexLock.lock();
+			try
 			{
 				if(( this.queueIsMissingLogIndex.get(queueId) == null) || (this.queueIsMissingLogIndex.get(queueId).longValue() < (System.currentTimeMillis() - 60000L)))
 				{
 					log = true;
 					this.queueIsMissingLogIndex.put(queueId,System.currentTimeMillis());
 				}
+			}
+			finally 
+			{
+				this.queueIsMissingLogIndexLock.unlock();
 			}
 			if(log)
 			{
@@ -249,7 +265,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			this.id = properties.get(IEventDispatcher.PROPERTY_ID).toString();
 		}
 		
-		for(IEventDispatcherExtension eventDispatcherExtension : this.eventDispatcherExtensionList)
+		for(IEventDispatcherExtension eventDispatcherExtension : this.eventDispatcherExtensionListCopy)
 		{
 			try
 			{
@@ -285,7 +301,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		
 		
-		synchronized (this.controllerList)
+		controllerListLock.lock();
+		try
 		{
 			counterConfigurationSize = metrics.counter( IMetrics.METRICS_EVENT_CONTROLLER);
 			
@@ -293,6 +310,10 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				counterConfigurationSize.inc(this.controllerList.size());
 			}
+		}
+		finally 
+		{
+			controllerListLock.unlock();	
 		}
 		
 		this.onJobTimeOutExecuterService = Executors.newCachedThreadPool();
@@ -304,12 +325,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		this.spooledQueueWorkerScheduler = new SpooledQueueWorkerScheduler(this);
 		this.spooledQueueWorkerScheduler.start();
 		
-		List<ControllerContainer> controllerContainerCopy = null;
-		synchronized (this.controllerList)
-		{
-			controllerContainerCopy = new ArrayList<ControllerContainer>(this.controllerList);
-		}
-		for(ControllerContainer controllerContainer : controllerContainerCopy)
+		for(ControllerContainer controllerContainer : controllerListCopy)
 		{
 			try
 			{
@@ -355,12 +371,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
             reg.unregister();
 		}
 		
-		List<ControllerContainer> controllerContainerCopy = null;
-		synchronized (this.controllerList)
-		{
-			controllerContainerCopy = new ArrayList<ControllerContainer>(this.controllerList);
-		}
-		for(ControllerContainer controllerContainer : controllerContainerCopy)
+		for(ControllerContainer controllerContainer : controllerListCopy)
 		{
 			try
 			{
@@ -518,7 +529,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
 	public void bindEventDispatcherExtension(IEventDispatcherExtension eventDispatcherExtension)
 	{
-		synchronized (this.eventDispatcherExtensionList)
+		this.eventDispatcherExtensionLock.lock();
+		try
 		{
 			boolean alreadyConnected = false;
 			for(IEventDispatcherExtension extension : this.eventDispatcherExtensionList)
@@ -538,8 +550,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				return;
 			}
+			
+			this.registerDispatcherExtension(eventDispatcherExtension);
 		}
-		this.registerDispatcherExtension(eventDispatcherExtension);
+		finally 
+		{
+			this.eventDispatcherExtensionLock.unlock();
+		}
 	}
 	
 	public void registerDispatcherExtension(IEventDispatcherExtension eventDispatcherExtension)
@@ -549,17 +566,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			return;
 		}
 		
-		List<ControllerContainer> controllerListCopy = new ArrayList<ControllerContainer>();
-		List<QueueImpl> queueListCopy = new ArrayList<QueueImpl>();
+		List<QueueImpl> queueListCopy = new ArrayList<QueueImpl>(); // TODO ???
 		
-		synchronized (this.controllerList)
-		{
-			for (ControllerContainer controllerContainer :this.controllerList)
-			{
-				controllerListCopy.add(controllerContainer);
-			}
-		}
-			
 		this.queueIndexReadLock.lock();
 		try
 		{
@@ -592,9 +600,17 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 		
 		
-		for(ControllerContainer controllerContainer : controllerListCopy)
+		controllerListLock.lock();
+		try
 		{
-			eventDispatcherExtension.registerEventController(this,controllerContainer.getEventController(), controllerContainer.getProperties());
+			for(ControllerContainer controllerContainer : controllerList)
+			{
+				eventDispatcherExtension.registerEventController(this,controllerContainer.getEventController(), controllerContainer.getProperties());
+			}
+		}
+		finally 
+		{
+			controllerListLock.unlock();
 		}
 		
 		for(QueueImpl queue : queueListCopy)
@@ -606,29 +622,34 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 
 	public void unbindEventDispatcherExtension(IEventDispatcherExtension eventDispatcherExtension)
 	{
-		if(this.context != null)
+		this.eventDispatcherExtensionLock.lock();
+		try
 		{
-			try
+			if(this.context != null)
 			{
-				eventDispatcherExtension.unregisterEventDispatcher(this);
-			}
-			catch (Exception e) 
-			{
-				if(logService != null)
+				try
 				{
-					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on unregister dispatcher to extension", e);
+					eventDispatcherExtension.unregisterEventDispatcher(this);
 				}
-				else
+				catch (Exception e) 
 				{
-					System.err.println("Exception on unregister dispatcher to extension " + e.getMessage());
+					if(logService != null)
+					{
+						logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on unregister dispatcher to extension", e);
+					}
+					else
+					{
+						System.err.println("Exception on unregister dispatcher to extension " + e.getMessage());
+					}
 				}
 			}
-		}
-		
-		synchronized (this.eventDispatcherExtensionList)
-		{
+			
 			while(this.eventDispatcherExtensionList.remove(eventDispatcherExtension)) {}
 			this.eventDispatcherExtensionListCopy = Collections.unmodifiableList(new ArrayList<IEventDispatcherExtension>(this.eventDispatcherExtensionList));
+		}
+		finally 
+		{
+			this.eventDispatcherExtensionLock.unlock();
 		}
 	}
 	
@@ -644,38 +665,47 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			return;
 		}
-		synchronized (this.controllerList)
+		
+		controllerListLock.lock();
+		try
 		{
 			ControllerContainer controllerContainer = new ControllerContainer();
 			controllerContainer.setEventController(eventController);
 			controllerContainer.setProperties(properties);
 			
 			this.controllerList.add(controllerContainer);
+			this.controllerListCopy = Collections.unmodifiableList( new ArrayList<ControllerContainer>(this.controllerList));
 			
 			if(this.counterConfigurationSize != null)
 			{
 				this.counterConfigurationSize.inc();
 			}
+			
+			for(IEventDispatcherExtension extension : this.eventDispatcherExtensionListCopy)
+			{
+				try
+				{
+					extension.registerEventController(this,eventController, properties);
+				}
+				catch (Exception e) 
+				{
+					if(logService != null)
+					{
+						logService.log(context.getServiceReference(), LogService.LOG_ERROR, "register eventcontroller to extension", e);
+					}
+					else
+					{
+						System.err.println("Exception on register eventcontroller to extension" + e.getMessage());
+					}
+				}
+			}
+		}
+		finally 
+		{
+			controllerListLock.unlock();
 		}
 		
-		for(IEventDispatcherExtension extension : this.eventDispatcherExtensionListCopy)
-		{
-			try
-			{
-				extension.registerEventController(this,eventController, properties);
-			}
-			catch (Exception e) 
-			{
-				if(logService != null)
-				{
-					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "register eventcontroller to extension", e);
-				}
-				else
-				{
-					System.err.println("Exception on register eventcontroller to extension" + e.getMessage());
-				}
-			}
-		}
+		
 		
 		if(this.context != null)
 		{
@@ -806,7 +836,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			this.queueIndexReadLock.lock();
 			try
 			{
-				synchronized(this.serviceList)
+				serviceListListLock.lock();
+				try
 				{
 					for(ServiceContainer serviceContainer :  this.serviceList )
 					{
@@ -817,6 +848,10 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 						
 						queue.addService(serviceContainer.getQueueService(), serviceContainer.getProperties());
 					}
+				}
+				finally 
+				{
+					serviceListListLock.unlock();
 				}
 			}
 			finally 
@@ -874,7 +909,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	
 	public void unbindEventController(IEventController eventController,Map<String, ?> properties)
 	{
-		synchronized (this.controllerList)
+		this.controllerListLock.lock();
+		try
 		{
 			List<ControllerContainer> removeList = null;
 			for(ControllerContainer controllerContainer : this.controllerList)
@@ -900,7 +936,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					}
 				}
 			}
+			this.controllerListCopy = Collections.unmodifiableList( new ArrayList<ControllerContainer>(this.controllerList));
 		}
+		finally 
+		{
+			controllerListLock.unlock();
+		}
+		
 		if(this.context != null)
 		{
 			this.unregisterEventController(eventController);
@@ -1069,7 +1111,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			return;
 		}
-		synchronized (this.serviceList)
+		
+		serviceListListLock.lock();
+		try
 		{
 			ServiceContainer serviceContainer = new ServiceContainer();
 			serviceContainer.setQueueService(queueService);
@@ -1077,12 +1121,18 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			this.serviceList.add(serviceContainer);
 			
+			if(this.context != null)
+			{
+				registerQueueService(queueService, properties);
+			}
+			
+		}
+		finally 
+		{
+			serviceListListLock.unlock();
 		}
 		
-		if(this.context != null)
-		{
-			registerQueueService(queueService, properties);
-		}
+		
 	}
 	
 	private boolean registerQueueService(IQueueService queueService,Map<String, ?> properties)
@@ -1140,7 +1190,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	
 	public void unbindQueueService(IQueueService queueService,Map<String, ?> properties)
 	{
-		synchronized (this.serviceList)
+		this.serviceListListLock.lock();
+		try
 		{
 			List<ServiceContainer> removeList = null;
 			for(ServiceContainer serviceContainer : this.serviceList)
@@ -1161,11 +1212,18 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					this.serviceList.remove(serviceContainer);
 				}
 			}
+			
+			if(this.context != null)
+			{
+				this.unregisterQueueService(queueService);
+			}
 		}
-		if(this.context != null)
+		finally 
 		{
-			this.unregisterQueueService(queueService);
+			this.serviceListListLock.unlock();
 		}
+		
+		
 	}
 	
 	private boolean unregisterQueueService(IQueueService queueService)
