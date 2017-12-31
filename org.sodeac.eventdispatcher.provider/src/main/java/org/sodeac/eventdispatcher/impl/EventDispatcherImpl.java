@@ -1181,10 +1181,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet() )
 			{
-				if(entry.getValue().removeService(queueService))
-				{
-					// TODO setDone
-				}
+				entry.getValue().removeService(queueService);
 			}
 		}
 		finally 
