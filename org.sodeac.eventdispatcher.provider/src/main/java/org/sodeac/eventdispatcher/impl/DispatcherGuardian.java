@@ -345,11 +345,18 @@ public class DispatcherGuardian extends Thread
 					}
 				}
 			}
+			
+			if(notify)
+			{
+				try
+				{
+					waitMonitor.notify();
+				}
+				catch (Exception e) {}
+				catch (Error e) {}
+			}
 		}
-		if(notify)
-		{
-			this.notifyUpdate();
-		}
+		
 	}
 	
 	public void unregisterTimeOut(QueueImpl queue, JobContainer job)
@@ -370,20 +377,6 @@ public class DispatcherGuardian extends Thread
 		{
 			jobTimeOutIndexWriteLock.unlock();
 		}
-	}
-	
-	private void notifyUpdate()
-	{
-		try
-		{
-			synchronized (this.waitMonitor)
-			{
-				this.isUpdateNotified = true;
-				waitMonitor.notify();
-			}	
-		}
-		catch (Exception e) {}
-		catch (Error e) {}
 	}
 	
 	public void stopGuardian()
