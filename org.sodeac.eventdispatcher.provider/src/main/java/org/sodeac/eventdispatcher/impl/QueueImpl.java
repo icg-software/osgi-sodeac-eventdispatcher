@@ -600,30 +600,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 	
 	public boolean removeService(IQueueService eventQueueService)
-	{
-		jobListReadLock.lock();
-		try
-		{
-			for(Entry<String,JobContainer> jobContainerEntry : this.jobIndex.entrySet())
-			{
-				try
-				{
-					if(jobContainerEntry.getValue().getJob() == eventQueueService)
-					{
-						jobContainerEntry.getValue().getJobControl().setDone();
-					}
-				}
-				catch (Exception e) 
-				{
-					log(LogService.LOG_ERROR, "set queue service done", e);
-				}
-			}
-		}
-		finally 
-		{
-			jobListReadLock.unlock();
-		}
-		
+	{	
 		serviceListWriteLock.lock();
 		try
 		{
@@ -640,7 +617,34 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				this.serviceList.remove(toDelete);
 			}
 			this.serviceListCopy = null;
-			return toDeleteList.size() > 0;
+			
+			if(! toDeleteList.isEmpty())
+			{
+				jobListReadLock.lock();
+				try
+				{
+					for(Entry<String,JobContainer> jobContainerEntry : this.jobIndex.entrySet())
+					{
+						try
+						{
+							if(jobContainerEntry.getValue().getJob() == eventQueueService)
+							{
+								jobContainerEntry.getValue().getJobControl().setDone();
+							}
+						}
+						catch (Exception e) 
+						{
+							log(LogService.LOG_ERROR, "set queue service done", e);
+						}
+					}
+				}
+				finally 
+				{
+					jobListReadLock.unlock();
+				}
+				return true;
+			}
+			return false;
 		}
 		finally 
 		{
