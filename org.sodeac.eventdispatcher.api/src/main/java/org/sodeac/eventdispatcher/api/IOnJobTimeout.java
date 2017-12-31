@@ -20,9 +20,9 @@ package org.sodeac.eventdispatcher.api;
 public interface IOnJobTimeout extends IEventController
 {
 	/**
-	 * This is fired, if {@link IQueueJob} runs in timeout
+	 * This is fired, if {@link IQueueJob} runs in timeout.
 	 * <br>
-	 * invoked by new thread
+	 * Attention! This call is not synchronized by worker thread!
 	 * 
 	 * @param job runs in timeout
 	 */

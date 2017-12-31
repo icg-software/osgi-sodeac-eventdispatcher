@@ -36,6 +36,8 @@ import org.sodeac.eventdispatcher.itest.components.base.BaseReCreateWorkerTestCo
 import org.sodeac.eventdispatcher.itest.components.base.BaseReScheduleTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseServiceTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTestController;
+import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutAndStop1TestController;
+import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutAndStop2TestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutTestController;
 
 
@@ -281,12 +283,184 @@ public class BaseContainerTest extends AbstractTest
 		tracingEventPosition++;
 		
 		assertTrue("Timeout Handling should be invoked after  " + BaseTimeoutTestController.TIMEOUT_VALUE + " (+/- 100 ms). Actual: " + (timeoutTimeStamp - schedulingTimeStamp) , super.checkTimeMeasure(BaseTimeoutTestController.TIMEOUT_VALUE, timeoutTimeStamp - schedulingTimeStamp, 100, -1) );
-		System.out.println("[INFO] Definied timeout for timeoutDelayTest: " + BaseTimeoutTestController.TIMEOUT_VALUE + " ms / measured timeouthandling on runtime: " + (timeoutTimeStamp - schedulingTimeStamp) + " ms");
+		System.out.println("[INFO] Definied timeout for timeoutTest: " + BaseTimeoutTestController.TIMEOUT_VALUE + " ms / measured timeouthandling on runtime: " + (timeoutTimeStamp - schedulingTimeStamp) + " ms");
+		
+	}
+	
+	@Test(timeout=7000 + BaseTimeoutAndStop1TestController.SLEEP_VALUE)
+	public void test04TimeoutWithStopDispatcherWorkflow() 
+	{
+		IQueue queue = this.eventDispatcher.getQueue(BaseTimeoutAndStop1TestController.QUEUE_ID);
+		assertNotNull("queue should not be null" ,queue);
+		
+		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		assertNotNull("tracingObject should not be null" ,tracingObject);
+		
+		int tracingEventPosition = 0;
+		CountDownLatch latch = new CountDownLatch(1);
+		
+		Map<String,Object> eventProperties = new HashMap<String,Object>();
+		eventProperties.put(BaseTimeoutAndStop1TestController.EVENT_PROPERTY_LATCH, latch);
+		Event event =  new Event(BaseTimeoutAndStop1TestController.SCHEDULE_EVENT,eventProperties);
+		eventAdmin.sendEvent(event);
+		
+		try
+		{
+			latch.await(5 + (BaseTimeoutAndStop1TestController.SLEEP_VALUE  / 1000), TimeUnit.SECONDS);
+		}
+		catch (Exception e) {}
+		
+		try
+		{
+			Thread.sleep(2000);
+		}
+		catch (Exception e) {}
+		
+		// 1. Queue Observe
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		// 2. Schedule Event
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_EVENT_SCHEDULED, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		long schedulingTimeStamp = tracingObject.getTracingEventList().get(tracingEventPosition).getTimestamp();
+		tracingEventPosition++;
+		
+		
+		//  3. Job TimeOut
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Job TimeOut",TracingEvent.ON_JOB_TIMEOUT, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		long timeoutTimeStamp = tracingObject.getTracingEventList().get(tracingEventPosition).getTimestamp();
+		tracingEventPosition++;
+		
+		//  4. Signal Interrupt
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		String signal = tracingObject.getTracingEventList().get(tracingEventPosition).getSignal();
+		assertEquals("Expect Event scheduled","INTERRUPT",signal);
+		tracingEventPosition++;
+		
+		//  5. Signal Thread Death
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		signal = tracingObject.getTracingEventList().get(tracingEventPosition).getSignal();
+		assertEquals("Expect Event scheduled","THREAD_DEATH",signal);
+		tracingEventPosition++;
+		
+		assertFalse("tracingEventLists should contains no more items " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		
+		
+		assertTrue("Timeout Handling should be invoked after  " + BaseTimeoutAndStop1TestController.TIMEOUT_VALUE + " (+/- 100 ms). Actual: " + (timeoutTimeStamp - schedulingTimeStamp) , super.checkTimeMeasure(BaseTimeoutAndStop1TestController.TIMEOUT_VALUE, timeoutTimeStamp - schedulingTimeStamp, 100, -1) );
+		System.out.println("[INFO] Definied timeout for timeoutAndStop1Test: " + BaseTimeoutAndStop1TestController.TIMEOUT_VALUE + " ms / measured timeouthandling on runtime: " + (timeoutTimeStamp - schedulingTimeStamp) + " ms");
+		
+	}
+	
+	@Test(timeout=7000 + BaseTimeoutAndStop2TestController.SLEEP_VALUE)
+	public void test05TimeoutTimeoutWithStopAndMoreLifetimeDispatcherWorkflow() 
+	{
+		IQueue queue = this.eventDispatcher.getQueue(BaseTimeoutAndStop2TestController.QUEUE_ID);
+		assertNotNull("queue should not be null" ,queue);
+		
+		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		assertNotNull("tracingObject should not be null" ,tracingObject);
+		
+		int tracingEventPosition = 0;
+		CountDownLatch latch = new CountDownLatch(1);
+		
+		Map<String,Object> eventProperties = new HashMap<String,Object>();
+		eventProperties.put(BaseTimeoutAndStop2TestController.EVENT_PROPERTY_LATCH, latch);
+		Event event =  new Event(BaseTimeoutAndStop2TestController.SCHEDULE_EVENT,eventProperties);
+		eventAdmin.sendEvent(event);
+		
+		try
+		{
+			latch.await(5 + (BaseTimeoutAndStop2TestController.SLEEP_VALUE  / 1000), TimeUnit.SECONDS);
+		}
+		catch (Exception e) {}
+		
+		try
+		{
+			Thread.sleep(2000);
+		}
+		catch (Exception e) {}
+		
+		// 1. Queue Observe
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		// 2. Schedule Event
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_EVENT_SCHEDULED, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		long schedulingTimeStamp = tracingObject.getTracingEventList().get(tracingEventPosition).getTimestamp();
+		tracingEventPosition++;
+		
+		
+		//  3. Job TimeOut
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Job TimeOut",TracingEvent.ON_JOB_TIMEOUT, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		long timeoutTimeStamp = tracingObject.getTracingEventList().get(tracingEventPosition).getTimestamp();
+		tracingEventPosition++;
+		
+		//  4. Signal More Time 0
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		String signal = tracingObject.getTracingEventList().get(tracingEventPosition).getSignal();
+		assertEquals("Expect Event scheduled","MORE_LIFE_TIME_0",signal);
+		tracingEventPosition++;
+
+		//  5. Signal More Time 0
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		signal = tracingObject.getTracingEventList().get(tracingEventPosition).getSignal();
+		assertEquals("Expect Event scheduled","MORE_LIFE_TIME_1",signal);
+		tracingEventPosition++;
+		
+		//  6. Signal More Time 0
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		signal = tracingObject.getTracingEventList().get(tracingEventPosition).getSignal();
+		assertEquals("Expect Event scheduled","MORE_LIFE_TIME_2",signal);
+		tracingEventPosition++;
+		
+		//  7. Signal Interrupt
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		signal = tracingObject.getTracingEventList().get(tracingEventPosition).getSignal();
+		assertEquals("Expect Event scheduled","INTERRUPT",signal);
+		tracingEventPosition++;
+		
+		//  8. Signal Thread Death
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		signal = tracingObject.getTracingEventList().get(tracingEventPosition).getSignal();
+		assertEquals("Expect Event scheduled","THREAD_DEATH",signal);
+		tracingEventPosition++;
+		
+		assertFalse("tracingEventLists should contains no more items " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		
+		
+		assertTrue("Timeout Handling should be invoked after  " + BaseTimeoutAndStop2TestController.TIMEOUT_VALUE + " (+/- 100 ms). Actual: " + (timeoutTimeStamp - schedulingTimeStamp) , super.checkTimeMeasure(BaseTimeoutAndStop2TestController.TIMEOUT_VALUE, timeoutTimeStamp - schedulingTimeStamp, 100, -1) );
+		System.out.println("[INFO] Definied timeout for timeoutAndStop2Test: " + BaseTimeoutAndStop2TestController.TIMEOUT_VALUE + " ms / measured timeouthandling on runtime: " + (timeoutTimeStamp - schedulingTimeStamp) + " ms");
 		
 	}
 	
 	@Test(timeout=60000)
-	public void test04SimpleHearbeatTimeoutDispatcherWorkflow() 
+	public void test06SimpleHearbeatTimeoutDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseHeartbeatTimeoutTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -338,7 +512,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=25000)
-	public void test05RecreateWorkerDispatcherWorkflow() 
+	public void test07RecreateWorkerDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReCreateWorkerTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -471,7 +645,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000)
-	public void test06SimpleExceptionDispatcherWorkflow() 
+	public void test08SimpleExceptionDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseExceptionTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -513,7 +687,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=10000)
-	public void test07SimpleReScheduleDispatcherWorkflow1() 
+	public void test09SimpleReScheduleDispatcherWorkflow1() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReScheduleTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -594,7 +768,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=10000)
-	public void test08SimpleReScheduleDispatcherWorkflow2() 
+	public void test10SimpleReScheduleDispatcherWorkflow2() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReScheduleTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -670,7 +844,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=12000)
-	public void test09GetJobDispatcherWorkflow() 
+	public void test11GetJobDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseGetJobTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -762,7 +936,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=10000)
-	public void test10PropertyBlockDispatcherWorkflow() 
+	public void test12PropertyBlockDispatcherWorkflow() 
 	{
 		IPropertyBlock propertyBlock = this.eventDispatcher.createPropertyBlock();
 		
@@ -840,7 +1014,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=13000)
-	public void test11FilterDispatcherWorkflow() throws InvalidSyntaxException 
+	public void test13FilterDispatcherWorkflow() throws InvalidSyntaxException 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseFilterTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1135,7 +1309,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=13000)
-	public void test12PeriodicJob() throws Exception 
+	public void test14PeriodicJob() throws Exception 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BasePeriodicJobTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1199,7 +1373,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=12000)
-	public void test13GetJobDispatcherWorkflow() throws InterruptedException 
+	public void test15GetJobDispatcherWorkflow() throws InterruptedException 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseServiceTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1286,7 +1460,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000 )
-	public void test14SimpleRegistrationForEventDispatcherWorkflow() 
+	public void test16SimpleRegistrationForEventDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseDelayedTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);

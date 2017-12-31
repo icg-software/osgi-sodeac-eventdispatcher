@@ -21,7 +21,9 @@ public interface IOnRemoveEvent extends IEventController
 {
 	/**
 	 * This methode is fired, if {@link IEventController} remove a scheduled {@link IQueuedEvent}
-	 * 
+	 * <br>
+	 * invoked and synchronized by queue worker
+	 *  
 	 * @param event removed event
 	 */
 	public void onRemoveEvent(IQueuedEvent event);

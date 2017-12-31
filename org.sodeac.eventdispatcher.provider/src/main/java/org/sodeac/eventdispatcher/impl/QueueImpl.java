@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -852,6 +853,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public String scheduleJob(String id, IQueueJob job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut )
 	{
+		return scheduleJob(id,job, propertyBlock, executionTimeStamp, timeOutValue, heartBeatTimeOut, false);
+	}
+	
+	@Override
+	public String scheduleJob(String id, IQueueJob job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut, boolean stopOnTimeOut )
+	{
 
 		JobContainer jobContainer = null;
 		
@@ -952,6 +959,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				jobControl.setTimeOut(timeOutValue);
 			}
+			
+			jobControl.setStopOnTimeOutFlag(stopOnTimeOut);
 			
 			propertyBlock.setProperty(IQueueJob.PROPERTY_KEY_JOB_ID, id);
 			
@@ -1473,21 +1482,33 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		boolean timeOut = false;
 		if(worker != null)
 		{
-			timeOut = worker.checkTimeOut();
-			if(timeOut)
+			AtomicBoolean stopJob = new AtomicBoolean(false);
+			try
 			{
-				this.workerSpoolLock.lock();
-				try
+				timeOut = worker.checkTimeOut(stopJob);
+				if(timeOut)
 				{
-					if(worker == this.queueWorker)
+					this.workerSpoolLock.lock();
+					try
 					{
-						this.queueWorker = null;
+						if(worker == this.queueWorker)
+						{
+							this.queueWorker = null;
+						}
+					}
+					finally 
+					{
+						this.workerSpoolLock.unlock();
 					}
 				}
-				finally 
-				{
-					this.workerSpoolLock.unlock();
-				}
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"check worker timeout",e);
+			}
+			catch (Error e) 
+			{
+				log(LogService.LOG_ERROR,"check worker timeout",e);
 			}
 		}
 		return timeOut;
@@ -1688,7 +1709,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		boolean notify = false;
 		QueueWorker worker = null;
 		
-		this.workerSpoolLock.lock(); //genericQueueSpoolLock
+		this.workerSpoolLock.lock();
 		
 		try
 		{
@@ -1768,6 +1789,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 		
 		if(this.privateWorker)
+		{
+			return false;
+		}
+		
+		if(! worker.isGo())
 		{
 			return false;
 		}

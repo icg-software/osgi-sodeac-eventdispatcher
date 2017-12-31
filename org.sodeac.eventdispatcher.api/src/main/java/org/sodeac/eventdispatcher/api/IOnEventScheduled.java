@@ -22,7 +22,7 @@ public interface IOnEventScheduled extends IEventController
 	/**
 	 * This is fired, if {@link IEventController} schedule a new {@link org.osgi.service.event.Event}.
 	 * <br>
-	 * invoked by queueworker
+	 * invoked and synchronized by queue worker
 	 * 
 	 * @param event new scheduled event, contains {@link org.osgi.service.event.Event}
 	 */

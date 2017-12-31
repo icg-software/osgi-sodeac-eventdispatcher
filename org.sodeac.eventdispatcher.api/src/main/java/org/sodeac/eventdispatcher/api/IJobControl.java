@@ -95,13 +95,27 @@ public interface IJobControl
 	 */
 	public boolean isInTimeOut();
 	
-	// TODO
-	/*
-	 * in moment, ignore this methode
+	/**
+	 * setter for stopOnTimeout flag
 	 * 
-	 * @return false
+	 * If a job runs in a timeout, the worker is no longer in use, but normally continuing running to finish the runMethode. 
+	 * A long running job should ask for timeout by invoking isInTimeOut() periodically to clean up and skip continuing. 
+	 * But, if worker is blocked by network operation for example, the guardian can stop worker thread by setting  stopOnTimeoutFlag true. 
+	 * 
+	 * Attention !!! You should be familiar with all things can happens by stopping a thread. You can handle some issues if {@link IQueueJob} implements {@link IOnJobStop} 
+	 * 
+	 * 
+	 * @param stopOnTimeoutFlag new stopOnTimeoutFlag value
+	 * 
+	 * @return old stopOnTimeout value
 	 */
-	/*public boolean stopOnTimeOut();*/
+	public boolean setStopOnTimeOutFlag(boolean stopOnTimeoutFlag);
 
+	/**
+	 * getter for stopOnTimeout flag
+	 * 
+	 * @return stopOnTimeout flag
+	 */
+	public boolean getStopOnTimeOutFlag();
 
 }

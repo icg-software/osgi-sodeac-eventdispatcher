@@ -24,7 +24,7 @@ public interface IOnFireEvent extends IEventController
 	/**
 	 * This is fired, if {@link IQueue} sends / posts  a new {@link org.osgi.service.event.Event}
 	 * <br>
-	 * invoked by queueworker
+	 * invoked and synchronized by queue worker
 	 * 
 	 * @param event new fired {@link org.osgi.service.event.Event}
 	 * @param queue fire by {@link IQueue}

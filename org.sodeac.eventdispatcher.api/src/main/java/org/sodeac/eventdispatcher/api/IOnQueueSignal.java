@@ -22,7 +22,7 @@ public interface IOnQueueSignal extends IEventController
 	/**
 	 * This is fired, if a signal is fired for on a queue
 	 * <br>
-	 * invoked by queueworker
+	 *  invoked and synchronized by queue worker
 	 * 
 	 * @param queue parent queue
 	 * @param signal fired signal

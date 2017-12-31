@@ -22,7 +22,7 @@ public interface IOnJobDone extends IEventController
 	/**
 	 * This is fired, if {@link IQueueJob} remove a scheduled {@link IQueuedEvent}
 	 * <br>
-	 * invoked by queueworker
+	 * invoked and synchronized by queue worker
 	 * 
 	 * @param job finished {@link IQueueJob}
 	 */

@@ -11,20 +11,23 @@
 package org.sodeac.eventdispatcher.api;
 
 /**
- * 
- * An extension interface for {@link IEventController} to consume notifications if instance of {@link IEventController} begins to observe a {@link IQueue}
+ * wrapper object for worker thread 
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnQueueObserve extends IEventController
+public interface IQueueWorker
 {
+
 	/**
-	 * This is fired, if {@link IEventController} starts to observe a {@link IQueue}
-	 * <br>
-	 * invoked and synchronized by queue worker
-	 * 
-	 * @param queue is linked with {@link IEventController}
+	 * invoke {@link java.lang.Thread#interrupt()}  on worker thread
 	 */
-	public void onQueueObserve(IQueue queue);
+	public void interrupt();
+	
+	/**
+	 * get {@link IQueue} for which the worker works
+	 * 
+	 * @return queue for which the worker works
+	 */
+	public IQueue getQueue();
 }

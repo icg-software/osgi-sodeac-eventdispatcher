@@ -22,7 +22,7 @@ public interface IOnJobError extends IEventController
 	/**
 	 * This methode is fired, if {@link IQueueJob} throws an exception
 	 * <br>
-	 * invoked by queueworker
+	 * invoked and synchronized by queue worker
 	 * 
 	 * @param job job which throws the exception
 	 * @param exception throwed exception

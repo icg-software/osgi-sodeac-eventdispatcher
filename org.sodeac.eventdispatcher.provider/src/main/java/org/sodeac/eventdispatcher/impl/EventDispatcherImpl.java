@@ -18,6 +18,10 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -36,10 +40,13 @@ import org.osgi.service.event.EventAdmin;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IMetrics;
+import org.sodeac.eventdispatcher.api.IOnJobStop;
+import org.sodeac.eventdispatcher.api.IOnJobTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
+import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
@@ -88,6 +95,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private volatile List<IEventDispatcherExtension>  eventDispatcherExtensionListCopy = null;
 	
 	private Map<String,Long> queueIsMissingLogIndex = new HashMap<String,Long>();
+	
+	private ExecutorService onJobTimeOutExecuterService = null;
+	private ExecutorService onJobStopExecuterService = null;
 	
 	
 	// TODO replace synchronized (controllerList/serviceList) by locks ? // unmodifiableList ??
@@ -284,6 +294,10 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				counterConfigurationSize.inc(this.controllerList.size());
 			}
 		}
+		
+		this.onJobTimeOutExecuterService = Executors.newCachedThreadPool();
+		this.onJobStopExecuterService = Executors.newCachedThreadPool();
+		
 		this.dispatcherGuardian = new DispatcherGuardian(this);
 		this.dispatcherGuardian.start();
 		
@@ -483,6 +497,20 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			this.workerPoolWriteLock.unlock();
 		}
+		
+		try
+		{
+			this.onJobTimeOutExecuterService.shutdown();
+			this.onJobTimeOutExecuterService.awaitTermination(3, TimeUnit.SECONDS);
+		}
+		catch (Exception e) {}
+		
+		try
+		{
+			this.onJobStopExecuterService.shutdown();
+			this.onJobStopExecuterService.awaitTermination(3, TimeUnit.SECONDS);
+		}
+		catch (Exception e) {}
 		
 		this.context = null;
 	}
@@ -1333,5 +1361,93 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	protected SpooledQueueWorker scheduleQueueWorker(QueueImpl queue, long wakeUpTime)
 	{
 		return this.spooledQueueWorkerScheduler.scheduleQueueWorker(queue, wakeUpTime);
+	}
+	
+	public void executeOnJobTimeOut(IOnJobTimeout controller, IQueueJob job)
+	{
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		
+		this.onJobTimeOutExecuterService.execute(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					controller.onJobTimeout(job);
+				}
+				catch (Exception e) {}
+				countDownLatch.countDown();
+			}
+		});
+		
+		try
+		{
+			countDownLatch.await(7, TimeUnit.SECONDS);
+		}
+		catch (Exception ie) {}
+	}
+	
+	public void executeOnJobStopExecuter(QueueWorker worker, IQueueJob job)
+	{
+		this.onJobStopExecuterService.execute(new Runnable()
+		{
+			@Override
+			@SuppressWarnings("deprecation")
+			public void run()
+			{
+				if(worker.isAlive())
+				{
+					if(job instanceof IOnJobStop)
+					{
+						long number = 0L;
+						long moreTimeUntilNow = 0L;
+						long moreTime;
+						
+						while(worker.isAlive() && ((moreTime = ((IOnJobStop)job).requestForMoreLifeTime(number, moreTimeUntilNow, worker.getWorkerWrapper())) > 0) )
+						{
+							try
+							{
+								Thread.sleep(moreTime);
+							}
+							catch (Exception e) {}
+							catch (Error e) {}
+							number++;
+							moreTimeUntilNow += moreTime;
+						}
+					}
+					
+				}
+				
+				if(worker.isAlive())
+				{
+					try
+					{
+						worker.interrupt();
+					}
+					catch (Exception e) {}
+					catch (Error e) {}
+					
+					try
+					{
+						Thread.sleep(13);
+					}
+					catch (Exception e) {}
+					catch (Error e) {}
+					
+					if(worker.isAlive())
+					{
+					
+						try
+						{
+							log(LogService.LOG_WARNING,"stop worker " + worker.getName(),null);
+							worker.stop();
+						}
+						catch (Exception e) {log(LogService.LOG_WARNING,"stop worker " + worker.getName(),e);}
+						catch (Error e) {log(LogService.LOG_WARNING,"stop worker " + worker.getName(),e);}
+					}
+				}
+			}
+		});
 	}
 }

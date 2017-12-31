@@ -22,6 +22,7 @@ public class JobControlImpl implements IJobControl
 	private volatile long timeOutValue = IQueueJob.DEFAULT_TIMEOUT;
 	private volatile long heartBeatTimeOut = -1;
 	
+	private volatile boolean stopJobOnTimeout = false;
 	private volatile boolean inRun = false;
 	
 	
@@ -131,16 +132,23 @@ public class JobControlImpl implements IJobControl
 		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
 		return old;
 	}
-	
-	//@Override
-	public boolean stopOnTimeOut()
-	{
-		return false;
-	}
 
 	@Override
 	public boolean isDone()
 	{
 		return this.done;
+	}
+
+	@Override
+	public boolean setStopOnTimeOutFlag(boolean value)
+	{
+		boolean oldValue = this.stopJobOnTimeout;
+		this.stopJobOnTimeout = value;
+		return oldValue;
+	}
+	
+	public boolean getStopOnTimeOutFlag()
+	{
+		return this.stopJobOnTimeout;
 	}
 }

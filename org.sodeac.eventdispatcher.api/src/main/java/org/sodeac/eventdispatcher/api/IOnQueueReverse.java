@@ -21,6 +21,8 @@ public interface IOnQueueReverse extends IEventController
 {
 	/**
 	 * This is fired, if {@link IEventController} stops to observe a {@link IQueue}
+	 * <br>
+	 * Attention! This call is not synchronized by worker thread!
 	 * 
 	 * @param queue is unlinked from {@link IEventController}
 	 */

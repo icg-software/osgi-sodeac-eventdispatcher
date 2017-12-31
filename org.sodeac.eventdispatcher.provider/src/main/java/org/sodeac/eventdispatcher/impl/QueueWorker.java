@@ -12,8 +12,7 @@ package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.osgi.service.event.Event;
 import org.osgi.service.log.LogService;
@@ -29,6 +28,7 @@ import org.sodeac.eventdispatcher.api.IOnEventScheduled;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
+import org.sodeac.eventdispatcher.api.IQueueWorker;
 import org.sodeac.eventdispatcher.api.ITimer;
 
 public class QueueWorker extends Thread
@@ -41,6 +41,7 @@ public class QueueWorker extends Thread
 	private long spoolTimeStamp = 0;
 	
 	private QueueImpl eventQueue = null;
+	private IQueueWorker workerWrapper = null;
 	private volatile boolean go = true;
 	private volatile boolean isUpdateNotified = false;
 	private volatile Object waitMonitor = new Object();
@@ -61,6 +62,7 @@ public class QueueWorker extends Thread
 	{
 		super();
 		this.eventQueue = impl;
+		this.workerWrapper = new QueueWorkerWrapper(this);
 		this.dueJobList = new ArrayList<JobContainer>();
 		this.newScheduledList = new ArrayList<QueuedEventImpl>();
 		this.removedEventList = new ArrayList<QueuedEventImpl>();
@@ -445,10 +447,18 @@ public class QueueWorker extends Thread
 										this.log(LogService.LOG_ERROR, "eventQueue.getEventDispatcher().unregisterTimeOut(this.eventQueue,dueJob)", e);
 									}
 								}
+								if(! go)
+								{
+									return;
+								}
 							}
 							catch (Exception e) 
 							{
-								this.currentRunningJob.getPropertyBlock().setProperty(IQueueJob.PROPERTY_KEY_THROWED_EXCEPTION, e);
+								JobContainer runningJob = this.currentRunningJob;
+								this.currentTimeOutTimeStamp = null;
+								this.currentRunningJob = null;
+								
+								runningJob.getPropertyBlock().setProperty(IQueueJob.PROPERTY_KEY_THROWED_EXCEPTION, e);
 								log(LogService.LOG_ERROR,"Exception while process job " + dueJob,e);
 								if(timerContextJob != null)
 								{
@@ -478,53 +488,52 @@ public class QueueWorker extends Thread
 								catch (Exception e2) {}
 								
 								dueJob.getJobControl().postRun();
-								this.currentTimeOutTimeStamp = null;
-								this.currentRunningJob = null;
 								if(jobTimeOut)
 								{
 									this.eventQueue.getEventDispatcher().unregisterTimeOut(this.eventQueue,dueJob);
 								}
 								
-								CountDownLatch countDownLatch = new CountDownLatch(1);
+								if(! (dueJob.getJob() instanceof IQueueService))
+								{
+									dueJob.getJobControl().setDone();
+								}
+								
+								if(! go)
+								{
+									return;
+								}
 								
 								try
 								{
-									if(! (dueJob.getJob() instanceof IQueueService))
+									for(ControllerContainer conf : eventQueue.getConfigurationList())
 									{
-										dueJob.getJobControl().setDone();
-									}
-									new Thread()
-									{
-										public void run()
+										if(conf.getEventController() instanceof IOnJobError)
 										{
-											for(ControllerContainer conf : eventQueue.getConfigurationList())
+											try
 											{
-												if(conf.getEventController() instanceof IOnJobError)
-												{
-													try
-													{
-														((IOnJobError)conf.getEventController()).onJobError(dueJob.getJob(),  e);
-													}
-													catch (Exception e) {}
-												}
+												((IOnJobError)conf.getEventController()).onJobError(dueJob.getJob(),  e);
 											}
-											
-											countDownLatch.countDown();
+											catch (Exception ie) 
+											{
+												log(LogService.LOG_ERROR,"Error while process onJobError " + dueJob,ie);
+											}
 										}
-									}.start();
+									}
 								}
-								catch (Exception ie) {}
-								
-								try
+								catch (Exception ie) 
 								{
-									countDownLatch.await(13, TimeUnit.SECONDS);
+									log(LogService.LOG_ERROR,"Error while process onJobError " + dueJob,ie);
 								}
-								catch (Exception ie) {}
+				
 							}
 							catch (Error e) 
 							{
+								JobContainer runningJob = this.currentRunningJob;
+								this.currentTimeOutTimeStamp = null;
+								this.currentRunningJob = null;
+								
 								Exception exc = new Exception(e.getMessage(),e);
-								this.currentRunningJob.getPropertyBlock().setProperty(IQueueJob.PROPERTY_KEY_THROWED_EXCEPTION, exc);
+								runningJob.getPropertyBlock().setProperty(IQueueJob.PROPERTY_KEY_THROWED_EXCEPTION, exc);
 								log(LogService.LOG_ERROR,"Error while process job " + dueJob,e);
 								if(timerContextJob != null)
 								{
@@ -554,50 +563,57 @@ public class QueueWorker extends Thread
 								catch (Exception e2) {}
 								
 								dueJob.getJobControl().postRun();
-								this.currentTimeOutTimeStamp = null;
-								this.currentRunningJob = null;
 								if(jobTimeOut)
 								{
 									this.eventQueue.getEventDispatcher().unregisterTimeOut(this.eventQueue,dueJob);
 								}
-								CountDownLatch countDownLatch = new CountDownLatch(1);
+								
+								if(! (dueJob.getJob() instanceof IQueueService))
+								{
+									dueJob.getJobControl().setDone();
+								}
+								
+								if(e instanceof ThreadDeath)
+								{
+									go = false;
+								}
+								
+								if(! go)
+								{
+									return;
+								}
 								
 								try
 								{
-									if(! (dueJob.getJob() instanceof IQueueService))
+									for(ControllerContainer conf : eventQueue.getConfigurationList())
 									{
-										dueJob.getJobControl().setDone();
-									}
-									new Thread()
-									{
-										public void run()
+										if(conf.getEventController() instanceof IOnJobError)
 										{
-											for(ControllerContainer conf : eventQueue.getConfigurationList())
+											try
 											{
-												if(conf.getEventController() instanceof IOnJobError)
-												{
-													try
-													{
-														((IOnJobError)conf.getEventController()).onJobError(dueJob.getJob(),  new Exception(exc));
-													}
-													catch (Exception e) {}
-												}
+												((IOnJobError)conf.getEventController()).onJobError(dueJob.getJob(),  new Exception(exc));
 											}
-											
-											countDownLatch.countDown();
+											catch (Exception ie) 
+											{
+												log(LogService.LOG_ERROR,"Error while process onJobError " + dueJob,ie);
+											}
 										}
-									}.start();
+									}
 								}
-								catch (Exception ie) {}
-								
-								try
+								catch (Exception ie) 
 								{
-									countDownLatch.await(13, TimeUnit.SECONDS);
+									log(LogService.LOG_ERROR,"Error while process onJobError " + dueJob,ie);
 								}
-								catch (Exception ie) {}
+								
 							}
 							
 							this.currentTimeOutTimeStamp = null;
+							this.currentRunningJob = null;
+							
+							if(! go)
+							{
+								return;
+							}
 							
 							try
 							{
@@ -881,7 +897,7 @@ public class QueueWorker extends Thread
 		}		
 	}
 	
-	public boolean checkTimeOut()
+	public boolean checkTimeOut(AtomicBoolean stop)
 	{
 		JobContainer timeOutJob = this.currentRunningJob;
 		if(timeOutJob == null)
@@ -939,7 +955,7 @@ public class QueueWorker extends Thread
 			}
 		}
 		
-		this.stopWorker();
+		this.go = false;
 		
 		try
 		{
@@ -960,53 +976,30 @@ public class QueueWorker extends Thread
 			{
 				if(conf.getEventController() instanceof IOnJobTimeout)
 				{
-					new Thread()
-					{
-						public void run()
-						{
-							((IOnJobTimeout)conf.getEventController()).onJobTimeout(timeOutJob.getJob());
-						}
-					}.start();
+					((EventDispatcherImpl)eventQueue.getDispatcher()).executeOnJobTimeOut((IOnJobTimeout)conf.getEventController(), timeOutJob.getJob());
 				}
 			}
 			catch (Exception e) {}
 		}
 		
-		if(timeOutJob.getJobControl().stopOnTimeOut())
+		if(timeOutJob.getJobControl().getStopOnTimeOutFlag())
 		{
 			if(Thread.currentThread() != this)
 			{
-				new Thread()
+				try
 				{
-					@SuppressWarnings("deprecation")
-					public void run()
-					{
-						if(QueueWorker.this.isAlive())
-						{
-							try
-							{
-								Thread.sleep(1080); // TODO give chance API
-							}
-							catch (Exception e) {}
-							catch (Error e) {}
-						}
-						
-						if(QueueWorker.this.isAlive())
-						{
-							try
-							{
-								synchronized (QueueWorker.this.waitMonitor)
-								{
-									QueueWorker.this.stop();
-								}
-							}
-							catch (Exception e) {}
-							catch (Error e) {}
-						}
-					}
-				}.start();
+					stop.set(true);
+					((EventDispatcherImpl)eventQueue.getDispatcher()).executeOnJobStopExecuter(this, timeOutJob.getJob());
+				}
+				catch (Exception e) {}
+				
+			}
+			else
+			{
+				log(LogService.LOG_WARNING, "worker not stopped: checkTimeout invoke by self", null);
 			}
 		}
+		
 		return true;
 	}
 	
@@ -1141,5 +1134,9 @@ public class QueueWorker extends Thread
 	{
 		this.spoolTimeStamp = spoolTimeStamp;
 	}
-	
+
+	public IQueueWorker getWorkerWrapper()
+	{
+		return workerWrapper;
+	}
 }

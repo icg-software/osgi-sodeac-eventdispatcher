@@ -152,6 +152,21 @@ public interface IQueue
 	public String scheduleJob(String id, IQueueJob job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut );
 	
 	/**
+	 * schedule a {@link IQueueJob} to {@link IQueue}.
+	 * 
+	 * @param id registration-id for {@link IQueueJob} to schedule
+	 * @param job {@link IQueueJob} to schedule
+	 * @param propertyBlock {@link IQueueJob}-properties (factory in {@link IEventDispatcher})
+	 * @param executionTimeStamp execution time millis
+	 * @param timeOutValue timeout value in ms, before notify for timeout
+	 * @param heartBeatTimeOut heartbeat-timeout value in ms, before notify for timeout
+	 * @param stopOnTimeOut stop unlinked worker-thread on timeout. This option is NOT necessary to create new worker running other jobs. Attention: can be dangerous  
+	 * 
+	 * @return jobid (generated, in parameter id is null)
+	 */
+	public String scheduleJob(String id, IQueueJob job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut, boolean stopOnTimeOut );
+	
+	/**
 	 * reset execution plan for an existing {@link IQueueJob}
 	 * 
 	 * @param id registration-id of {@link IQueueJob} in which reset execution plan 
