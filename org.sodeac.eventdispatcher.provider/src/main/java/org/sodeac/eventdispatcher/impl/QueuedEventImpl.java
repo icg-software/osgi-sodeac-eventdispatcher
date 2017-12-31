@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.osgi.service.event.Event;
 import org.sodeac.eventdispatcher.api.IQueue;
@@ -27,7 +28,7 @@ public class QueuedEventImpl implements IQueuedEvent
 	private Event event = null;
 	private String uuid = null;
 	
-	private Object lockPropertyInstance = null;
+	private ReentrantLock lock = null;
 	private volatile PropertyBlockImpl propertyBlock = null;
 	private volatile Map<String,Object> nativeProperties;
 	private List<String> emptyKeyList = null;
@@ -38,7 +39,7 @@ public class QueuedEventImpl implements IQueuedEvent
 		super();
 		this.event = event;
 		this.queue = queue;
-		this.lockPropertyInstance = new Object();
+		this.lock = new ReentrantLock();
 		this.uuid = UUID.randomUUID().toString();
 	}
 
@@ -53,7 +54,8 @@ public class QueuedEventImpl implements IQueuedEvent
 	{
 		if(this.propertyBlock == null)
 		{
-			synchronized (lockPropertyInstance)
+			lock.lock();
+			try
 			{
 				if(this.propertyBlock == null)
 				{
@@ -61,6 +63,10 @@ public class QueuedEventImpl implements IQueuedEvent
 					this.emptyKeyList = null;
 					this.emptyProperties = null;
 				}
+			}
+			finally 
+			{
+				lock.unlock();
 			}
 		}
 		
@@ -92,7 +98,8 @@ public class QueuedEventImpl implements IQueuedEvent
 			List<String> returnList = this.emptyKeyList;
 			if(returnList ==  null)
 			{
-				synchronized (this.lockPropertyInstance)
+				this.lock.lock();
+				try
 				{
 					if(this.propertyBlock == null)
 					{
@@ -102,6 +109,10 @@ public class QueuedEventImpl implements IQueuedEvent
 						}
 						returnList = this.emptyKeyList;
 					}
+				}
+				finally 
+				{
+					lock.unlock();
 				}
 			}
 			if(returnList != null)
@@ -120,7 +131,8 @@ public class QueuedEventImpl implements IQueuedEvent
 			Map<String,Object> returnIndex = this.emptyProperties;
 			if(returnIndex ==  null)
 			{
-				synchronized (this.lockPropertyInstance)
+				lock.lock();
+				try
 				{
 					if(this.propertyBlock == null)
 					{
@@ -130,6 +142,10 @@ public class QueuedEventImpl implements IQueuedEvent
 						}
 						returnIndex = this.emptyProperties;
 					}
+				}
+				finally 
+				{
+					lock.unlock();
 				}
 			}
 			if(returnIndex != null)
