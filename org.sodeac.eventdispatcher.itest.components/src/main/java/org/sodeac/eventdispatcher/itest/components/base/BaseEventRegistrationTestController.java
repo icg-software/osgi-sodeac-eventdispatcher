@@ -26,7 +26,7 @@ import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
 import org.sodeac.eventdispatcher.api.IOnEventScheduled;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
-import org.sodeac.eventdispatcher.common.FireSyncEvent;
+import org.sodeac.eventdispatcher.common.job.FireSyncEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 
 @Component

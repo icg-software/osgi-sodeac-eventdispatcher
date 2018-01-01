@@ -98,7 +98,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		PropertyBlockImpl qualityValues = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
 		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
 		this.metrics = new MetricImpl(this,qualityValues, null,enableMetrics);
-		this.propertyBlock = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
+		this.configurationPropertyBlock = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
+		this.statePropertyBlock = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
 		
 		this.metrics.registerGauge(new IGauge<Long>()
 		{
@@ -117,6 +118,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				return (Long)qualityValues.getProperty(IMetrics.QUALITY_VALUE_LAST_POST_EVENT);
 			}
 		}, IMetrics.GAUGE_LAST_POST_EVENT);
+		
+		this.queueConfigurationModifyListener = new QueueConfigurationModifyListener(this);
+		this.configurationPropertyBlock.addModifyListener(this.queueConfigurationModifyListener);
 	}
 	
 	private String category = null;
@@ -160,7 +164,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	private volatile QueueWorker queueWorker = null;
 	private volatile SpooledQueueWorker currentSpooledQueueWorker = null;
 	private volatile long lastWorkerAction;
-	private PropertyBlockImpl propertyBlock = null;
+	private PropertyBlockImpl configurationPropertyBlock = null;
+	private PropertyBlockImpl statePropertyBlock = null;
 	
 	private volatile boolean newScheduledListUpdate = false;
 	private List<QueuedEventImpl> newScheduledList = null;
@@ -175,6 +180,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	private volatile boolean enableMetrics = true;
 	private volatile boolean disposed = false; 
 	private volatile boolean privateWorker = false;
+	
+	private volatile QueueConfigurationModifyListener queueConfigurationModifyListener = null;
 	
 	@Override
 	public boolean scheduleEvent(Event event)
@@ -217,7 +224,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 	
 	
-	public void addConfiguration(IEventController eventQueueConfiguration,Map<String, ?> properties)
+	public ControllerContainer addConfiguration(IEventController eventQueueConfiguration,Map<String, ?> properties)
 	{
 		configurationListWriteLock.lock();
 		try
@@ -227,7 +234,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				if(configurationContainer.getEventController() == eventQueueConfiguration)
 				{
 					configurationContainer.setProperties(properties);
-					return;
+					return null;
 				}
 			}
 			
@@ -317,6 +324,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			
 			this.configurationList.add(configurationContainer);
 			this.configurationListCopy = null;
+			
+			return configurationContainer;
 		}
 		finally 
 		{
@@ -672,11 +681,16 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 	
 	@Override
-	public IPropertyBlock getPropertyBlock()
+	public IPropertyBlock getConfigurationPropertyBlock()
 	{
-		return this.propertyBlock;
+		return this.configurationPropertyBlock;
 	}
 	
+	@Override
+	public IPropertyBlock getStatePropertyBlock()
+	{
+		return this.statePropertyBlock;
+	}
 
 	@Override
 	public String getQueueId()
@@ -1544,6 +1558,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	public void dispose()
 	{
 		this.disposed = true;
+		
+		if(this.queueConfigurationModifyListener != null)
+		{
+			this.configurationPropertyBlock.removeModifyListener(this.queueConfigurationModifyListener);
+		}
 	}
 	
 	public void stopQueueWorker()
@@ -2056,5 +2075,16 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	public long getLastWorkerAction()
 	{
 		return this.lastWorkerAction;
+	}
+
+	public QueueConfigurationModifyListener getQueueConfigurationModifyListener()
+	{
+		return queueConfigurationModifyListener;
+	}
+
+
+	public void setQueueConfigurationModifyListener(QueueConfigurationModifyListener queueConfigurationModifyListener)
+	{
+		this.queueConfigurationModifyListener = queueConfigurationModifyListener;
 	}
 }

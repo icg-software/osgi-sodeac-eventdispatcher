@@ -36,6 +36,7 @@ import org.sodeac.eventdispatcher.itest.components.base.BaseReCreateWorkerTestCo
 import org.sodeac.eventdispatcher.itest.components.base.BaseReScheduleTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseServiceTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTestController;
+import org.sodeac.eventdispatcher.itest.components.base.BaseTestTypeMatchingController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutAndStop1TestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutAndStop2TestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutTestController;
@@ -48,7 +49,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
-
+import org.ops4j.pax.exam.cm.ConfigurationAdminOptions;
+import org.ops4j.pax.exam.cm.ConfigurationOption;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerSuite;
@@ -82,12 +84,23 @@ public class BaseContainerTest extends AbstractTest
 	@Inject
 	private EventAdmin eventAdmin;
 	
-	@Inject
-	
 	@Configuration
 	public Option[] config() 
 	{
-		return super.config();
+		Option[] optionsSuper = super.config();
+		Option[] options = new Option[optionsSuper.length + 1];
+		
+		for(int i = 0; i < optionsSuper.length; i++)
+		{
+			options[i] = optionsSuper[i];
+		}
+		
+		ConfigurationOption configProps = ConfigurationAdminOptions.newConfiguration("org.sodeac.eventdispatcher.common.controller.queuefactory");
+		configProps.put("queueid", BaseTestTypeMatchingController.QUEUE_ID);
+        configProps.put("queuetype", BaseTestTypeMatchingController.QUEUE_TYPE);
+        options[optionsSuper.length] = configProps.asOption();
+        
+        return options;
 	}
 	
 	@Before
@@ -116,7 +129,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -177,7 +190,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseDelayedTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -244,7 +257,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseTimeoutTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -293,7 +306,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseTimeoutAndStop1TestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -367,7 +380,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseTimeoutAndStop2TestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -465,7 +478,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseHeartbeatTimeoutTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -517,7 +530,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseReCreateWorkerTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -650,7 +663,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseExceptionTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -692,7 +705,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseReScheduleTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -773,7 +786,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseReScheduleTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -849,7 +862,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseGetJobTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -1019,7 +1032,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseFilterTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		CountDownLatch latch = new CountDownLatch(1);
@@ -1138,15 +1151,15 @@ public class BaseContainerTest extends AbstractTest
 		}
 		catch (Exception e) {}
 		
-		IQueuedEvent queuedEvent1 = (IQueuedEvent)queue.getPropertyBlock().getProperty(BaseFilterTestController.SCHEDULE_EVENT + BaseFilterTestController.EVENT1);
+		IQueuedEvent queuedEvent1 = (IQueuedEvent)queue.getStatePropertyBlock().getProperty(BaseFilterTestController.SCHEDULE_EVENT + BaseFilterTestController.EVENT1);
 		assertNotNull("queuedEvent1  should not be null" ,queuedEvent1);
 		assertEquals("queuedEvent1.event should be event1", event1.getProperty(keyEventTopic), queuedEvent1.getEvent().getProperty(keyEventTopic));
 		
-		IQueuedEvent queuedEvent2 = (IQueuedEvent)queue.getPropertyBlock().getProperty(BaseFilterTestController.SCHEDULE_EVENT + BaseFilterTestController.EVENT2);
+		IQueuedEvent queuedEvent2 = (IQueuedEvent)queue.getStatePropertyBlock().getProperty(BaseFilterTestController.SCHEDULE_EVENT + BaseFilterTestController.EVENT2);
 		assertNotNull("queuedEvent2  should not be null" ,queuedEvent2);
 		assertEquals("queuedEvent2.event should be event2", event2.getProperty(keyEventTopic), queuedEvent2.getEvent().getProperty(keyEventTopic));
 		
-		IQueuedEvent queuedEvent3 = (IQueuedEvent)queue.getPropertyBlock().getProperty(BaseFilterTestController.SCHEDULE_EVENT + BaseFilterTestController.EVENT3);
+		IQueuedEvent queuedEvent3 = (IQueuedEvent)queue.getStatePropertyBlock().getProperty(BaseFilterTestController.SCHEDULE_EVENT + BaseFilterTestController.EVENT3);
 		assertNotNull("queuedEvent3  should not be null" ,queuedEvent3);
 		assertEquals("queuedEvent3.event should be event3", event3.getProperty(keyEventTopic), queuedEvent3.getEvent().getProperty(keyEventTopic));
 		
@@ -1314,7 +1327,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BasePeriodicJobTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -1378,11 +1391,11 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseServiceTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
-		CountDownLatch latch = (CountDownLatch)queue.getPropertyBlock().getProperty(BaseServiceTestController.EVENT_PROPERTY_LATCH);
+		CountDownLatch latch = (CountDownLatch)queue.getStatePropertyBlock().getProperty(BaseServiceTestController.EVENT_PROPERTY_LATCH);
 		
 		Event event1 =  new Event(BaseServiceTestController.RESCHEDULE_EVENT1,new HashMap<String,Object>());
 		eventAdmin.sendEvent(event1);
@@ -1465,7 +1478,7 @@ public class BaseContainerTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(BaseDelayedTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
-		TracingObject tracingObject = (TracingObject) queue.getPropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
 		assertNotNull("tracingObject should not be null" ,tracingObject);
 		
 		int tracingEventPosition = 0;
@@ -1518,5 +1531,66 @@ public class BaseContainerTest extends AbstractTest
 		assertEquals("Expect Job Done",TracingEvent.ON_JOB_DONE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
+	}
+	
+	@Test(timeout=5000 )
+	public void test17TypedControllerBinding() 
+	{
+		IQueue queue = this.eventDispatcher.getQueue(BaseTestTypeMatchingController.QUEUE_ID);
+		assertNotNull("queue should not be null" ,queue);
+		
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		assertNotNull("tracingObject should not be null" ,tracingObject);
+		
+		int tracingEventPosition = 0;
+		CountDownLatch latch = new CountDownLatch(1);
+		
+		Map<String,Object> eventProperties = new HashMap<String,Object>();
+		eventProperties.put(BaseTestTypeMatchingController.EVENT_PROPERTY_LATCH, latch);
+		Event event =  new Event(BaseTestTypeMatchingController.SCHEDULE_EVENT,eventProperties);
+		eventAdmin.sendEvent(event);
+		
+		try
+		{
+			latch.await(5, TimeUnit.SECONDS);
+		}
+		catch (Exception e) {}
+		
+		// 1. Queue Observe
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		// 2. Schedule Event
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_EVENT_SCHEDULED, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		// 3. Fire Event
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Fire Event",TracingEvent.ON_FIRE_EVENT, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		// 4. Remove Event
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Remove Event",TracingEvent.ON_REMOVE_EVENT, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		//  5. Signal
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect QueueSignal",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+			
+		//  6. Job Done
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Job Done",TracingEvent.ON_JOB_DONE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+
 	}
 }

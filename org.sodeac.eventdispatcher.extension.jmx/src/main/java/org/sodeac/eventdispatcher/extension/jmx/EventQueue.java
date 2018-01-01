@@ -117,7 +117,7 @@ public class EventQueue implements EventQueueMBean
 	{
 		StringBuilder info = new StringBuilder();
 		
-		IPropertyBlock properties = this.queue.getPropertyBlock();
+		IPropertyBlock properties = this.queue.getConfigurationPropertyBlock();
 		info.append("Properties:\n");
 		{
 			for(String key : properties.getPropertyKeys())

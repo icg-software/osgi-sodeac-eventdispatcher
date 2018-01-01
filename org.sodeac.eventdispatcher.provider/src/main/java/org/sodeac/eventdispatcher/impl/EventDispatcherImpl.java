@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.framework.Constants;
+import org.osgi.framework.Filter;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -566,7 +567,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			return;
 		}
 		
-		List<QueueImpl> queueListCopy = new ArrayList<QueueImpl>(); // TODO ???
+		List<QueueImpl> queueListCopy = new ArrayList<QueueImpl>();
 		
 		this.queueIndexReadLock.lock();
 		try
@@ -720,40 +721,15 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			return false;
 		}
 		
+		String queueConfigurationFilter = (String)properties.get(IEventDispatcher.PROPERTY_QUEUE_CONFIGURATION_FILTER);
 		String queueId = (String)properties.get(IEventDispatcher.PROPERTY_QUEUE_ID);
-		if(queueId == null)
+		if( ((queueId == null) || queueId.isEmpty()) && ((queueConfigurationFilter == null) || queueConfigurationFilter.isEmpty()) )
 		{
 			if(this.logService != null)
 			{
-				this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "Missing QueueId (Null)");
-			}
-			else
-			{
-				System.err.println("Missing QueueId (Null)");
+				this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_WARNING, "Missing QueueId or ConfigurationFilter");
 			}
 			return false;
-		}
-		if(queueId.isEmpty())
-		{
-			if(this.logService != null)
-			{
-				this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "Missing QueueId (Empty)");
-			}
-			else
-			{
-				System.err.println("Missing QueueId (Empty)");
-			}
-			return false;
-		}
-		QueueImpl queue = null;
-		this.queueIndexReadLock.lock();
-		try
-		{
-			queue = this.queueIndex.get(queueId);
-		}
-		finally 
-		{
-			this.queueIndexReadLock.unlock();
 		}
 		
 		boolean enableMetrics = (eventController instanceof IEnableMetricsOnQueueObserve);
@@ -782,129 +758,183 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			enableMetrics = false;
 		}
 		
-		if(queue == null)
-		{
-			String name  = eventController.getClass().getSimpleName();
-			if((properties.get(IEventController.PROPERTY_JMX_NAME) != null) && (! properties.get(IEventController.PROPERTY_JMX_NAME).toString().isEmpty()))
-			{
-				name = properties.get(IEventController.PROPERTY_JMX_NAME).toString();
-			}
-			
-			String category = null;
-			if((properties.get(IEventController.PROPERTY_JMX_CATEGORY) != null) && (! properties.get(IEventController.PROPERTY_JMX_CATEGORY).toString().isEmpty()))
-			{
-				category = properties.get(IEventController.PROPERTY_JMX_CATEGORY).toString();
-			}
-			
-			
-			queue = new QueueImpl(queueId,this, ! disableMetrics, name,category);
-			this.queueIndexWriteLock.lock();
-			try
-			{
-				this.queueIndex.put(queueId,queue);
-				if(this.counterQueueSize != null)
-				{
-					this.counterQueueSize.inc();
-				}
-			}
-			finally 
-			{
-				this.queueIndexWriteLock.unlock();
-			}
-			
-			for(IEventDispatcherExtension extension : this.eventDispatcherExtensionListCopy)
-			{
-				try
-				{
-					extension.registerEventQueue(this, queue);
-					queue.registerOnExtension(extension);
-				}
-				catch (Exception e) 
-				{
-					if(this.logService != null)
-					{
-						this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "register new queue to extension");
-					}
-					else
-					{
-						System.err.println("register new queue to extension");
-						e.printStackTrace();
-					}
-				}
-			}
-			
+		Map<QueueImpl,QueueImpl> relatedQueueIndex = new HashMap<QueueImpl,QueueImpl>();
+		QueueImpl queue = null;
+		
+		if((queueId != null) && (! queueId.isEmpty()))
+		{	
+		
 			this.queueIndexReadLock.lock();
 			try
 			{
-				serviceListListLock.lock();
-				try
-				{
-					for(ServiceContainer serviceContainer :  this.serviceList )
-					{
-						if(! queueId.equals(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)))
-						{
-							continue;
-						}
-						
-						queue.addService(serviceContainer.getQueueService(), serviceContainer.getProperties());
-					}
-				}
-				finally 
-				{
-					serviceListListLock.unlock();
-				}
+				queue = this.queueIndex.get(queueId);
 			}
 			finally 
 			{
 				this.queueIndexReadLock.unlock();
 			}
+			
+			if(queue == null)
+			{
+				this.queueIndexWriteLock.lock();
+				try
+				{
+					queue = this.queueIndex.get(queueId);
+				
+					if(queue == null)
+					{
+						String name  = eventController.getClass().getSimpleName();
+						if((properties.get(IEventController.PROPERTY_JMX_NAME) != null) && (! properties.get(IEventController.PROPERTY_JMX_NAME).toString().isEmpty()))
+						{
+							name = properties.get(IEventController.PROPERTY_JMX_NAME).toString();
+						}
+						
+						String category = null;
+						if((properties.get(IEventController.PROPERTY_JMX_CATEGORY) != null) && (! properties.get(IEventController.PROPERTY_JMX_CATEGORY).toString().isEmpty()))
+						{
+							category = properties.get(IEventController.PROPERTY_JMX_CATEGORY).toString();
+						}
+						
+						
+						queue = new QueueImpl(queueId,this, ! disableMetrics, name,category);
+						this.queueIndex.put(queueId,queue);
+						if(this.counterQueueSize != null)
+						{
+							this.counterQueueSize.inc();
+						}
+						
+						for(IEventDispatcherExtension extension : this.eventDispatcherExtensionListCopy)
+						{
+							try
+							{
+								extension.registerEventQueue(this, queue);
+								queue.registerOnExtension(extension);
+							}
+							catch (Exception e) 
+							{
+								if(this.logService != null)
+								{
+									this.logService.log(this.context == null ? null : this.context.getServiceReference(), LogService.LOG_ERROR, "register new queue to extension");
+								}
+								else
+								{
+									System.err.println("register new queue to extension");
+									e.printStackTrace();
+								}
+							}
+						}
+						
+						serviceListListLock.lock();
+						try
+						{
+							for(ServiceContainer serviceContainer :  this.serviceList )
+							{
+								if(! queueId.equals(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)))
+								{
+									continue;
+								}
+								
+								queue.addService(serviceContainer.getQueueService(), serviceContainer.getProperties());
+							}
+						}
+						finally 
+						{
+							serviceListListLock.unlock();
+						}
+					}
+				}
+				finally 
+				{
+					this.queueIndexWriteLock.unlock();
+				}
+				
+				relatedQueueIndex.put(queue, queue);
+			}
 		}
 		
-		queue.addConfiguration(eventController, properties);
-		
-		if(disableMetrics)
+		if((queueConfigurationFilter != null) && (! queueConfigurationFilter.isEmpty()))
 		{
 			try
 			{
-				queue.setMetricsEnabled(false);
+				Filter filter = this.context.getBundleContext().createFilter(queueConfigurationFilter);
+				this.queueIndexReadLock.lock();
+				try
+				{
+					for(Entry<String,QueueImpl> entry : queueIndex.entrySet())
+					{
+						if(relatedQueueIndex.containsKey(entry.getValue()))
+						{
+							continue;
+						}
+						if(filter.matches(entry.getValue().getConfigurationPropertyBlock().getProperties()))
+						{
+							relatedQueueIndex.put(entry.getValue(), entry.getValue());
+						}
+						
+					}
+				}
+				finally 
+				{
+					this.queueIndexReadLock.unlock();
+				}
 			}
 			catch (Exception e) 
 			{
-				if(logService != null)
-				{
-					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "queue.setMetricsEnabled(false)", e);
-				}
-				else
-				{
-					System.err.println("queue.setMetricsEnabled(false) " + e.getMessage());
-				}
+				log(LogService.LOG_ERROR,"check queue binding for controller by configuration filter",e);
 			}
+			
 		}
-		else if(enableMetrics)
+		
+		for(Entry<QueueImpl, QueueImpl> queueEntry : relatedQueueIndex.entrySet())
 		{
-			try
+			QueueImpl relatedQueue = queueEntry.getKey();
+			
+			relatedQueue.addConfiguration(eventController, properties);
+			
+			if(disableMetrics)
 			{
-				queue.setMetricsEnabled(true);
+				try
+				{
+					relatedQueue.setMetricsEnabled(false);
+				}
+				catch (Exception e) 
+				{
+					if(logService != null)
+					{
+						logService.log(context.getServiceReference(), LogService.LOG_ERROR, "queue.setMetricsEnabled(false)", e);
+					}
+					else
+					{
+						System.err.println("queue.setMetricsEnabled(false) " + e.getMessage());
+					}
+				}
 			}
-			catch (Exception e) 
+			else if(enableMetrics)
 			{
-				if(logService != null)
+				try
 				{
-					logService.log(context.getServiceReference(), LogService.LOG_ERROR, "queue.setMetricsEnabled(true)", e);
+					relatedQueue.setMetricsEnabled(true);
 				}
-				else
+				catch (Exception e) 
 				{
-					System.err.println("queue.setMetricsEnabled(true) " + e.getMessage());
+					if(logService != null)
+					{
+						logService.log(context.getServiceReference(), LogService.LOG_ERROR, "queue.setMetricsEnabled(true)", e);
+					}
+					else
+					{
+						System.err.println("queue.setMetricsEnabled(true) " + e.getMessage());
+					}
 				}
+			}
+			
+			if(eventController instanceof IOnQueueObserve)
+			{
+				relatedQueue.addOnQueueObserver((IOnQueueObserve)eventController);
 			}
 		}
 		
-		if(eventController instanceof IOnQueueObserve)
-		{
-			queue.addOnQueueObserver((IOnQueueObserve)eventController);
-		}
-		
-		return true;
+		return queueIndex.size() > 0;
 	}
 	
 	public void unbindEventController(IEventController eventController,Map<String, ?> properties)
@@ -1504,5 +1534,82 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				}
 			}
 		});
+	}
+	
+	public void onConfigurationModify(QueueImpl queue)
+	{
+		try
+		{
+			
+			Map<IEventController,ControllerContainer> controllerIndex = new HashMap<IEventController,ControllerContainer>();
+			for(ControllerContainer controllerContainer : queue.getConfigurationList())
+			{
+				controllerIndex.put(controllerContainer.getEventController(),controllerContainer);
+			}
+			
+			for(ControllerContainer controllerContainer : controllerListCopy)
+			{
+				String queueConfigurationFilter = (String)controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_CONFIGURATION_FILTER);
+				if(queueConfigurationFilter == null)
+				{
+					continue;
+				}
+				
+				if(queueConfigurationFilter.isEmpty())
+				{
+					continue;
+				}
+				
+				String queueId = (String)controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID);
+				if((queueId != null) && (!queueId.isEmpty()) && (queueId.equals(queue.getQueueId())))
+				{
+					// Observe by QueueId
+					continue;
+				}
+						
+				Filter filter = this.context.getBundleContext().createFilter(queueConfigurationFilter);
+				
+				try
+				{
+					if(filter.matches(queue.getConfigurationPropertyBlock().getProperties()))
+					{
+						if(controllerIndex.get(controllerContainer.getEventController()) == null)
+						{
+							ControllerContainer container = queue.addConfiguration(controllerContainer.getEventController(),controllerContainer.getProperties());
+							if(container != null)
+							{
+								if(controllerContainer.getEventController() instanceof IOnQueueObserve)
+								{
+									queue.addOnQueueObserver((IOnQueueObserve)controllerContainer.getEventController());
+								}
+								controllerIndex.put(controllerContainer.getEventController(),controllerContainer);
+							}
+						}
+					}
+					else
+					{
+						if(controllerIndex.get(controllerContainer.getEventController()) != null)
+						{
+							
+							queue.removeConfiguration(controllerContainer.getEventController());
+							
+							if(controllerContainer.getEventController() instanceof IOnQueueReverse)
+							{
+								((IOnQueueReverse)controllerContainer.getEventController()).onQueueReverse(queue);
+							}
+							controllerIndex.remove(controllerContainer.getEventController());
+						}
+					}
+				}
+				catch (Exception e) 
+				{
+					log(LogService.LOG_ERROR,"check queue binding for controller by configuration filter on queue configuration modify",e);
+				}
+			}
+		}
+		catch (Exception e) 
+		{
+			log(LogService.LOG_ERROR,"check queue binding for controller by configuration filter on queue configuration modify",e);
+		}
 	}
 }

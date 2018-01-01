@@ -32,6 +32,8 @@ import java.io.File;
 
 public abstract class AbstractTest
 {
+	protected boolean testStrictTime = true;
+	
 	public static ProvisionOption<?> reactorBundle(String artifactId, String version) 
 	{
 		String fileName = String.format("%s/../%s/target/%s-%s.jar", PathUtils.getBaseDir(), artifactId, artifactId,version);
@@ -127,7 +129,6 @@ public abstract class AbstractTest
 			logLevel(LogLevel.INFO),
 			features(karafStandardRepo , "scr"),
 			mavenBundle("io.dropwizard.metrics", "metrics-core", "3.2.5").start(),
-			//mavenBundle("org.apache.sling", "org.apache.sling.commons.metrics", "1.2.2").start(),
 			mavenBundle("org.easymock", "easymock", "3.4").start(),
 			reactorBundle("org.sodeac.eventdispatcher.api","0.9.0").start(),
 			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.0").start(),

@@ -34,7 +34,7 @@ public class AbstractBaseTestController
 
 	public void onQueueObserve(IQueue queue)
 	{
-		queue.getPropertyBlock().setProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT, this.tracingObject);
+		queue.getStatePropertyBlock().setProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT, this.tracingObject);
 		
 		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_QUEUE_OBSERVE,queue));
 	}

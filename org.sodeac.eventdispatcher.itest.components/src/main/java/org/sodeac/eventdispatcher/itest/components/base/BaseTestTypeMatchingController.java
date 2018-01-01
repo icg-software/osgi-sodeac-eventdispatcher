@@ -41,22 +41,16 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 	service={IEventController.class,EventHandler.class},
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_ID+"="+BaseReScheduleTestController.QUEUE_ID,
-		EventConstants.EVENT_TOPIC+"=" + BaseReScheduleTestController.SCHEDULE_EVENT,
-		EventConstants.EVENT_TOPIC+"=" + BaseReScheduleTestController.RESCHEDULE_EVENT1,
-		EventConstants.EVENT_TOPIC+"=" + BaseReScheduleTestController.RESCHEDULE_EVENT2
+		IEventDispatcher.PROPERTY_QUEUE_CONFIGURATION_FILTER+"=("+IEventDispatcher.PROPERTY_QUEUE_CONFIGURATION_FILTER_TYPE + "=" + BaseTestTypeMatchingController.QUEUE_TYPE + ")",
+		EventConstants.EVENT_TOPIC+"=" + BaseTestTypeMatchingController.SCHEDULE_EVENT
 	}
 )
-public class BaseReScheduleTestController extends AbstractBaseTestController implements EventHandler,IEventController,IOnEventScheduled,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseTestTypeMatchingController extends AbstractBaseTestController implements EventHandler,IEventController,IOnEventScheduled,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
-	public static final String	JOB_ID				= BaseReScheduleTestController.class.getCanonicalName() + "Job";
-	public static final int		DELAY				= 5000;
-	public static final int		RESCHEDULE_DELAY	= 3000;
-	public static final String 	QUEUE_ID 			= "baserescheduletestqueue";
-	public static final String 	JOB_EVENT			= "org/sodeac/eventdispatcher/itest/baserescheduletest/jobevent";
-	public static final String 	SCHEDULE_EVENT 		= "org/sodeac/eventdispatcher/itest/baserescheduletest/scheduleevent";
-	public static final String 	RESCHEDULE_EVENT1 	= "org/sodeac/eventdispatcher/itest/baserescheduletest/rescheduleevent1";
-	public static final String 	RESCHEDULE_EVENT2 	= "org/sodeac/eventdispatcher/itest/baserescheduletest/rescheduleevent2";
+	public static final String QUEUE_ID 		= "basetypedcontrollerbinding";
+	public static final String QUEUE_TYPE 		= "test17type";
+	public static final String JOB_EVENT 		= "org/sodeac/eventdispatcher/itest/basetesttypematching/jobevent";
+	public static final String SCHEDULE_EVENT 	= "org/sodeac/eventdispatcher/itest/basetesttypematching/scheduleevent";
 	
 	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
 	protected volatile IEventDispatcher dispatcher;
@@ -64,29 +58,15 @@ public class BaseReScheduleTestController extends AbstractBaseTestController imp
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(event, BaseReScheduleTestController.QUEUE_ID);
+		dispatcher.schedule(event, BaseTestTypeMatchingController.QUEUE_ID);
 	}
 	
 	@Override
 	public void onEventScheduled(IQueuedEvent event)
 	{
-		if(event.getEvent().getTopic().equals(SCHEDULE_EVENT))
-		{
-			super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
-			IQueueJob job = new FireSyncEvent(event,JOB_EVENT,event.getNativeEventProperties());
-			
-			super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-			event.getQueue().scheduleJob(JOB_ID,job,null,System.currentTimeMillis() + DELAY, -1,-1);
-		}
-		
-		if(event.getEvent().getTopic().equals(RESCHEDULE_EVENT1))
-		{
-			event.getQueue().rescheduleJob(JOB_ID,System.currentTimeMillis() + DELAY, -1,-1);
-		}
-		
-		if(event.getEvent().getTopic().equals(RESCHEDULE_EVENT2))
-		{
-			event.getQueue().rescheduleJob(JOB_ID,System.currentTimeMillis(), -1,-1);
-		}
+		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
+		IQueueJob job = new FireSyncEvent(event,JOB_EVENT,event.getNativeEventProperties());
+		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
+		event.getQueue().scheduleJob(job);
 	}
 }

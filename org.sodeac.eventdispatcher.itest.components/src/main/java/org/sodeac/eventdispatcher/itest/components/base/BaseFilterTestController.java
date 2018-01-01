@@ -76,7 +76,7 @@ public class BaseFilterTestController extends AbstractBaseTestController impleme
 	@Override
 	public void onEventScheduled(IQueuedEvent event)
 	{	
-		event.getQueue().getPropertyBlock().setProperty(event.getEvent().getTopic(),  event);
+		event.getQueue().getStatePropertyBlock().setProperty(event.getEvent().getTopic(),  event);
 		
 		Map<String,Object> eProps = (Map<String,Object>)event.getEvent().getProperty(PROPERTY_QE_PROPS);
 		if(eProps != null)

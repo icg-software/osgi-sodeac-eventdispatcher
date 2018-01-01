@@ -44,11 +44,18 @@ public interface IQueue
 	public boolean scheduleEvent(Event event);
 	
 	/**
-	 * getter for propertyblock of queue
+	 * getter for configuration propertyblock of queue
 	 * 
-	 * @return {@link IPropertyBlock} of queue 
+	 * @return {@link IPropertyBlock} of queue for configuration details
 	 */
-	public IPropertyBlock getPropertyBlock();
+	public IPropertyBlock getConfigurationPropertyBlock();
+
+	/**
+	 * getter for state propertyblock of queue
+	 * 
+	 * @return {@link IPropertyBlock} of queue  for work state
+	 */
+	public IPropertyBlock getStatePropertyBlock();
 	
 	/**
 	 * getter of metric-handler of queue

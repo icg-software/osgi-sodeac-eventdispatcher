@@ -92,7 +92,7 @@ public class BaseServiceTestController extends AbstractBaseTestController implem
 	public void onQueueObserve(IQueue queue)
 	{
 		super.onQueueObserve(queue);
-		queue.getPropertyBlock().setProperty(EVENT_PROPERTY_LATCH, this.latch);
+		queue.getStatePropertyBlock().setProperty(EVENT_PROPERTY_LATCH, this.latch);
 	}
 	
 	@Override

@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common;
+package org.sodeac.eventdispatcher.common.job;
 
 import java.util.List;
 import java.util.Map;

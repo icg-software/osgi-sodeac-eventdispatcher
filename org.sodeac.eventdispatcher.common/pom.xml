@@ -34,7 +34,11 @@
             	org.sodeac.eventdispatcher.api;version="[0.9.0,0.9.0]",
             	*
             </Import-Package>
-            <Export-Package>org.sodeac.eventdispatcher.common*</Export-Package>
+            <Export-Package>
+            	org.sodeac.eventdispatcher.common,
+            	org.sodeac.eventdispatcher.common.controller,
+            	org.sodeac.eventdispatcher.common.job
+            </Export-Package>
           </instructions>
           <source>1.8</source>
           <target>1.8</target>
