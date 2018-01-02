@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Sebastian Palarus
+ * Copyright (c) 2017, 2018 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -246,4 +246,31 @@ public interface IQueue
 	 */
 	public boolean isMetricsEnabled();
 	
+	/**
+	 * create {@link IQueueScope} for {@link IQueue}. Does not work, if this queue is already a scope
+	 * 
+	 * @param scopeName human readable name of scope or null
+	 * @param configurationProperties blue print for configuration propertyblock of new scope
+	 * @param stateProperties blue print for state propertyblock of new scope
+	 * @param adoptContoller keep controller of parent queue
+	 * 
+	 * @return new scope, or null, if scope could not created
+	 */
+	public IQueueScope createScope(String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller);
+	
+	/**
+	 * returns scopelist of queue
+	 * 
+	 * @return scopelist of queue
+	 */
+	public List<IQueueScope> getScopes();
+	
+	/**
+	 * returns scopelist of queue with positiv match result for {@code filter}
+	 * 
+	 * @param filter match condition for configuration propertyblock
+	 * 
+	 * @return scopelist of queue with positiv match result for {@code filter}
+	 */
+	public List<IQueueScope> getScopes(Filter filter);
 }

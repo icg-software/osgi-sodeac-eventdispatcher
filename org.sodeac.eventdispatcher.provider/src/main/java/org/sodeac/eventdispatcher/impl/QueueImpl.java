@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Sebastian Palarus
+ * Copyright (c) 2017, 2018 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -40,6 +40,7 @@ import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IGauge;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueScope;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.ITimer;
@@ -95,6 +96,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		this.lastWorkerAction = System.currentTimeMillis();
 		
+		this.queueScopeList = new ArrayList<IQueueScope>();
+		this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueScope>());
+		this.queueScopeListLock = new ReentrantLock();
+		
 		PropertyBlockImpl qualityValues = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
 		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
 		this.metrics = new MetricImpl(this,qualityValues, null,enableMetrics);
@@ -123,66 +128,69 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.configurationPropertyBlock.addModifyListener(this.queueConfigurationModifyListener);
 	}
 	
-	private String category = null;
-	private String name = null;
+	protected String category = null;
+	protected String name = null;
 	
-	private MetricImpl metrics;
-	private EventDispatcherImpl eventDispatcher = null;
-	private String queueId = null;
+	protected MetricImpl metrics;
+	protected EventDispatcherImpl eventDispatcher = null;
+	protected String queueId = null;
 	
-	private List<ControllerContainer> configurationList;
-	private volatile List<ControllerContainer> configurationListCopy = null;
-	private ReentrantReadWriteLock configurationListLock;
-	private ReadLock configurationListReadLock;
-	private WriteLock configurationListWriteLock;
+	protected List<ControllerContainer> configurationList;
+	protected volatile List<ControllerContainer> configurationListCopy = null;
+	protected ReentrantReadWriteLock configurationListLock;
+	protected ReadLock configurationListReadLock;
+	protected WriteLock configurationListWriteLock;
 	
-	private List<ServiceContainer> serviceList;
-	private volatile List<ServiceContainer> serviceListCopy = null;
-	private ReentrantReadWriteLock serviceListLock;
-	private ReadLock serviceListReadLock;
-	private WriteLock serviceListWriteLock;
+	protected List<ServiceContainer> serviceList;
+	protected volatile List<ServiceContainer> serviceListCopy = null;
+	protected ReentrantReadWriteLock serviceListLock;
+	protected ReadLock serviceListReadLock;
+	protected WriteLock serviceListWriteLock;
 	
-	private List<QueuedEventImpl> eventList = null;
-	private ReentrantReadWriteLock eventListLock;
-	private ReadLock eventListReadLock;
-	private WriteLock eventListWriteLock;
+	protected List<QueuedEventImpl> eventList = null;
+	protected ReentrantReadWriteLock eventListLock;
+	protected ReadLock eventListReadLock;
+	protected WriteLock eventListWriteLock;
 	
-	private List<JobContainer> jobList = null;
-	private Map<String,JobContainer> jobIndex = null;
-	private ReentrantReadWriteLock jobListLock;
-	private ReadLock jobListReadLock;
-	private WriteLock jobListWriteLock;
+	protected List<JobContainer> jobList = null;
+	protected Map<String,JobContainer> jobIndex = null;
+	protected ReentrantReadWriteLock jobListLock;
+	protected ReadLock jobListReadLock;
+	protected WriteLock jobListWriteLock;
 	
-	private volatile boolean signalListUpdate = false;
-	private List<String> signalList = null;
-	private ReentrantLock signalListLock = null;
+	protected volatile boolean signalListUpdate = false;
+	protected List<String> signalList = null;
+	protected ReentrantLock signalListLock = null;
 	
-	private volatile boolean onQueueObserveListUpdate = false;
-	private List<IOnQueueObserve> onQueueObserveList = null;
-	private ReentrantLock onQueueObserveListLock = null;
+	protected volatile boolean onQueueObserveListUpdate = false;
+	protected List<IOnQueueObserve> onQueueObserveList = null;
+	protected ReentrantLock onQueueObserveListLock = null;
 	
-	private volatile QueueWorker queueWorker = null;
-	private volatile SpooledQueueWorker currentSpooledQueueWorker = null;
-	private volatile long lastWorkerAction;
-	private PropertyBlockImpl configurationPropertyBlock = null;
-	private PropertyBlockImpl statePropertyBlock = null;
+	protected volatile QueueWorker queueWorker = null;
+	protected volatile SpooledQueueWorker currentSpooledQueueWorker = null;
+	protected volatile long lastWorkerAction;
+	protected PropertyBlockImpl configurationPropertyBlock = null;
+	protected PropertyBlockImpl statePropertyBlock = null;
 	
-	private volatile boolean newScheduledListUpdate = false;
-	private List<QueuedEventImpl> newScheduledList = null;
-	private volatile boolean removedEventListUpdate = false;
-	private List<QueuedEventImpl> removedEventList = null;
-	private volatile boolean firedEventListUpdate = false;
-	private List<Event> firedEventList = null;
+	protected volatile boolean newScheduledListUpdate = false;
+	protected List<QueuedEventImpl> newScheduledList = null;
+	protected volatile boolean removedEventListUpdate = false;
+	protected List<QueuedEventImpl> removedEventList = null;
+	protected volatile boolean firedEventListUpdate = false;
+	protected List<Event> firedEventList = null;
 	
-	private ReentrantLock genericQueueSpoolLock = null;
-	private ReentrantLock workerSpoolLock = null;
+	protected ReentrantLock genericQueueSpoolLock = null;
+	protected ReentrantLock workerSpoolLock = null;
 	
-	private volatile boolean enableMetrics = true;
-	private volatile boolean disposed = false; 
-	private volatile boolean privateWorker = true;
+	protected volatile boolean enableMetrics = true;
+	protected volatile boolean disposed = false; 
+	protected volatile boolean privateWorker = true;
 	
-	private volatile QueueConfigurationModifyListener queueConfigurationModifyListener = null;
+	protected volatile QueueConfigurationModifyListener queueConfigurationModifyListener = null;
 	
+	protected List<IQueueScope> queueScopeList = null;
+	protected volatile List<IQueueScope> queueScopeListCopy = null;
+	protected ReentrantLock queueScopeListLock = null;
 	@Override
 	public boolean scheduleEvent(Event event)
 	{
@@ -2086,5 +2094,75 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	public void setQueueConfigurationModifyListener(QueueConfigurationModifyListener queueConfigurationModifyListener)
 	{
 		this.queueConfigurationModifyListener = queueConfigurationModifyListener;
+	}
+
+
+	@Override
+	public IQueueScope createScope(String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller)
+	{
+		QueueScopeImpl newScope = new QueueScopeImpl(this, scopeName,adoptContoller);
+		this.queueScopeListLock.lock();
+		try
+		{
+			this.queueScopeList.add(newScope);
+			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueScope>(this.queueScopeList));
+		}
+		finally 
+		{
+			this.queueScopeListLock.unlock();
+		}
+		
+		if((stateProperties != null) && (! stateProperties.isEmpty()) )
+		{
+			newScope.getStatePropertyBlock().setPropertySet(stateProperties, false);
+		}
+		if((configurationProperties != null) && (! configurationProperties.isEmpty()) )
+		{
+			newScope.getConfigurationPropertyBlock().setPropertySet(configurationProperties, false);
+		}
+		// TODO adoptContoller
+		return newScope;
+	}
+
+
+	@Override
+	public List<IQueueScope> getScopes()
+	{
+		return this.queueScopeListCopy;
+	}
+
+
+	@Override
+	public List<IQueueScope> getScopes(Filter filter)
+	{
+		List<IQueueScope> copyList = this.queueScopeListCopy;
+		if(copyList.isEmpty())
+		{
+			return copyList;
+		}
+		if(filter == null)
+		{
+			return copyList;
+		}
+		List<IQueueScope> filterList = new ArrayList<IQueueScope>();
+		for(IQueueScope scope : copyList)
+		{
+			if(scope.getConfigurationPropertyBlock().isEmpty())
+			{
+				continue;
+			}
+			try
+			{
+				if(filter.matches(scope.getConfigurationPropertyBlock().getProperties()))
+				{
+					filterList.add(scope);
+				}
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"get scopelist by filter",e);
+			}
+		}
+		return filterList;
 	}
 }
