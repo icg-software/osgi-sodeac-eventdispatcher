@@ -1,6 +1,9 @@
 package org.sodeac.eventdispatcher.impl;
 
+import java.util.List;
+
 import org.sodeac.eventdispatcher.extension.api.IPropertyBlockModifyListener;
+import org.sodeac.eventdispatcher.extension.api.PropertyBlockModifyItem;
 
 public class QueueConfigurationModifyListener implements IPropertyBlockModifyListener
 {
@@ -14,6 +17,12 @@ public class QueueConfigurationModifyListener implements IPropertyBlockModifyLis
 
 	@Override
 	public void onModify(ModifyType type, String key, Object valueOld, Object valueNew)
+	{
+		((EventDispatcherImpl)queue.getDispatcher()).onConfigurationModify(this.queue);
+	}
+
+	@Override
+	public void onModifySet(List<PropertyBlockModifyItem> modifySet)
 	{
 		((EventDispatcherImpl)queue.getDispatcher()).onConfigurationModify(this.queue);
 	}

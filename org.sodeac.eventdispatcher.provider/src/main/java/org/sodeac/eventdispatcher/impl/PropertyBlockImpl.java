@@ -24,6 +24,7 @@ import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.extension.api.IExtensiblePropertyBlock;
 import org.sodeac.eventdispatcher.extension.api.IPropertyBlockModifyListener;
+import org.sodeac.eventdispatcher.extension.api.PropertyBlockModifyItem;
 
 public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBlock
 {
@@ -38,11 +39,15 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		this.dispatcher = dispatcher;
 	}
 	
+	public static final Map<String,Object> EMPTY_PROPERTIES = Collections.unmodifiableMap(new HashMap<String,Object>());
+	public static final List<String> EMPTY_KEYLIST = Collections.unmodifiableList(new ArrayList<String>());
+	
 	private List<IPropertyBlockModifyListener> modifyListenerList = null;
 	
 	private Map<String,Object> properties;
 	private Map<String,Object> propertiesCopy;
 	private List<String> keyList;
+	
 	private ReentrantReadWriteLock propertiesLock;
 	private ReadLock propertiesReadLock;
 	private WriteLock propertiesWriteLock;
@@ -72,7 +77,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 				old = this.properties.get(key);
 			}
 			this.properties.put(key, value);
-			this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
+			this.propertiesCopy = null;
 			this.keyList = null;
 			listenerList = this.modifyListenerList;
 			
@@ -110,6 +115,134 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			}
 		}
 		return old;
+	}
+	
+	@Override
+	public Map<String, Object> setPropertySet(Map<String, Object> propertySet, boolean ignoreIfEquals)
+	{
+		if(propertySet == null)
+		{
+			return EMPTY_PROPERTIES;
+		}
+		
+		if(propertySet.isEmpty())
+		{
+			return EMPTY_PROPERTIES;
+		}
+		
+		Map<String, Object> oldValues = null;
+		List<PropertyBlockModifyItem> modifyList = null;
+		List<IPropertyBlockModifyListener> listenerList = null;
+		
+		propertiesWriteLock.lock();
+		try
+		{
+			if(this.properties == null)
+			{
+				this.properties = new HashMap<String,Object>();
+			}
+			
+			IPropertyBlockModifyListener.ModifyType modifyType;
+			String key;
+			Object oldValue;
+			Object newValue;
+			boolean update;
+			
+			for(Entry<String,Object> propertyEntry : propertySet.entrySet())
+			{
+				if(this.properties.containsKey(propertyEntry.getKey()))
+				{
+					modifyType = IPropertyBlockModifyListener.ModifyType.UPDATE;
+				}
+				else
+				{
+					modifyType = IPropertyBlockModifyListener.ModifyType.INSERT;
+				}
+				
+				key = propertyEntry.getKey();
+				oldValue = this.properties.get(key);
+				newValue = propertyEntry.getValue();
+				
+				update = ! ignoreIfEquals;
+				if(ignoreIfEquals)
+				{
+					if
+					(
+						((oldValue == null) && (newValue != null)) || 
+						((oldValue != null) && (newValue == null))
+					)
+					{
+						update = true;
+					}
+					else if((oldValue == null) && (newValue != null))
+					{
+						continue;
+					}
+					else if(oldValue.equals(newValue))
+					{
+						continue;
+					}
+				}
+				
+				if(update)
+				{
+					if(modifyList == null)
+					{
+						oldValues = new HashMap<String, Object>();
+						modifyList = new ArrayList<PropertyBlockModifyItem>();
+					}
+					modifyList.add(new PropertyBlockModifyItem(modifyType, key, oldValue, newValue));
+					oldValues.put(key, oldValue);
+					this.properties.put(key, newValue);
+				}
+			}
+			
+			if (modifyList != null)
+			{
+				this.propertiesCopy = null;
+				this.keyList = null;
+				listenerList = this.modifyListenerList;
+			}
+		}
+		finally 
+		{
+			propertiesWriteLock.unlock();
+		}
+		
+		if(modifyList == null)
+		{
+			return EMPTY_PROPERTIES;
+		}
+		
+		if(listenerList != null)
+		{
+			try
+			{
+				for(IPropertyBlockModifyListener listener : listenerList)
+				{
+					try
+					{
+						listener.onModifySet(modifyList);
+					}
+					catch (Exception e) 
+					{
+						if(dispatcher != null)
+						{
+							dispatcher.log(LogService.LOG_ERROR,"execute property modify listener (update/insert set)", e);
+						}
+					}
+				}
+			}
+			catch (Exception e) 
+			{
+				if(dispatcher != null)
+				{
+					dispatcher.log(LogService.LOG_ERROR,"execute property modify listener list (update/insert set)", e);
+				}
+			}
+		}
+		
+		return oldValues;
 	}
 
 	@Override
@@ -167,7 +300,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			oldPropertyValue = this.properties.get(key);
 			
 			this.properties.remove(key);
-			this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
+			this.propertiesCopy = null;
 			this.keyList = null;
 			listenerList = this.modifyListenerList;
 			
@@ -213,24 +346,17 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	{
 		if(this.properties == null)
 		{
-			if(this.keyList == null)
-			{
-				this.keyList = Collections.unmodifiableList(new ArrayList<String>());
-			}
-			return keyList;
+			return EMPTY_KEYLIST;
 		}
+		
 		try
 		{
 			propertiesReadLock.lock();
 			if(this.keyList == null)
 			{
-				this.keyList = new ArrayList<String>();
-				for(String key : this.properties.keySet())
-				{
-					this.keyList.add(key);
-				}
+				this.keyList = Collections.unmodifiableList(new ArrayList<String>(this.properties.keySet()));
 			}
-			return Collections.unmodifiableList(this.keyList);
+			return this.keyList;
 		}
 		finally 
 		{
@@ -241,6 +367,11 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	@Override
 	public Map<String, Object> getProperties()
 	{
+		if(this.properties == null)
+		{
+			return EMPTY_PROPERTIES;
+		}
+		
 		Map<String,Object> props = this.propertiesCopy;
 		if(props == null)
 		{
@@ -249,7 +380,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			{
 				if(this.properties == null)
 				{
-					this.properties = new HashMap<String,Object>();
+					return EMPTY_PROPERTIES;
 				}
 				this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
 				props = this.propertiesCopy;
@@ -263,33 +394,48 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	}
 
 	@Override
-	public void clear()
+	public Map<String, Object> clear()
 	{
+		Map<String, Object> oldValues = null;
+		
 		if(this.properties == null)
 		{
-			return;
+			return EMPTY_PROPERTIES;
 		}
 		
-		Map<String,Object> propertiesOld = null;
 		List<IPropertyBlockModifyListener> listenerList = null;
+		List<PropertyBlockModifyItem> modifyList = null;
 		
 		propertiesWriteLock.lock();
 		try
 		{
 			if(this.properties == null)
 			{
-				return;
+				return EMPTY_PROPERTIES;
 			}
+			
+			if(this.properties.isEmpty())
+			{
+				return EMPTY_PROPERTIES;
+			}
+			
+			modifyList = new ArrayList<PropertyBlockModifyItem>();
+			
+			oldValues = new HashMap<>(this.properties);
 			
 			if((this.modifyListenerList != null) && (! this.modifyListenerList.isEmpty()) && (! this.properties.isEmpty()))
 			{
-				propertiesOld = new HashMap<String,Object>(this.properties);
 				listenerList = this.modifyListenerList;
+			}
+			
+			for(Entry<String,Object> oldEntry : oldValues.entrySet())
+			{
+				modifyList.add(new PropertyBlockModifyItem(IPropertyBlockModifyListener.ModifyType.REMOVE, oldEntry.getKey(), oldEntry.getValue(), null));
 			}
 			
 			this.keyList = null;
 			this.properties.clear();
-			this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
+			this.propertiesCopy = null;
 		}
 		finally 
 		{
@@ -298,38 +444,32 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		
 		if(listenerList != null)
 		{
-			for(Entry<String,Object> oldEntry : propertiesOld.entrySet())
+			try
 			{
-				if(listenerList != null)
+				for(IPropertyBlockModifyListener listener : listenerList)
 				{
 					try
 					{
-						for(IPropertyBlockModifyListener listener : listenerList)
-						{
-							try
-							{
-								listener.onModify(IPropertyBlockModifyListener.ModifyType.REMOVE, oldEntry.getKey(), oldEntry.getValue(), null);
-							}
-							catch (Exception e) 
-							{
-								if(dispatcher != null)
-								{
-									dispatcher.log(LogService.LOG_ERROR,"execute property modify listener (clear)", e);
-								}
-							}
-						}
+						listener.onModifySet(modifyList);
 					}
 					catch (Exception e) 
 					{
 						if(dispatcher != null)
 						{
-							dispatcher.log(LogService.LOG_ERROR,"execute property modify listener list (clear)", e);
+							dispatcher.log(LogService.LOG_ERROR,"execute property modify listener (clear)", e);
 						}
 					}
 				}
 			}
+			catch (Exception e) 
+			{
+				if(dispatcher != null)
+				{
+					dispatcher.log(LogService.LOG_ERROR,"execute property modify listener list (clear)", e);
+				}
+			}
 		}
-		
+		return oldValues;
 	}
 
 	@Override
@@ -391,12 +531,58 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 				this.modifyListenerList = null;
 			}
 			this.keyList = null;
-			this.properties.clear();
-			this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(this.properties));
+			this.properties =  null;
+			this.propertiesCopy = null;
 		}
 		finally 
 		{
 			propertiesWriteLock.unlock();
+		}
+	}
+
+	@Override
+	public boolean isEmpty()
+	{
+		if(this.properties == null)
+		{
+			return false;
+		}
+		
+		try
+		{
+			propertiesReadLock.lock();
+			if(this.properties == null)
+			{
+				return false;
+			}
+			return this.properties.isEmpty();
+		}
+		finally 
+		{
+			propertiesReadLock.unlock();
+		}
+	}
+	
+	@Override
+	public boolean containsKey(Object key)
+	{
+		if(this.properties == null)
+		{
+			return false;
+		}
+		
+		try
+		{
+			propertiesReadLock.lock();
+			if(this.properties == null)
+			{
+				return false;
+			}
+			return this.properties.containsKey(key);
+		}
+		finally 
+		{
+			propertiesReadLock.unlock();
 		}
 	}
 	

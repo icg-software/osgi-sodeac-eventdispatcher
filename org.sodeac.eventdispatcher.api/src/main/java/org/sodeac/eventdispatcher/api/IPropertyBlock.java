@@ -32,6 +32,16 @@ public interface IPropertyBlock
 	public Object setProperty(String key,Object value);
 	
 	/**
+	 * register a set of properties
+	 * 
+	 * @param propertySet with new values
+	 * @param ignoreIfEquals switch to skip updates, if old value equals new value 
+	 * 
+	 * @return a map of previously property registered
+	 */
+	public Map<String,Object> setPropertySet(Map<String,Object> propertySet, boolean ignoreIfEquals);
+	
+	/**
 	 * getter for registered property with associated {@code key}
 	 * 
 	 * @param key the key whose associated property is to be returned
@@ -64,7 +74,24 @@ public interface IPropertyBlock
 	public List<String> getPropertyKeys();
 	
 	/**
-	 * remove all property entries
+	 * Returns true if this propertyblock contains no entries
+	 * 
+	 * @return true if this propertyblock contains no entries
 	 */
-	public void clear();
+	public boolean isEmpty();
+	
+	/**
+	 * returns true if this propertyblock contains entry with {@code key}  ( key==null ? k==null : key.equals(k)). 
+	 * 
+	 * @param key  key whose presence in this propertyblock is to be tested
+	 * @return true if this propertyblock contains a entrymapped with specified key
+	 */
+	public boolean containsKey(Object key);
+	
+	/**
+	 * remove all property entries
+	 * 
+	 * @return a map of previously property registered
+	 */
+	public Map<String,Object> clear();
 }
