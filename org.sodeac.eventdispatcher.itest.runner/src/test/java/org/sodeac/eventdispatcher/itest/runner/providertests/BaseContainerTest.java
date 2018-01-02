@@ -300,7 +300,7 @@ public class BaseContainerTest extends AbstractTest
 		System.out.println("[INFO] Definied timeout for timeoutTest: " + BaseTimeoutTestController.TIMEOUT_VALUE + " ms / measured timeouthandling on runtime: " + (timeoutTimeStamp - schedulingTimeStamp) + " ms");
 		
 	}
-	@Ignore
+	
 	@Test(timeout=7000 + BaseTimeoutAndStop1TestController.SLEEP_VALUE)
 	public void test04TimeoutWithStopDispatcherWorkflow() 
 	{
@@ -375,7 +375,6 @@ public class BaseContainerTest extends AbstractTest
 		
 	}
 	
-	@Ignore
 	@Test(timeout=7000 + BaseTimeoutAndStop2TestController.SLEEP_VALUE)
 	public void test05TimeoutTimeoutWithStopAndMoreLifetimeDispatcherWorkflow() 
 	{

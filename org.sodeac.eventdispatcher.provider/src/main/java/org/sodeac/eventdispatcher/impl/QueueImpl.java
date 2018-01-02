@@ -179,7 +179,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	private volatile boolean enableMetrics = true;
 	private volatile boolean disposed = false; 
-	private volatile boolean privateWorker = false;
+	private volatile boolean privateWorker = true;
 	
 	private volatile QueueConfigurationModifyListener queueConfigurationModifyListener = null;
 	
