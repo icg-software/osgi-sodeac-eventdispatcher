@@ -165,7 +165,9 @@ public class QueueFactoryController implements IEventController,IOnQueueObserve,
 		{
 			return;
 		}
+		System.out.println("qf on observe: " +  queue.getQueueId());
 		queue.getConfigurationPropertyBlock().setPropertySet((Map<String,Object>)this.properties,true);		
+		System.out.println("done");
 	}
 
 	@Override
