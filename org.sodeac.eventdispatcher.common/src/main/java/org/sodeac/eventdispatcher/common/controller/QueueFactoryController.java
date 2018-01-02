@@ -106,6 +106,7 @@ public class QueueFactoryController implements IEventController,IOnQueueObserve,
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Modified 
 	public void modified(Map<String, ?> properties)
 	{
@@ -130,37 +131,11 @@ public class QueueFactoryController implements IEventController,IOnQueueObserve,
 		
 		for(IQueue queue : queueCopy)
 		{
-			for(Entry<String,?> entry : this.properties.entrySet())
-			{
-				Object oldValue = queue.getConfigurationPropertyBlock().getProperty(entry.getKey());
-				Object newValue = entry.getValue();
-				
-				if
-				(
-					((oldValue == null) && (newValue != null)) || 
-					((oldValue != null) && (newValue == null))
-				)
-				{
-					queue.getConfigurationPropertyBlock().setProperty(entry.getKey(), entry.getValue());
-					continue;
-				}
-				
-				if((oldValue == null) && (newValue != null))
-				{
-					continue;
-				}
-				
-				if(oldValue.equals(newValue))
-				{
-					continue;
-				}
-				
-				queue.getConfigurationPropertyBlock().setProperty(entry.getKey(), entry.getValue());
-				
-			}
+			queue.getConfigurationPropertyBlock().setPropertySet((Map<String,Object>)this.properties,true);	
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void onQueueObserve(IQueue queue)
 	{
@@ -190,11 +165,7 @@ public class QueueFactoryController implements IEventController,IOnQueueObserve,
 		{
 			return;
 		}
-		for(Entry<String,?> entry : this.properties.entrySet())
-		{
-			queue.getConfigurationPropertyBlock().setProperty(entry.getKey(), entry.getValue());
-		}
-		
+		queue.getConfigurationPropertyBlock().setPropertySet((Map<String,Object>)this.properties,true);		
 	}
 
 	@Override
@@ -208,7 +179,6 @@ public class QueueFactoryController implements IEventController,IOnQueueObserve,
 		finally 
 		{
 			lock.unlock();
-		}
-		
+		}		
 	}
 }
