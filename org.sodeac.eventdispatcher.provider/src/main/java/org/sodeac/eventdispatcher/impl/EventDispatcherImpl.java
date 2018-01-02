@@ -866,6 +866,10 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 						{
 							continue;
 						}
+						if(entry.getValue().getConfigurationPropertyBlock().isEmpty())
+						{
+							continue;
+						}
 						if(filter.matches(entry.getValue().getConfigurationPropertyBlock().getProperties()))
 						{
 							relatedQueueIndex.put(entry.getValue(), entry.getValue());
@@ -1571,7 +1575,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				try
 				{
-					if(filter.matches(queue.getConfigurationPropertyBlock().getProperties()))
+					if((! queue.getConfigurationPropertyBlock().isEmpty()) && filter.matches(queue.getConfigurationPropertyBlock().getProperties()))
 					{
 						if(controllerIndex.get(controllerContainer.getEventController()) == null)
 						{
