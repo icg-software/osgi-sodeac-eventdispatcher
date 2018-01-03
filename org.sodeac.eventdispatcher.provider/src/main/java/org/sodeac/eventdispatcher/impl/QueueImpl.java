@@ -49,7 +49,7 @@ import org.sodeac.eventdispatcher.extension.api.IExtensibleQueue;
 
 public class QueueImpl implements IQueue,IExtensibleQueue
 {
-	public QueueImpl(String queueId,EventDispatcherImpl eventDispatcher, boolean enableMetrics, String name, String category)
+	public QueueImpl(String queueId,EventDispatcherImpl eventDispatcher, boolean enableMetrics, String name, String category,Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
 		super();
 	
@@ -100,13 +100,25 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		this.queueScopeList = new ArrayList<IQueueScope>();
 		this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueScope>());
-		this.queueScopeListLock = new ReentrantLock();
+		this.queueScopeListLock = new ReentrantReadWriteLock(true);
+		this.queueScopeListReadLock = this.queueScopeListLock.readLock();
+		this.queueScopeListWriteLock = this.queueScopeListLock.writeLock();
 		
 		PropertyBlockImpl qualityValues = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
 		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
 		this.metrics = new MetricImpl(this,qualityValues, null,enableMetrics);
+		
 		this.configurationPropertyBlock = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
+		if(configurationProperties != null)
+		{
+			this.configurationPropertyBlock.setPropertySet(configurationProperties, false);
+		}
+		
 		this.statePropertyBlock = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
+		if(stateProperties != null)
+		{
+			this.statePropertyBlock.setPropertySet(stateProperties,false);
+		}
 		
 		this.metrics.registerGauge(new IGauge<Long>()
 		{
@@ -192,9 +204,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	protected volatile QueueConfigurationModifyListener queueConfigurationModifyListener = null;
 	
-	protected List<IQueueScope> queueScopeList = null;
+	protected List<IQueueScope> queueScopeList;
 	protected volatile List<IQueueScope> queueScopeListCopy = null;
-	protected ReentrantLock queueScopeListLock = null;
+	protected ReentrantReadWriteLock queueScopeListLock;
+	protected ReadLock queueScopeListReadLock;
+	protected WriteLock queueScopeListWriteLock;
 	
 	@Override
 	public boolean scheduleEvent(Event event)
@@ -238,7 +252,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	// Controller
 	
-	public boolean checkController(ControllerContainer controllerContainer)
+	public void checkForController(ControllerContainer controllerContainer,QueueBindingModifyFlags bindingModifyFlags)
 	{
 		boolean controllerMatch = false;
 		if(queueId.equals(controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)))
@@ -269,15 +283,30 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 		}
 		
+		boolean add = false;
+		boolean remove = false;
+		
 		if(controllerMatch)
 		{
-			return setController(controllerContainer);
+			add = setController(controllerContainer);
 		}
 		else
 		{
-			unsetController(controllerContainer);
+			remove = unsetController(controllerContainer);
 		}
-		return false;
+		
+		if(this instanceof QueueScopeImpl)
+		{
+			if(controllerMatch){bindingModifyFlags.setScopeSet(true);}
+			if(add) {bindingModifyFlags.setScopeAdd(true);}
+			if(remove) {bindingModifyFlags.setScopeRemove(true);}
+		}
+		else
+		{
+			if(controllerMatch){bindingModifyFlags.setGlobalSet(true);}
+			if(add) {bindingModifyFlags.setGlobalAdd(true);}
+			if(remove) {bindingModifyFlags.setGlobalRemove(true);}
+		}
 	}
 	
 	public boolean setController(ControllerContainer controllerContainer)
@@ -2317,8 +2346,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public IQueueScope createScope(String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller)
 	{
-		QueueScopeImpl newScope = new QueueScopeImpl(this, scopeName,adoptContoller);
-		this.queueScopeListLock.lock();
+		QueueScopeImpl newScope = new QueueScopeImpl(this, scopeName,adoptContoller,configurationProperties,stateProperties);
+		this.queueScopeListWriteLock.lock();
 		try
 		{
 			this.queueScopeList.add(newScope);
@@ -2326,17 +2355,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 		finally 
 		{
-			this.queueScopeListLock.unlock();
+			this.queueScopeListWriteLock.unlock();
 		}
 		
-		if((stateProperties != null) && (! stateProperties.isEmpty()) )
-		{
-			newScope.getStatePropertyBlock().setPropertySet(stateProperties, false);
-		}
-		if((configurationProperties != null) && (! configurationProperties.isEmpty()) )
-		{
-			newScope.getConfigurationPropertyBlock().setPropertySet(configurationProperties, false);
-		}
 		// TODO adoptContoller
 		return newScope;
 	}

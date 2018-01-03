@@ -796,7 +796,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 							String name  = controllerContainer.getNonEmptyStringProperty(IEventController.PROPERTY_JMX_NAME, controllerContainer.getEventController().getClass().getSimpleName());
 							String category = controllerContainer.getNonEmptyStringProperty(IEventController.PROPERTY_JMX_CATEGORY,null);
 							
-							queue = new QueueImpl(queueId,this, ! controllerContainer.isDisableMetrics(), name,category);
+							queue = new QueueImpl(queueId,this, ! controllerContainer.isDisableMetrics(), name,category,null,null);
 							this.queueIndex.put(queueId,queue);
 							if(this.counterQueueSize != null)
 							{
@@ -844,12 +844,16 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				try
 				{
+					QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
+					
 					this.queueIndexReadLock.lock();
 					try
 					{
 						for(Entry<String,QueueImpl> entry : queueIndex.entrySet())
 						{
-							if(entry.getValue().checkController(controllerContainer))
+							modifyFlags.reset();
+							entry.getValue().checkForController(controllerContainer,modifyFlags);
+							if(modifyFlags.isGlobalSet() || modifyFlags.isScopeSet())
 							{
 								controllerInUse = true;
 							}
@@ -1452,11 +1456,15 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			controllerListReadLock.lock();
 			try
 			{
+				QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
+				
 				for(ControllerContainer controllerContainer : controllerList)
 				{
+					modifyFlags.reset();
+					
 					try
 					{
-						queue.checkController(controllerContainer);
+						queue.checkForController(controllerContainer,modifyFlags);
 					}
 					catch (Exception e) 
 					{

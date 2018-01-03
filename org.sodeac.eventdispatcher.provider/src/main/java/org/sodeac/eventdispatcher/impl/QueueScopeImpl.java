@@ -15,9 +15,9 @@ public class QueueScopeImpl extends QueueImpl implements IQueueScope
 	private String scopeName;
 	private boolean adoptContoller;
 	
-	protected QueueScopeImpl(QueueImpl parent, String scopeName, boolean adoptContoller)
+	protected QueueScopeImpl(QueueImpl parent, String scopeName, boolean adoptContoller,Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
-		super(null,(EventDispatcherImpl)parent.getDispatcher(), parent.isMetricsEnabled(), null, null);
+		super(null,(EventDispatcherImpl)parent.getDispatcher(), parent.isMetricsEnabled(), null, null,configurationProperties,stateProperties);
 		
 		this.parent = parent;
 		this.scopeName = scopeName;
