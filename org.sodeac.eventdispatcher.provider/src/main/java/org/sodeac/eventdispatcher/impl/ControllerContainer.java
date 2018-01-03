@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.sodeac.eventdispatcher.api.IDisableMetricsOnQueueObserve;
+import org.sodeac.eventdispatcher.api.IEnableMetricsOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IEventController;
 
 public class ControllerContainer
@@ -21,6 +23,7 @@ public class ControllerContainer
 	private Map<String, ?> properties = null;
 	private IEventController eventController = null;
 	private List<ConsumeEventHandler> consumeEventHandlerList = null;
+	private boolean registered = false;
 	
 	public Map<String, ?> getProperties()
 	{
@@ -38,6 +41,14 @@ public class ControllerContainer
 	{
 		this.eventController = eventController;
 	}
+	public boolean isRegistered()
+	{
+		return registered;
+	}
+	public void setRegistered(boolean registered)
+	{
+		this.registered = registered;
+	}
 	public ConsumeEventHandler addConsumeEventHandler(ConsumeEventHandler consumeEventHandler)
 	{
 		if(this.consumeEventHandlerList == null)
@@ -50,5 +61,63 @@ public class ControllerContainer
 	public List<ConsumeEventHandler> getConsumeEventHandlerList()
 	{
 		return consumeEventHandlerList;
+	}
+	
+	public String getNonEmptyStringProperty(String key, String defaultValue)
+	{
+		String stringValue = defaultValue;
+		Object current = this.properties.get(key);
+		if(current != null)
+		{
+			if(! (current instanceof String))
+			{
+				current = current.toString();
+			}
+		}
+		if((current != null) && (! ((String)current).isEmpty()))
+		{
+			stringValue = (String)current;
+		}
+		else
+		{
+			stringValue = defaultValue;
+		}
+		return stringValue;
+	}
+	
+	public boolean isEnableMetrics()
+	{
+		boolean enableMetrics = eventController instanceof IEnableMetricsOnQueueObserve;
+		boolean disableMetrics = isDisableMetrics();
+		if(disableMetrics)
+		{
+			enableMetrics = false;
+		}
+		return enableMetrics;
+	}
+	
+	public boolean isDisableMetrics()
+	{
+		boolean disableMetrics = eventController instanceof IDisableMetricsOnQueueObserve;
+		if(! disableMetrics)
+		{
+			Object disableMetricsProperty = properties.get(IEventController.PROPERTY_DISABLE_METRICS);
+			if(disableMetricsProperty != null)
+			{
+				if(disableMetricsProperty instanceof Boolean)
+				{
+					disableMetrics = (Boolean)disableMetricsProperty;
+				}
+				else if (disableMetricsProperty instanceof String)
+				{
+					disableMetrics = ((String)disableMetricsProperty).equalsIgnoreCase("true");
+				}
+				else
+				{
+					disableMetrics = disableMetricsProperty.toString().equalsIgnoreCase("true");
+				}
+			}
+		}
+		return disableMetrics;
 	}
 }

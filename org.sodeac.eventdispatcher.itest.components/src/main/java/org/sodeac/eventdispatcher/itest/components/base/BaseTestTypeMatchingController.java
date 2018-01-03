@@ -41,7 +41,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 	service={IEventController.class,EventHandler.class},
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_CONFIGURATION_FILTER+"=("+IEventDispatcher.PROPERTY_QUEUE_CONFIGURATION_FILTER_TYPE + "=" + BaseTestTypeMatchingController.QUEUE_TYPE + ")",
+		IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER+"=("+IEventDispatcher.PROPERTY_QUEUE_TYPE + "=" + BaseTestTypeMatchingController.QUEUE_TYPE + ")",
 		EventConstants.EVENT_TOPIC+"=" + BaseTestTypeMatchingController.SCHEDULE_EVENT
 	}
 )

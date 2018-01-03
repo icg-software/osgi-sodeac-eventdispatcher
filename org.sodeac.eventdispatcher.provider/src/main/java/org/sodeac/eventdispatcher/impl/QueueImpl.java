@@ -26,6 +26,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.framework.Filter;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
@@ -63,12 +64,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.genericQueueSpoolLock = new ReentrantLock();
 		this.workerSpoolLock = new ReentrantLock();
 		
-		this.configurationList = new ArrayList<ControllerContainer>();
-		this.configurationListLock = new ReentrantReadWriteLock(true);
-		this.configurationListReadLock = this.configurationListLock.readLock();
-		this.configurationListWriteLock = this.configurationListLock.writeLock();
+		this.controllerList = new ArrayList<ControllerContainer>();
+		this.controllerListLock = new ReentrantReadWriteLock(true);
+		this.controllerReadLock = this.controllerListLock.readLock();
+		this.controllerListWriteLock = this.controllerListLock.writeLock();
 		
 		this.serviceList = new ArrayList<ServiceContainer>();
+		this.serviceIndex = new HashMap<ServiceContainer,ServiceContainer>();
 		this.serviceListLock = new ReentrantReadWriteLock(true);
 		this.serviceListReadLock = this.serviceListLock.readLock();
 		this.serviceListWriteLock = this.serviceListLock.writeLock();
@@ -135,13 +137,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected EventDispatcherImpl eventDispatcher = null;
 	protected String queueId = null;
 	
-	protected List<ControllerContainer> configurationList;
-	protected volatile List<ControllerContainer> configurationListCopy = null;
-	protected ReentrantReadWriteLock configurationListLock;
-	protected ReadLock configurationListReadLock;
-	protected WriteLock configurationListWriteLock;
+	protected List<ControllerContainer> controllerList;
+	protected volatile List<ControllerContainer> controllerListCopy = null;
+	protected ReentrantReadWriteLock controllerListLock;
+	protected ReadLock controllerReadLock;
+	protected WriteLock controllerListWriteLock;
 	
 	protected List<ServiceContainer> serviceList;
+	protected Map<ServiceContainer,ServiceContainer> serviceIndex = null;
 	protected volatile List<ServiceContainer> serviceListCopy = null;
 	protected ReentrantReadWriteLock serviceListLock;
 	protected ReadLock serviceListReadLock;
@@ -191,6 +194,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected List<IQueueScope> queueScopeList = null;
 	protected volatile List<IQueueScope> queueScopeListCopy = null;
 	protected ReentrantLock queueScopeListLock = null;
+	
+	private String cachedQueueConfigurationFilter = null;
+	private Filter cachedFilter = null;
+	
 	@Override
 	public boolean scheduleEvent(Event event)
 	{
@@ -231,24 +238,22 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		return true;
 	}
 	
+	// Controller
 	
-	public ControllerContainer addConfiguration(IEventController eventQueueConfiguration,Map<String, ?> properties)
+	public ControllerContainer addController(ControllerContainer controllerContainer)
 	{
-		configurationListWriteLock.lock();
+		controllerListWriteLock.lock();
 		try
 		{
-			for(ControllerContainer configurationContainer : this.configurationList)
+			for(ControllerContainer controllerContainerCheck : this.controllerList)
 			{
-				if(configurationContainer.getEventController() == eventQueueConfiguration)
+				if(controllerContainer == controllerContainerCheck)
 				{
-					configurationContainer.setProperties(properties);
 					return null;
 				}
 			}
 			
-			ControllerContainer configurationContainer = new ControllerContainer();
-			configurationContainer.setProperties(properties);
-			configurationContainer.setEventController(eventQueueConfiguration);
+			Map<String,?> properties =  controllerContainer.getProperties();
 			
 			if(properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC) != null)
 			{
@@ -257,7 +262,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					String topic = (String)properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC);
 					if(! topic.isEmpty())
 					{
-						ConsumeEventHandler handler = configurationContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId, topic));
+						ConsumeEventHandler handler = controllerContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId, topic));
 						Dictionary<String, Object> registerProperties = new Hashtable<String,Object>();
 						registerProperties.put(EventConstants.EVENT_TOPIC,topic);
 						ServiceRegistration<EventHandler> registration = eventDispatcher.getContext().getBundleContext().registerService(EventHandler.class, handler, registerProperties);
@@ -313,12 +318,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					{
 						for(String topic : topicList)
 						{
-							configurationContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId, topic));
+							controllerContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId, topic));
 						}
 						
-						if(configurationContainer.getConsumeEventHandlerList() != null)
+						if(controllerContainer.getConsumeEventHandlerList() != null)
 						{
-							for(ConsumeEventHandler handler :  configurationContainer.getConsumeEventHandlerList())
+							for(ConsumeEventHandler handler :  controllerContainer.getConsumeEventHandlerList())
 							{
 								Dictionary<String, Object> registerProperties = new Hashtable<String,Object>();
 								registerProperties.put(EventConstants.EVENT_TOPIC,handler.getTopic());
@@ -330,33 +335,65 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				}
 			}
 			
-			this.configurationList.add(configurationContainer);
-			this.configurationListCopy = null;
+			this.controllerList.add(controllerContainer);
+			this.controllerListCopy = null;
 			
-			return configurationContainer;
+			// enable disable metrics
+			
+			if(controllerContainer.isDisableMetrics())
+			{
+				try
+				{
+					setMetricsEnabled(false);
+				}
+				catch (Exception e) 
+				{
+					log(LogService.LOG_ERROR, "queue.setMetricsEnabled(false)", e);
+				}
+			}
+			else if(controllerContainer.isEnableMetrics())
+			{
+				try
+				{
+					setMetricsEnabled(true);
+				}
+				catch (Exception e) 
+				{
+					log(LogService.LOG_ERROR, "queue.setMetricsEnabled(true)", e);
+				}
+			}
+			
+			// observeEvent
+			
+			if(controllerContainer.getEventController() instanceof IOnQueueObserve)
+			{
+				addOnQueueObserver((IOnQueueObserve)controllerContainer.getEventController());
+			}
+			return controllerContainer;
 		}
 		finally 
 		{
-			configurationListWriteLock.unlock();
+			controllerListWriteLock.unlock();
 		}
 	}
 	
-	public boolean removeConfiguration(IEventController eventQueueConfiguration)
+	public boolean removeController(ControllerContainer configurationContainer)
 	{
-		configurationListWriteLock.lock();
+		controllerListWriteLock.lock();
 		try
 		{
 			List<ControllerContainer> toDeleteList = new ArrayList<ControllerContainer>();
-			for(ControllerContainer configurationContainer : this.configurationList)
+			for(ControllerContainer configurationContainerCheck : this.controllerList)
 			{
-				if(configurationContainer.getEventController() == eventQueueConfiguration)
+				if(configurationContainer == configurationContainerCheck)
 				{
 					toDeleteList.add(configurationContainer);
 				}
 			}
+			
 			for(ControllerContainer toDelete : toDeleteList)
 			{
-				this.configurationList.remove(toDelete);
+				this.controllerList.remove(toDelete);
 				
 				if(toDelete.getConsumeEventHandlerList() != null)
 				{
@@ -378,29 +415,87 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					}
 				}
 			}
-			this.configurationListCopy = null;
+			this.controllerListCopy = null;
 			return toDeleteList.size() > 0;
 		}
 		finally 
 		{
-			configurationListWriteLock.unlock();
+			controllerListWriteLock.unlock();
 		}
 	}
 	
-	public int getConfigurationSize()
+	public int getControllerSize()
 	{
-		configurationListReadLock.lock();
+		controllerReadLock.lock();
 		try
 		{
-			return this.configurationList.size();
+			return this.controllerList.size();
 		}
 		finally 
 		{
-			configurationListReadLock.unlock();
+			controllerReadLock.unlock();
 		}
 	}
 	
-
+	// Services
+	
+	public boolean checkForService(ServiceContainer serviceContainer)
+	{
+		boolean serviceMatch = false;
+		if(queueId.equals(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)))
+		{
+			serviceMatch = true;
+		}
+		else
+		{
+			if(! this.configurationPropertyBlock.isEmpty())
+			{
+				String queueConfigurationFilter = serviceContainer.getNonEmptyStringProperty(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER,"");
+				if(! queueConfigurationFilter.isEmpty())
+				{
+					try
+					{
+						Filter filter = null;
+						serviceListReadLock.lock();
+						try
+						{
+							if((cachedQueueConfigurationFilter == null) || (!cachedQueueConfigurationFilter.equals(queueConfigurationFilter)))
+							{
+								cachedFilter = FrameworkUtil.createFilter(queueConfigurationFilter);
+								cachedQueueConfigurationFilter = queueConfigurationFilter;
+							}
+							
+							filter = cachedFilter;
+						}
+						finally
+						{
+							serviceListReadLock.unlock();
+						}
+						
+						if(filter.matches(this.configurationPropertyBlock.getProperties()))
+						{
+							serviceMatch = true;
+						}
+					}
+					catch (Exception e) 
+					{
+						log(LogService.LOG_ERROR,"check queue binding for service",e);
+					}
+				}
+			}
+		}
+		
+		if(serviceMatch)
+		{
+			addService(serviceContainer,true);
+			return true;
+		}
+		else
+		{
+			removeService(serviceContainer);
+			return false;
+		}
+	}
 
 	@Override
 	public void setMetricsEnabled(boolean enabled)
@@ -468,29 +563,41 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		return this.enableMetrics;
 	}
 	
-	public void addService(IQueueService queueService,Map<String, ?> properties)
+	public boolean addService(ServiceContainer serviceContainer, boolean createOnly)
 	{
+		if(createOnly)
+		{
+			serviceListReadLock.lock();
+			try
+			{
+				if(serviceIndex.get(serviceContainer) != null)
+				{
+					return false;
+				}
+			}
+			finally
+			{
+				serviceListReadLock.unlock();
+			}
+		}
+		
 		boolean reschedule = false;
 		serviceListWriteLock.lock();
 		try
 		{
-			for(ServiceContainer serviceContainer : this.serviceList)
+			if(serviceIndex.get(serviceContainer) != null)
 			{
-				if(serviceContainer.getQueueService() == queueService)
+				if(createOnly)
 				{
-					serviceContainer.setProperties(properties);
-					reschedule = true;
-					break;
+					return false;
 				}
+				reschedule = true;
 			}
 			
 			if(! reschedule)
 			{
-				ServiceContainer serviceContainer = new ServiceContainer();
-				serviceContainer.setProperties(properties);
-				serviceContainer.setQueueService(queueService);
-				
 				this.serviceList.add(serviceContainer);
+				serviceIndex.put(serviceContainer,serviceContainer);
 				this.serviceListCopy = null;
 			}
 		}
@@ -499,7 +606,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			serviceListWriteLock.unlock();
 		}
 		
-		this.scheduleService(queueService, properties, reschedule);
+		this.scheduleService(serviceContainer.getQueueService(), serviceContainer.getProperties(), reschedule);
+		
+		return true;
 		
 	}
 	
@@ -616,52 +725,58 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 	}
 	
-	public boolean removeService(IQueueService eventQueueService)
-	{	
+	public boolean removeService(ServiceContainer serviceContainer)
+	{
+		serviceListReadLock.lock();
+		try
+		{
+			if(this.serviceIndex.get(serviceContainer) == null)
+			{
+				return false;
+			}
+		}
+		finally 
+		{
+			serviceListReadLock.unlock();
+		}
+		
 		serviceListWriteLock.lock();
 		try
 		{
-			List<ServiceContainer> toDeleteList = new ArrayList<ServiceContainer>();
-			for(ServiceContainer serviceContainer : this.serviceList)
+			ServiceContainer toDelete = this.serviceIndex.get(serviceContainer);
+			if(toDelete == null)
 			{
-				if(serviceContainer.getQueueService() == eventQueueService)
-				{
-					toDeleteList.add(serviceContainer);
-				}
+				return false;
 			}
-			for(ServiceContainer toDelete : toDeleteList)
-			{
-				this.serviceList.remove(toDelete);
-			}
+			while(this.serviceList.remove(toDelete)) {}
+			this.serviceIndex.remove(serviceContainer);
 			this.serviceListCopy = null;
 			
-			if(! toDeleteList.isEmpty())
+			jobListReadLock.lock();
+			try
 			{
-				jobListReadLock.lock();
-				try
+				for(Entry<String,JobContainer> jobContainerEntry : this.jobIndex.entrySet())
 				{
-					for(Entry<String,JobContainer> jobContainerEntry : this.jobIndex.entrySet())
+					try
 					{
-						try
+						if(jobContainerEntry.getValue().getJob() == serviceContainer.getQueueService())
 						{
-							if(jobContainerEntry.getValue().getJob() == eventQueueService)
-							{
-								jobContainerEntry.getValue().getJobControl().setDone();
-							}
-						}
-						catch (Exception e) 
-						{
-							log(LogService.LOG_ERROR, "set queue service done", e);
+							jobContainerEntry.getValue().getJobControl().setDone();
 						}
 					}
+					catch (Exception e) 
+					{
+						log(LogService.LOG_ERROR, "set queue service done", e);
+					}
 				}
-				finally 
-				{
-					jobListReadLock.unlock();
-				}
-				return true;
 			}
-			return false;
+			finally 
+			{
+				jobListReadLock.unlock();
+			}
+			
+			return true;
+			
 		}
 		finally 
 		{
@@ -1465,25 +1580,25 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 	public List<ControllerContainer> getConfigurationList()
 	{
-		List<ControllerContainer> list = configurationListCopy;
+		List<ControllerContainer> list = controllerListCopy;
 		if(list != null)
 		{
 			return list; 
 		}
-		configurationListReadLock.lock();
+		controllerReadLock.lock();
 		try
 		{
 			list = new ArrayList<ControllerContainer>();
-			for(ControllerContainer configuration : configurationList)
+			for(ControllerContainer configuration : controllerList)
 			{
 				list.add(configuration);
 			}
 			list = Collections.unmodifiableList(list);
-			configurationListCopy = list;
+			controllerListCopy = list;
 		}
 		finally 
 		{
-			configurationListReadLock.unlock();
+			controllerReadLock.unlock();
 		}
 		 
 		return list;
@@ -1565,12 +1680,39 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	public void dispose()
 	{
+		if(this.disposed)
+		{
+			return;
+		}
 		this.disposed = true;
 		
 		if(this.queueConfigurationModifyListener != null)
 		{
 			this.configurationPropertyBlock.removeModifyListener(this.queueConfigurationModifyListener);
 		}
+		
+		for(IEventDispatcherExtension extension : this.eventDispatcher.getEventDispatcherExtensionList())
+		{
+			try
+			{
+				extension.unregisterEventQueue(this.eventDispatcher, this);
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR, "unregister queue from extension",e);
+			}
+		}
+		
+		try
+		{
+			if(metrics != null)
+			{
+				metrics.dispose();
+			}
+		}
+		catch (Exception e) {}
+		
+		stopQueueWorker();
 	}
 	
 	public void stopQueueWorker()

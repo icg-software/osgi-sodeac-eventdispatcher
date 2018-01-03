@@ -25,8 +25,8 @@ public interface IEventDispatcher
 {
 	public static final String PROPERTY_ID = "id";
 	public static final String PROPERTY_QUEUE_ID = "queueid";
-	public static final String PROPERTY_QUEUE_CONFIGURATION_FILTER = "queueconfigurationfilter";
-	public static final String PROPERTY_QUEUE_CONFIGURATION_FILTER_TYPE = "queuetype";
+	public static final String PROPERTY_QUEUE_MATCH_FILTER = "queueconfigurationmatchfilter";
+	public static final String PROPERTY_QUEUE_TYPE = "queuetype";
 	public static final String PROPERTY_DISPATCHER_ID = "dispatcherid";
 	public static final String DEFAULT_DISPATCHER_ID = "default";
 	

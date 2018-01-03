@@ -18,6 +18,7 @@ public class ServiceContainer
 {
 	private Map<String, ?> properties = null;
 	private IQueueService queueService = null;
+	private boolean registered = false;
 	
 	public Map<String, ?> getProperties()
 	{
@@ -34,5 +35,35 @@ public class ServiceContainer
 	public void setQueueService(IQueueService queueService)
 	{
 		this.queueService = queueService;
+	}
+	public boolean isRegistered()
+	{
+		return registered;
+	}
+	public void setRegistered(boolean registered)
+	{
+		this.registered = registered;
+	}
+	
+	public String getNonEmptyStringProperty(String key, String defaultValue)
+	{
+		String stringValue = defaultValue;
+		Object current = this.properties.get(key);
+		if(current != null)
+		{
+			if(! (current instanceof String))
+			{
+				current = current.toString();
+			}
+		}
+		if((current != null) && (! ((String)current).isEmpty()))
+		{
+			stringValue = (String)current;
+		}
+		else
+		{
+			stringValue = defaultValue;
+		}
+		return stringValue;
 	}
 }

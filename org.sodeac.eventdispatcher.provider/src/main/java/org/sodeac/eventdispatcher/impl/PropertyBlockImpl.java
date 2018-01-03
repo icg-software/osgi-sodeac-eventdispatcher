@@ -586,4 +586,43 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T getTypedProperty(String key, T defaultValue)
+	{
+		T typedValue = defaultValue;
+		Object current = getProperty(key);
+		if(current != null)
+		{
+			typedValue = (T)current;
+		}
+		else
+		{
+			typedValue = defaultValue;
+		}
+		return typedValue;
+	}
+	
+	@Override
+	public String getNonEmptyStringProperty(String key, String defaultValue)
+	{
+		String stringValue = defaultValue;
+		Object current = getProperty(key);
+		if(current != null)
+		{
+			if(! (current instanceof String))
+			{
+				current = current.toString();
+			}
+		}
+		if((current != null) && (! ((String)current).isEmpty()))
+		{
+			stringValue = (String)current;
+		}
+		else
+		{
+			stringValue = defaultValue;
+		}
+		return stringValue;
+	}
 }
