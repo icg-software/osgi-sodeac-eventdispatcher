@@ -14,9 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.osgi.framework.Filter;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
 import org.sodeac.eventdispatcher.api.IDisableMetricsOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IEnableMetricsOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IEventDispatcher;
 
 public class ControllerContainer
 {
@@ -24,6 +28,9 @@ public class ControllerContainer
 	private IEventController eventController = null;
 	private List<ConsumeEventHandler> consumeEventHandlerList = null;
 	private boolean registered = false;
+	
+	private String cachedControllerQueueConfigurationFilter = null;
+	private Filter cachedControllerFilter = null;
 	
 	public Map<String, ?> getProperties()
 	{
@@ -119,5 +126,24 @@ public class ControllerContainer
 			}
 		}
 		return disableMetrics;
+	}
+	
+	public synchronized Filter getGetQueueMatchFilter() throws InvalidSyntaxException
+	{
+		Filter filter = null;
+		String queueConfigurationFilter = getNonEmptyStringProperty(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER,"");
+		if(queueConfigurationFilter.isEmpty())
+		{
+			return filter;
+		}
+		
+		if((cachedControllerQueueConfigurationFilter == null) || (!cachedControllerQueueConfigurationFilter.equals(queueConfigurationFilter)))
+		{
+			cachedControllerFilter = FrameworkUtil.createFilter(queueConfigurationFilter);
+			cachedControllerQueueConfigurationFilter = queueConfigurationFilter;
+		}
+			
+		filter = cachedControllerFilter;
+		return filter;
 	}
 }

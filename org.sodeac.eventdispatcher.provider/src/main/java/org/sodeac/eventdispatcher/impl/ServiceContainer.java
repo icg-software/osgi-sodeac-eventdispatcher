@@ -12,6 +12,10 @@ package org.sodeac.eventdispatcher.impl;
 
 import java.util.Map;
 
+import org.osgi.framework.Filter;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IQueueService;
 
 public class ServiceContainer
@@ -19,6 +23,9 @@ public class ServiceContainer
 	private Map<String, ?> properties = null;
 	private IQueueService queueService = null;
 	private boolean registered = false;
+
+	private String cachedServiceQueueConfigurationFilter = null;
+	private Filter cachedServiceFilter = null;
 	
 	public Map<String, ?> getProperties()
 	{
@@ -65,5 +72,24 @@ public class ServiceContainer
 			stringValue = defaultValue;
 		}
 		return stringValue;
+	}
+	
+	public synchronized Filter getGetQueueMatchFilter() throws InvalidSyntaxException
+	{
+		Filter filter = null;
+		String queueConfigurationFilter = getNonEmptyStringProperty(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER,"");
+		if(queueConfigurationFilter.isEmpty())
+		{
+			return filter;
+		}
+		
+		if((cachedServiceQueueConfigurationFilter == null) || (!cachedServiceQueueConfigurationFilter.equals(queueConfigurationFilter)))
+		{
+			cachedServiceFilter = FrameworkUtil.createFilter(queueConfigurationFilter);
+			cachedServiceQueueConfigurationFilter = queueConfigurationFilter;
+		}
+		
+		filter = cachedServiceFilter;
+		return filter;
 	}
 }

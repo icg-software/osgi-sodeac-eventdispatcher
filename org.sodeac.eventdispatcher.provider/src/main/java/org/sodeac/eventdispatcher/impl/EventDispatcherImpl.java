@@ -28,8 +28,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.framework.Constants;
-import org.osgi.framework.Filter;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -45,7 +43,6 @@ import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnJobStop;
 import org.sodeac.eventdispatcher.api.IOnJobTimeout;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
@@ -770,8 +767,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				return false;
 			}
 			
-			Map<QueueImpl,QueueImpl> relatedQueueIndex = new HashMap<QueueImpl,QueueImpl>();
 			QueueImpl queue = null;
+			
+			boolean controllerInUse = false;
 			
 			if((queueId != null) && (! queueId.isEmpty()))
 			{	
@@ -837,33 +835,23 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 						this.queueIndexWriteLock.unlock();
 					}
 					
-					relatedQueueIndex.put(queue, queue);
+					controllerInUse = true;
+					queue.setController(controllerContainer);
 				}
 			}
 		
-			if((queueConfigurationFilter != null) && (! queueConfigurationFilter.isEmpty()))
+			if(! queueConfigurationFilter.isEmpty())
 			{
 				try
 				{
-					Filter filter = FrameworkUtil.createFilter(queueConfigurationFilter);
 					this.queueIndexReadLock.lock();
 					try
 					{
 						for(Entry<String,QueueImpl> entry : queueIndex.entrySet())
 						{
-							if(relatedQueueIndex.containsKey(entry.getValue()))
+							if(entry.getValue().checkController(controllerContainer))
 							{
-								// skip if is already in List
-								continue;
-							}
-							if(entry.getValue().getConfigurationPropertyBlock().isEmpty())
-							{
-								// skip if configuration property block is empty
-								continue;
-							}
-							if(filter.matches(entry.getValue().getConfigurationPropertyBlock().getProperties()))
-							{
-								relatedQueueIndex.put(entry.getValue(), entry.getValue());
+								controllerInUse = true;
 							}
 						}
 					}
@@ -878,12 +866,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				}
 			}
 			
-			for(Entry<QueueImpl, QueueImpl> queueEntry : relatedQueueIndex.entrySet())
-			{
-				queueEntry.getKey().addController(controllerContainer);
-			}
-			
-			return queueIndex.size() > 0;
+			return controllerInUse;
 		}
 		finally 
 		{
@@ -952,7 +935,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet() )
 			{
-				if(entry.getValue().removeController(controllerContainer))
+				if(entry.getValue().unsetController(controllerContainer))
 				{
 					if(registeredOnQueueList == null)
 					{
@@ -1116,17 +1099,36 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				return false;
 			}
 			
-			this.queueIndexReadLock.lock();
-			try
+			if(queueConfigurationFilter.isEmpty())
 			{
-				for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet())
+				this.queueIndexReadLock.lock();
+				try
 				{
-					entry.getValue().checkForService(serviceContainer);
+					QueueImpl queue = this.queueIndex.get(queueId);
+					if(queue != null)
+					{
+						queue.checkForService(serviceContainer);
+					}
+				}
+				finally 
+				{
+					this.queueIndexReadLock.unlock();
 				}
 			}
-			finally 
+			else
 			{
-				this.queueIndexReadLock.unlock();
+				this.queueIndexReadLock.lock();
+				try
+				{
+					for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet())
+					{
+						entry.getValue().checkForService(serviceContainer);
+					}
+				}
+				finally 
+				{
+					this.queueIndexReadLock.unlock();
+				}
 			}
 			
 			return true;
@@ -1176,7 +1178,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet() )
 			{
-				entry.getValue().removeService(serviceContainer);
+				entry.getValue().unsetService(serviceContainer);
 			}
 		}
 		finally 
@@ -1447,69 +1449,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	{
 		try
 		{
-			
-			Map<IEventController,ControllerContainer> controllerIndex = new HashMap<IEventController,ControllerContainer>();
-			for(ControllerContainer controllerContainer : queue.getConfigurationList())
-			{
-				controllerIndex.put(controllerContainer.getEventController(),controllerContainer);
-			}
-			
 			controllerListReadLock.lock();
 			try
 			{
 				for(ControllerContainer controllerContainer : controllerList)
 				{
-					String queueConfigurationFilter = (String)controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER);
-					if(queueConfigurationFilter == null)
-					{
-						continue;
-					}
-					
-					if(queueConfigurationFilter.isEmpty())
-					{
-						continue;
-					}
-					
-					String queueId = (String)controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID);
-					if((queueId != null) && (!queueId.isEmpty()) && (queueId.equals(queue.getQueueId())))
-					{
-						// Observe by QueueId
-						continue;
-					}
-							
-					Filter filter = this.context.getBundleContext().createFilter(queueConfigurationFilter);
-					
 					try
 					{
-						if((! queue.getConfigurationPropertyBlock().isEmpty()) && filter.matches(queue.getConfigurationPropertyBlock().getProperties()))
-						{
-							if(controllerIndex.get(controllerContainer.getEventController()) == null)
-							{
-								ControllerContainer container = queue.addController(controllerContainer);
-								if(container != null)
-								{
-									if(controllerContainer.getEventController() instanceof IOnQueueObserve)
-									{
-										queue.addOnQueueObserver((IOnQueueObserve)controllerContainer.getEventController());
-									}
-									controllerIndex.put(controllerContainer.getEventController(),controllerContainer);
-								}
-							}
-						}
-						else
-						{
-							if(controllerIndex.get(controllerContainer.getEventController()) != null)
-							{
-								
-								queue.removeController(controllerContainer);
-								
-								if(controllerContainer.getEventController() instanceof IOnQueueReverse)
-								{
-									((IOnQueueReverse)controllerContainer.getEventController()).onQueueReverse(queue);
-								}
-								controllerIndex.remove(controllerContainer.getEventController());
-							}
-						}
+						queue.checkController(controllerContainer);
 					}
 					catch (Exception e) 
 					{
@@ -1534,7 +1481,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				for(ServiceContainer serviceContainer : serviceList)
 				{
-					queue.checkForService(serviceContainer);
+					try
+					{
+						queue.checkForService(serviceContainer);
+					}
+					catch (Exception e) 
+					{
+						log(LogService.LOG_ERROR,"check queue binding for services by configuration filter on queue configuration modify",e);
+					}
 				}
 			}
 			finally 
