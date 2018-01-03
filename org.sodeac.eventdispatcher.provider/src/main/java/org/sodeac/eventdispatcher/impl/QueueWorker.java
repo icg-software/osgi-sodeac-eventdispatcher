@@ -773,8 +773,8 @@ public class QueueWorker extends Thread
 			
 			try
 			{
-				this.dueJobList.clear();
 				nextRunTimeStamp = eventQueue.getDueJobs(this.dueJobList);
+				this.dueJobList.clear();
 			}
 			catch (Exception e) 
 			{

@@ -187,7 +187,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	protected volatile boolean enableMetrics = true;
 	protected volatile boolean disposed = false; 
-	protected volatile boolean privateWorker = true;
+	protected volatile boolean privateWorker = false;
 	
 	protected volatile QueueConfigurationModifyListener queueConfigurationModifyListener = null;
 	
@@ -2007,6 +2007,28 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				return false;
 			}
+			
+			if(! this.newScheduledList.isEmpty())
+			{
+				return false;
+			}
+			if(! this.removedEventList.isEmpty())
+			{
+				return false;
+			}
+			if(! this.firedEventList.isEmpty())
+			{
+				return false;
+			}
+			if(! this.signalList.isEmpty())
+			{
+				return false;
+			}
+			if(! this.onQueueObserveList.isEmpty())
+			{
+				return false;
+			}
+			
 			if(! worker.setEventQueue(null))
 			{
 				return false;
@@ -2057,6 +2079,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				return false;
 			}
 			if(! this.firedEventList.isEmpty())
+			{
+				return false;
+			}
+			if(! this.signalList.isEmpty())
+			{
+				return false;
+			}
+			if(! this.onQueueObserveList.isEmpty())
 			{
 				return false;
 			}
