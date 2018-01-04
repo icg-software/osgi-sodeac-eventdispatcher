@@ -48,6 +48,7 @@ import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
+import org.sodeac.eventdispatcher.api.ITimer;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
 import org.sodeac.eventdispatcher.api.ICounter;
@@ -117,6 +118,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	
 	private ExecutorService onJobTimeOutExecuterService = null;
 	private ExecutorService onJobStopExecuterService = null;
+	private ExecutorService onQueueReverseExecuterService = null;
 	
 	@Override
 	public String getId()
@@ -324,6 +326,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			this.onJobTimeOutExecuterService = Executors.newCachedThreadPool();
 			this.onJobStopExecuterService = Executors.newCachedThreadPool();
+			this.onQueueReverseExecuterService = Executors.newCachedThreadPool();
 			
 			this.dispatcherGuardian = new DispatcherGuardian(this);
 			this.dispatcherGuardian.start();
@@ -468,11 +471,6 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			counterQueueSize = null;
 			counterConfigurationSize = null;
-			try
-			{
-				this.metrics.dispose();
-			}
-			catch (Exception e) {e.printStackTrace();}
 			
 			for(IEventDispatcherExtension eventDispatcherExtension : this.extensionListCopy)
 			{
@@ -526,7 +524,19 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			}
 			catch (Exception e) {}
 			
+			try
+			{
+				this.onQueueReverseExecuterService.shutdown();
+				this.onQueueReverseExecuterService.awaitTermination(3, TimeUnit.SECONDS);
+			}
+			catch (Exception e) {}
+			
 			this.context = null;
+			try
+			{
+				this.metrics.dispose();
+			}
+			catch (Exception e) {e.printStackTrace();}
 		}
 		finally 
 		{
@@ -767,6 +777,25 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				return false;
 			}
 			
+			try
+			{
+				getMetrics().meter(IMetrics.METRICS_EVENT_CONTROLLER,IMetrics.METRICS_CREATE).mark();
+			}
+			catch(Exception e)
+			{
+				log(LogService.LOG_ERROR, "mark metric register controller", e);
+			}
+			
+			ITimer.Context timerContext = null;
+			try
+			{
+				timerContext = getMetrics().timer(IMetrics.METRICS_EVENT_CONTROLLER,IMetrics.METRICS_CREATE).time();
+			}
+			catch(Exception e)
+			{
+				log(LogService.LOG_ERROR, "metric timer register controller", e);
+			}
+			
 			QueueImpl queue = null;
 			
 			boolean controllerInUse = false;
@@ -793,6 +822,25 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					
 						if(queue == null)
 						{
+							try
+							{
+								getMetrics().meter(IMetrics.METRICS_QUEUE,IMetrics.METRICS_CREATE).mark();
+							}
+							catch(Exception e)
+							{
+								log(LogService.LOG_ERROR, "mark metric queue create", e);
+							}
+							
+							ITimer.Context createQueueTimerContext = null;
+							try
+							{
+								createQueueTimerContext = getMetrics().timer(IMetrics.METRICS_QUEUE,IMetrics.METRICS_CREATE).time();
+							}
+							catch(Exception e)
+							{
+								log(LogService.LOG_ERROR, "metric timer queue create", e);
+							}
+							
 							String name  = controllerContainer.getNonEmptyStringProperty(IEventController.PROPERTY_JMX_NAME, controllerContainer.getEventController().getClass().getSimpleName());
 							String category = controllerContainer.getNonEmptyStringProperty(IEventController.PROPERTY_JMX_CATEGORY,null);
 							
@@ -819,14 +867,32 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 							serviceListReadLock.lock();
 							try
 							{
+								QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
+								
 								for(ServiceContainer serviceContainer :  this.serviceList )
 								{
-									queue.checkForService(serviceContainer);
+									modifyFlags.reset();
+									
+									queue.checkForService(serviceContainer, modifyFlags);
+								}
+								
+								try
+								{
+									getMetrics().histogram(IMetrics.METRICS_QUEUE,IMetrics.METRICS_CREATE,IMetrics.METRICS_SERVICE,IMetrics.METRICS_MATCH_CHECK).update(serviceList.size());
+								}
+								catch(Exception e)
+								{
+									log(LogService.LOG_ERROR, "metric histogram queue create", e);
 								}
 							}
 							finally 
 							{
 								serviceListReadLock.unlock();
+							}
+							
+							if(createQueueTimerContext != null)
+							{
+								try {createQueueTimerContext.stop();}catch (Exception e) {}
 							}
 						}
 					}
@@ -858,6 +924,15 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 								controllerInUse = true;
 							}
 						}
+						
+						try
+						{
+							getMetrics().histogram(IMetrics.METRICS_EVENT_CONTROLLER,IMetrics.METRICS_CREATE,IMetrics.METRICS_QUEUE,IMetrics.METRICS_MATCH_CHECK).update(queueIndex.size());
+						}
+						catch(Exception e)
+						{
+							log(LogService.LOG_ERROR, "metric histogram register controller", e);
+						}
 					}
 					finally 
 					{
@@ -868,6 +943,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				{
 					log(LogService.LOG_ERROR,"check queue binding for controller by configuration filter",e);
 				}
+			}
+			
+			if(timerContext != null)
+			{
+				try {timerContext.stop();}catch (Exception e) {}
 			}
 			
 			return controllerInUse;
@@ -934,6 +1014,26 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		boolean registered = false;
 		List<QueueImpl> registeredOnQueueList = null;
 		List<QueueImpl> queueRemoveList = null;
+		
+		try
+		{
+			getMetrics().meter(IMetrics.METRICS_EVENT_CONTROLLER,IMetrics.METRICS_DISPOSE).mark();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric register controller", e);
+		}
+		
+		ITimer.Context timerContext = null;
+		try
+		{
+			timerContext = getMetrics().timer(IMetrics.METRICS_EVENT_CONTROLLER,IMetrics.METRICS_DISPOSE).time();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "metric timer register controller", e);
+		}
+		
 		this.queueIndexReadLock.lock();
 		try
 		{
@@ -958,6 +1058,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					queueRemoveList.add(entry.getValue());
 				}
 			}
+			try
+			{
+				getMetrics().histogram(IMetrics.METRICS_EVENT_CONTROLLER,IMetrics.METRICS_DISPOSE,IMetrics.METRICS_QUEUE,IMetrics.METRICS_MATCH_CHECK).update(this.queueIndex.size());
+			}
+			catch(Exception e)
+			{
+				log(LogService.LOG_ERROR, "metric histogram unregister controller", e);
+			}
 		}
 		finally 
 		{
@@ -972,7 +1080,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				{
 					for(QueueImpl queue : registeredOnQueueList)
 					{	
-						((IOnQueueReverse)controllerContainer.getEventController()).onQueueReverse(queue);
+						this.executeOnQueueReverse((IOnQueueReverse)controllerContainer.getEventController(), queue);
 					}
 				}
 			}
@@ -989,6 +1097,26 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				for(QueueImpl queue : queueRemoveList)
 				{
+
+					try
+					{
+						getMetrics().meter(IMetrics.METRICS_QUEUE,IMetrics.METRICS_DISPOSE).mark();
+					}
+					catch(Exception e)
+					{
+						log(LogService.LOG_ERROR, "mark metric queue disponse", e);
+					}
+					
+					ITimer.Context removeQueueTimerContext = null;
+					try
+					{
+						removeQueueTimerContext = getMetrics().timer(IMetrics.METRICS_QUEUE,IMetrics.METRICS_DISPOSE).time();
+					}
+					catch(Exception e)
+					{
+						log(LogService.LOG_ERROR, "metric timer queue dispose", e);
+					}
+					
 					try
 					{
 						queue.dispose();
@@ -1000,6 +1128,12 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					
 					this.queueIndex.remove(queue.getQueueId());
 					counterQueueSize.dec();
+					
+					if(removeQueueTimerContext != null)
+					{
+						try {removeQueueTimerContext.stop();}catch (Exception e) {}
+					}
+					
 				}
 			}
 			finally 
@@ -1007,6 +1141,12 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				this.queueIndexWriteLock.unlock();
 			}
 		}
+		
+		if(timerContext != null)
+		{
+			try {timerContext.stop();}catch (Exception e) {}
+		}
+		
 		return registered;
 	}
 	
@@ -1103,6 +1243,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				return false;
 			}
 			
+			QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
+			
 			if(queueConfigurationFilter.isEmpty())
 			{
 				this.queueIndexReadLock.lock();
@@ -1111,7 +1253,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					QueueImpl queue = this.queueIndex.get(queueId);
 					if(queue != null)
 					{
-						queue.checkForService(serviceContainer);
+						queue.checkForService(serviceContainer, modifyFlags);
 					}
 				}
 				finally 
@@ -1126,7 +1268,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				{
 					for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet())
 					{
-						entry.getValue().checkForService(serviceContainer);
+						modifyFlags.reset();
+						entry.getValue().checkForService(serviceContainer, modifyFlags);
 					}
 				}
 				finally 
@@ -1449,15 +1592,59 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		});
 	}
 	
+	public void executeOnQueueReverse(IOnQueueReverse onQueueReverse , IQueue queue)
+	{
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		
+		this.onQueueReverseExecuterService.execute(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					onQueueReverse.onQueueReverse(queue);
+				}
+				catch (Exception e) {}
+				countDownLatch.countDown();
+			}
+		});
+		
+		try
+		{
+			countDownLatch.await(3, TimeUnit.SECONDS);
+		}
+		catch (Exception ie) {}
+	}
+	
 	public void onConfigurationModify(QueueImpl queue)
 	{
 		try
 		{
+			getMetrics().meter(IMetrics.METRICS_ON_CONFIGURATION_MODIFY).mark();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric on-configuration-modify", e);
+		}
+		
+		ITimer.Context timerContext = null;
+		try
+		{
+			timerContext = getMetrics().timer(IMetrics.METRICS_ON_CONFIGURATION_MODIFY).time();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "metric timer on-configuration-modify", e);
+		}
+		
+		QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
+		
+		try
+		{
 			controllerListReadLock.lock();
 			try
-			{
-				QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
-				
+			{	
 				for(ControllerContainer controllerContainer : controllerList)
 				{
 					modifyFlags.reset();
@@ -1470,6 +1657,15 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					{
 						log(LogService.LOG_ERROR,"check queue binding for controller by configuration filter on queue configuration modify",e);
 					}
+				}
+				
+				try
+				{
+					getMetrics().histogram(IMetrics.METRICS_ON_CONFIGURATION_MODIFY,IMetrics.METRICS_EVENT_CONTROLLER,IMetrics.METRICS_MATCH_CHECK).update(controllerList.size());
+				}
+				catch(Exception e)
+				{
+					log(LogService.LOG_ERROR, "metric histogram on-configuration-modify", e);
 				}
 			}
 			finally 
@@ -1489,14 +1685,24 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				for(ServiceContainer serviceContainer : serviceList)
 				{
+					modifyFlags.reset();
 					try
 					{
-						queue.checkForService(serviceContainer);
+						queue.checkForService(serviceContainer,modifyFlags);
 					}
 					catch (Exception e) 
 					{
 						log(LogService.LOG_ERROR,"check queue binding for services by configuration filter on queue configuration modify",e);
 					}
+				}
+				
+				try
+				{
+					getMetrics().histogram(IMetrics.METRICS_ON_CONFIGURATION_MODIFY,IMetrics.METRICS_SERVICE,IMetrics.METRICS_MATCH_CHECK).update(serviceList.size());
+				}
+				catch(Exception e)
+				{
+					log(LogService.LOG_ERROR, "metric histogram on-configuration-modify", e);
 				}
 			}
 			finally 
@@ -1507,6 +1713,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		catch (Exception e) 
 		{
 			log(LogService.LOG_ERROR,"check queue binding for services by configuration filter on queue configuration modify",e);
+		}
+		
+		if(timerContext != null)
+		{
+			try {timerContext.stop();}catch (Exception e) {}
 		}
 	}
 }

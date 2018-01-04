@@ -12,6 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.osgi.framework.Filter;
 import org.osgi.service.event.Event;
@@ -249,14 +250,16 @@ public interface IQueue
 	/**
 	 * create {@link IQueueScope} for {@link IQueue}. Does not work, if this queue is already a scope
 	 * 
-	 * @param scopeName human readable name of scope or null
-	 * @param configurationProperties blue print for configuration propertyblock of new scope
-	 * @param stateProperties blue print for state propertyblock of new scope
+	 * @param scopeId unique id of scope (unique by queue) or null for auto-generation
+	 * @param scopeName human readable name of scope (nullable)
+	 * @param configurationProperties blue print for configuration propertyblock of new scope (nullable)
+	 * @param stateProperties blue print for state propertyblock of new scope (nullable)
 	 * @param adoptContoller keep controller of parent queue
+	 * @param adoptServices keep services of parent queue
 	 * 
-	 * @return new scope, or null, if scope could not created
+	 * @return new scope, or null, if scope already exists
 	 */
-	public IQueueScope createScope(String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller);
+	public IQueueScope createScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices);
 	
 	/**
 	 * returns scopelist of queue
@@ -273,4 +276,14 @@ public interface IQueue
 	 * @return scopelist of queue with positiv match result for {@code filter}
 	 */
 	public List<IQueueScope> getScopes(Filter filter);
+	
+	
+	/**
+	 * returns scope with given {@code scopeId}
+	 * 
+	 * @param scopeId id of scope to return
+	 * 
+	 * @return  scope with given {@code scopeId} or null, if scope not found
+	 */
+	public IQueueScope getScope(UUID scopeId);
 }

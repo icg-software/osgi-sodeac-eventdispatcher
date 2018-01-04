@@ -1003,6 +1003,11 @@ public class QueueWorker extends Thread
 		return true;
 	}
 	
+	public void notifySoftUpdate()
+	{
+		this.isUpdateNotified = true;
+	}
+	
 	public void notifyUpdate(long newRuntimeStamp)
 	{
 		try
@@ -1080,6 +1085,7 @@ public class QueueWorker extends Thread
 		
 		if(! inFreeingArea)
 		{
+			System.out.println("Not IN FreeArea??");
 			return false;
 		}
 		

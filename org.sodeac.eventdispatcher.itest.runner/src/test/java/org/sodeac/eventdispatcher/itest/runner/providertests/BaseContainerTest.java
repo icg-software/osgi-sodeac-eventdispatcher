@@ -700,7 +700,7 @@ public class BaseContainerTest extends AbstractTest
 		tracingEventPosition++;
 	}
 	
-	@Test(timeout=10000)
+	@Test(timeout=12000)
 	public void test09SimpleReScheduleDispatcherWorkflow1() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReScheduleTestController.QUEUE_ID);
@@ -728,7 +728,7 @@ public class BaseContainerTest extends AbstractTest
 		
 		try
 		{
-			latch.await(5 + (BaseReScheduleTestController.DELAY / 1000), TimeUnit.SECONDS);
+			latch.await(5 + (BaseReScheduleTestController.DELAY / 1000), TimeUnit.SECONDS);		// TODO Timeout??
 		}
 		catch (Exception e) {}
 		

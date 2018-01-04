@@ -11,18 +11,20 @@ import org.sodeac.eventdispatcher.api.IQueueScope;
 public class QueueScopeImpl extends QueueImpl implements IQueueScope
 {
 	private UUID scopeId;
-	private QueueImpl parent;
-	private String scopeName;
-	private boolean adoptContoller;
 	
-	protected QueueScopeImpl(QueueImpl parent, String scopeName, boolean adoptContoller,Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
+	private String scopeName = null;
+	private boolean adoptContoller = false;
+	private boolean adoptServices = false;
+	
+	protected QueueScopeImpl(UUID scopeId,QueueImpl parent, String scopeName, boolean adoptContoller, boolean adoptServices, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
 		super(null,(EventDispatcherImpl)parent.getDispatcher(), parent.isMetricsEnabled(), null, null,configurationProperties,stateProperties);
 		
-		this.parent = parent;
+		super.parent = parent;
 		this.scopeName = scopeName;
 		this.adoptContoller = adoptContoller;
-		this.scopeId = UUID.randomUUID();
+		this.adoptServices = adoptServices;
+		this.scopeId = scopeId;
 		super.queueId = parent.getQueueId() + "." + this.scopeId.toString();
 	}
 
@@ -49,12 +51,15 @@ public class QueueScopeImpl extends QueueImpl implements IQueueScope
 		return adoptContoller;
 	}
 
+	public boolean isAdoptServices()
+	{
+		return adoptServices;
+	}
+
 	@Override
 	public void dispose()
 	{
 		super.dispose();
-		// TODO remove from parentScopeList
-		// TODO remove registered Objects (Controller) Services?
 	}
 
 	public IQueueScope createScope(String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)

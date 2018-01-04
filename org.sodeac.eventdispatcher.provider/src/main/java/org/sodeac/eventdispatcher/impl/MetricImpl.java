@@ -401,6 +401,7 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	
 	public void dispose()
 	{
+		this.enabled = false;
 		try
 		{
 			this.metricsWriteLock.lock();

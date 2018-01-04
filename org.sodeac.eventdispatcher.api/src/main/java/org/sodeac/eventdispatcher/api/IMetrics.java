@@ -32,8 +32,15 @@ public interface IMetrics
 	public static final String POSTFIX_METER = "Meter";
 	public static final String POSTFIX_TIMER = "Timer";
 	
+	public static final String METRICS_CREATE = "Create";
+	public static final String METRICS_DISPOSE = "Dispose";
+	public static final String METRICS_MATCH_CHECK = "MatchCheck";
+	
 	public static final String METRICS_QUEUE = "Queue";
+	public static final String METRICS_SCOPE = "Scope";
 	public static final String METRICS_EVENT_CONTROLLER = "EventController";
+	public static final String METRICS_SERVICE = "Service";
+	public static final String METRICS_ON_CONFIGURATION_MODIFY = "OnConfigurationModify";
 	
 	public static final String METRICS_RUN_JOB = "Run";
 	public static final String METRICS_RUN_JOB_ERROR = "ErrorRun";

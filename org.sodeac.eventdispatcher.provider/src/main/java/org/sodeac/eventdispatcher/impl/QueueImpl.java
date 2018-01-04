@@ -33,6 +33,7 @@ import org.osgi.service.event.EventHandler;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
+import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IEventController;
@@ -98,7 +99,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		this.lastWorkerAction = System.currentTimeMillis();
 		
-		this.queueScopeList = new ArrayList<IQueueScope>();
+		this.queueScopeList = new ArrayList<QueueScopeImpl>();
+		this.queueScopeIndex = new HashMap<UUID,QueueScopeImpl>();
 		this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueScope>());
 		this.queueScopeListLock = new ReentrantReadWriteLock(true);
 		this.queueScopeListReadLock = this.queueScopeListLock.readLock();
@@ -204,11 +206,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	protected volatile QueueConfigurationModifyListener queueConfigurationModifyListener = null;
 	
-	protected List<IQueueScope> queueScopeList;
+	protected List<QueueScopeImpl> queueScopeList;
+	protected Map<UUID,QueueScopeImpl> queueScopeIndex;
 	protected volatile List<IQueueScope> queueScopeListCopy = null;
 	protected ReentrantReadWriteLock queueScopeListLock;
 	protected ReadLock queueScopeListReadLock;
 	protected WriteLock queueScopeListWriteLock;
+	
+	protected QueueImpl parent = null;
 	
 	@Override
 	public boolean scheduleEvent(Event event)
@@ -277,7 +282,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					}
 					catch (Exception e) 
 					{
-						log(LogService.LOG_ERROR,"check queue binding for service",e);
+						log(LogService.LOG_ERROR,"check queue binding for controller",e);
 					}
 				}
 			}
@@ -296,13 +301,37 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 		
 		if(this instanceof QueueScopeImpl)
-		{
+		{	
 			if(controllerMatch){bindingModifyFlags.setScopeSet(true);}
 			if(add) {bindingModifyFlags.setScopeAdd(true);}
 			if(remove) {bindingModifyFlags.setScopeRemove(true);}
 		}
 		else
 		{
+			this.queueScopeListReadLock.lock();
+			try
+			{
+				for(QueueScopeImpl scope : this.queueScopeList)
+				{
+					if(scope.isAdoptContoller() && controllerMatch)
+					{
+						bindingModifyFlags.setScopeSet(true);
+						if(scope.setController(controllerContainer))
+						{
+							bindingModifyFlags.setScopeAdd(true);
+						}
+					}
+					else
+					{
+						scope.checkForController(controllerContainer, bindingModifyFlags);
+					}
+				}
+			}
+			finally 
+			{
+				this.queueScopeListReadLock.unlock();
+			}
+			
 			if(controllerMatch){bindingModifyFlags.setGlobalSet(true);}
 			if(add) {bindingModifyFlags.setGlobalAdd(true);}
 			if(remove) {bindingModifyFlags.setGlobalRemove(true);}
@@ -528,7 +557,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	// Services
 	
-	public boolean checkForService(ServiceContainer serviceContainer)
+	public void checkForService(ServiceContainer serviceContainer, QueueBindingModifyFlags bindingModifyFlags)
 	{
 		boolean serviceMatch = false;
 		if(queueId.equals(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)))
@@ -559,15 +588,53 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 		}
 		
+		boolean add = false;
+		boolean remove = false;
+		
 		if(serviceMatch)
 		{
-			setService(serviceContainer,true);
-			return true;
+			add = setService(serviceContainer,true);
 		}
 		else
 		{
-			unsetService(serviceContainer);
-			return false;
+			remove = unsetService(serviceContainer);
+		}
+		
+		if(this instanceof QueueScopeImpl)
+		{	
+			if(serviceMatch){bindingModifyFlags.setScopeSet(true);}
+			if(add) {bindingModifyFlags.setScopeAdd(true);}
+			if(remove) {bindingModifyFlags.setScopeRemove(true);}
+		}
+		else
+		{
+			this.queueScopeListReadLock.lock();
+			try
+			{
+				for(QueueScopeImpl scope : this.queueScopeList)
+				{
+					if(scope.isAdoptServices() && serviceMatch)
+					{
+						bindingModifyFlags.setScopeSet(true);
+						if(scope.setService(serviceContainer, true))
+						{
+							bindingModifyFlags.setScopeAdd(true);
+						}
+					}
+					else
+					{
+						scope.checkForService(serviceContainer, bindingModifyFlags);
+					}
+				}
+			}
+			finally 
+			{
+				this.queueScopeListReadLock.unlock();
+			}
+			
+			if(serviceMatch){bindingModifyFlags.setGlobalSet(true);}
+			if(add) {bindingModifyFlags.setGlobalAdd(true);}
+			if(remove) {bindingModifyFlags.setGlobalRemove(true);}
 		}
 	}
 
@@ -1787,6 +1854,42 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		catch (Exception e) {}
 		
 		stopQueueWorker();
+		
+		if((this instanceof QueueScopeImpl) && (this.parent != null))
+		{
+			parent.removeScope((QueueScopeImpl)this);
+			
+			controllerListReadLock.lock();
+			try
+			{
+				for(ControllerContainer controllerContainer : this.controllerList)
+				{
+					if(controllerContainer.getEventController() instanceof IOnQueueReverse)
+					{
+						this.eventDispatcher.executeOnQueueReverse(((IOnQueueReverse)controllerContainer.getEventController()), this);
+					}
+				}
+			}
+			finally 
+			{
+				controllerListReadLock.unlock();
+			}
+		}
+	}
+	
+	private void removeScope(QueueScopeImpl scope)
+	{
+		this.queueScopeListWriteLock.lock();
+		try
+		{
+			this.queueScopeIndex.remove(scope.getScopeId());
+			while(this.queueScopeList.remove(scope)){}
+			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueScope>(this.queueScopeList));
+		}
+		finally 
+		{
+			this.queueScopeListWriteLock.unlock();
+		}	
 	}
 	
 	public void stopQueueWorker()
@@ -2032,6 +2135,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				notify = true;
 			}
 			worker = this.queueWorker;
+			
+			worker.notifySoftUpdate();
 		}
 		finally 
 		{
@@ -2344,21 +2449,38 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 
 	@Override
-	public IQueueScope createScope(String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller)
+	public IQueueScope createScope(UUID scopeId, String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller, boolean adoptServices)
 	{
-		QueueScopeImpl newScope = new QueueScopeImpl(this, scopeName,adoptContoller,configurationProperties,stateProperties);
+		if(scopeId == null)
+		{
+			scopeId = UUID.randomUUID();
+		}
+		
+		QueueScopeImpl newScope = null;
+		
 		this.queueScopeListWriteLock.lock();
 		try
 		{
+			if(this.queueScopeIndex.get(scopeId) != null)
+			{
+				return null;
+			}
+			newScope = new QueueScopeImpl(scopeId,this, scopeName,adoptContoller,adoptServices,configurationProperties,stateProperties);
+			
 			this.queueScopeList.add(newScope);
 			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueScope>(this.queueScopeList));
+			this.queueScopeIndex.put(scopeId, newScope);
 		}
 		finally 
 		{
 			this.queueScopeListWriteLock.unlock();
 		}
 		
-		// TODO adoptContoller
+		if((configurationProperties != null) && (!configurationProperties.isEmpty()))
+		{
+			this.eventDispatcher.onConfigurationModify(newScope);
+		}
+		
 		return newScope;
 	}
 
@@ -2402,5 +2524,19 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 		}
 		return filterList;
+	}
+
+	@Override
+	public IQueueScope getScope(UUID scopeId)
+	{
+		this.queueScopeListReadLock.lock();
+		try
+		{
+			return this.queueScopeIndex.get(scopeId);
+		}
+		finally 
+		{
+			this.queueScopeListReadLock.unlock();
+		}
 	}
 }

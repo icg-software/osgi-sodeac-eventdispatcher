@@ -39,7 +39,8 @@
             <Export-Package>
             	org.sodeac.eventdispatcher.itest.components,
             	org.sodeac.eventdispatcher.itest.components.base,
-            	org.sodeac.eventdispatcher.itest.components.compressor
+            	org.sodeac.eventdispatcher.itest.components.compressor,
+            	org.sodeac.eventdispatcher.itest.components.scope
             </Export-Package>
           </instructions>
           <source>1.8</source>
