@@ -32,6 +32,10 @@ public class EventController implements EventControllerMBean
 		this.controllerObjectName = name;
 		this.objectNamePrefix = objectNamePrefix;
 	}
+	
+	public void dispose()
+	{
+	}
 
 	@Override
 	public String showStateInfo()

@@ -2,6 +2,7 @@ package org.sodeac.eventdispatcher.extension.jmx;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -57,6 +58,10 @@ public class EventDispatcherJavaManagementExtension implements IEventDispatcherE
 	@Deactivate
 	private void deactivate(ComponentContext context)
 	{
+		for(Entry<IExtensibleEventDispatcher,EventDispatcher> entry : this.eventDispatcherIndex.entrySet())
+		{
+			unregisterEventDispatcher(entry.getKey());
+		}
 		this.context = null;
 	}
 	

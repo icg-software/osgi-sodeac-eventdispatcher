@@ -8,6 +8,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.ObjectName;
 
 import org.osgi.service.log.LogService;
@@ -60,6 +62,7 @@ public class MetricContainer
 				{
 					ManagementFactory.getPlatformMBeanServer().unregisterMBean(entry.getValue().counterObjectName);
 				}
+				catch (InstanceNotFoundException e) {}
 				catch (Exception e) 
 				{
 					extension.log(LogService.LOG_ERROR,"clean counter",e);
@@ -73,6 +76,7 @@ public class MetricContainer
 				{
 					ManagementFactory.getPlatformMBeanServer().unregisterMBean(entry.getValue().meterObjectName);
 				}
+				catch (InstanceNotFoundException e) {}
 				catch (Exception e) 
 				{
 					extension.log(LogService.LOG_ERROR,"clean meter",e);
@@ -86,6 +90,7 @@ public class MetricContainer
 				{
 					ManagementFactory.getPlatformMBeanServer().unregisterMBean(entry.getValue().histogramObjectName);
 				}
+				catch (InstanceNotFoundException e) {}
 				catch (Exception e) 
 				{
 					extension.log(LogService.LOG_ERROR,"clean histogram",e);
@@ -99,6 +104,7 @@ public class MetricContainer
 				{
 					ManagementFactory.getPlatformMBeanServer().unregisterMBean(entry.getValue().timerObjectName);
 				}
+				catch (InstanceNotFoundException e) {}
 				catch (Exception e) 
 				{
 					extension.log(LogService.LOG_ERROR,"clean timer",e);
@@ -112,12 +118,13 @@ public class MetricContainer
 				{
 					ManagementFactory.getPlatformMBeanServer().unregisterMBean(entry.getValue().gaugeObjectName);
 				}
+				catch (InstanceNotFoundException e) {}
 				catch (Exception e) 
 				{
 					extension.log(LogService.LOG_ERROR,"clean gauge",e);
 				}
 			}
-			this.timerIndex.clear();
+			this.gaugeIndex.clear();
 		}
 		finally 
 		{
@@ -146,12 +153,31 @@ public class MetricContainer
 				counterBean = this.counterIndex.get(counter);
 				if(counterBean == null)
 				{
+					ObjectName objectName = null;
 					try
 					{
-						ObjectName objectName = new ObjectName(this.objectNamePrefix + ",metric=counter,name=" + counter.getName());
+						objectName = new ObjectName(this.objectNamePrefix + ",metric=counter,name=" + counter.getName());
 						counterBean = new Counter(objectName,counter);
 						this.counterIndex.put(counter,counterBean);
 						ManagementFactory.getPlatformMBeanServer().registerMBean(counterBean,objectName);
+					}
+					catch(InstanceAlreadyExistsException e)
+					{
+						try
+						{
+							ManagementFactory.getPlatformMBeanServer().unregisterMBean(objectName);
+						}
+						catch (Exception ie) {}
+						try
+						{
+							counterBean = new Counter(objectName,counter);
+							this.counterIndex.put(counter,counterBean);
+							ManagementFactory.getPlatformMBeanServer().registerMBean(counterBean,objectName);
+						}
+						catch (Exception ie) 
+						{
+							extension.log(LogService.LOG_ERROR,"re-register counter",e);
+						}
 					}
 					catch (Exception e) 
 					{
@@ -191,6 +217,7 @@ public class MetricContainer
 					{
 						ManagementFactory.getPlatformMBeanServer().unregisterMBean(counterBean.counterObjectName);
 					}
+					catch (InstanceNotFoundException e) {}
 					catch (Exception e) 
 					{
 						extension.log(LogService.LOG_ERROR,"unregister counter",e);
@@ -225,12 +252,31 @@ public class MetricContainer
 				meterBean = this.meterIndex.get(meter);
 				if(meterBean == null)
 				{
+					ObjectName objectName = null;
 					try
 					{
-						ObjectName objectName = new ObjectName(this.objectNamePrefix + ",metric=meter,name=" + meter.getName());
+						objectName = new ObjectName(this.objectNamePrefix + ",metric=meter,name=" + meter.getName());
 						meterBean = new Meter(objectName,meter);
 						this.meterIndex.put(meter,meterBean);
 						ManagementFactory.getPlatformMBeanServer().registerMBean(meterBean,objectName);
+					}
+					catch(InstanceAlreadyExistsException e)
+					{
+						try
+						{
+							ManagementFactory.getPlatformMBeanServer().unregisterMBean(objectName);
+						}
+						catch (Exception ie) {}
+						try
+						{
+							meterBean = new Meter(objectName,meter);
+							this.meterIndex.put(meter,meterBean);
+							ManagementFactory.getPlatformMBeanServer().registerMBean(meterBean,objectName);
+						}
+						catch (Exception ie) 
+						{
+							extension.log(LogService.LOG_ERROR,"re-register meter",e);
+						}
 					}
 					catch (Exception e) 
 					{
@@ -270,6 +316,7 @@ public class MetricContainer
 					{
 						ManagementFactory.getPlatformMBeanServer().unregisterMBean(meterBean.meterObjectName);
 					}
+					catch (InstanceNotFoundException e) {}
 					catch (Exception e) 
 					{
 						extension.log(LogService.LOG_ERROR,"unregister meter",e);
@@ -304,12 +351,31 @@ public class MetricContainer
 				histogramBean = this.histogramIndex.get(histogram);
 				if(histogramBean == null)
 				{
+					ObjectName objectName  = null;
 					try
 					{
-						ObjectName objectName = new ObjectName(this.objectNamePrefix + ",metric=histogram,name=" + histogram.getName());
+						objectName = new ObjectName(this.objectNamePrefix + ",metric=histogram,name=" + histogram.getName());
 						histogramBean = new Histogram(objectName,histogram);
 						this.histogramIndex.put(histogram,histogramBean);
 						ManagementFactory.getPlatformMBeanServer().registerMBean(histogramBean,objectName);
+					}
+					catch(InstanceAlreadyExistsException e)
+					{
+						try
+						{
+							ManagementFactory.getPlatformMBeanServer().unregisterMBean(objectName);
+						}
+						catch (Exception ie) {}
+						try
+						{
+							histogramBean = new Histogram(objectName,histogram);
+							this.histogramIndex.put(histogram,histogramBean);
+							ManagementFactory.getPlatformMBeanServer().registerMBean(histogramBean,objectName);
+						}
+						catch (Exception ie) 
+						{
+							extension.log(LogService.LOG_ERROR,"re-register histogram",e);
+						}
 					}
 					catch (Exception e) 
 					{
@@ -349,6 +415,7 @@ public class MetricContainer
 					{
 						ManagementFactory.getPlatformMBeanServer().unregisterMBean(histogramBean.histogramObjectName);
 					}
+					catch (InstanceNotFoundException e) {}
 					catch (Exception e) 
 					{
 						extension.log(LogService.LOG_ERROR,"unregister histogram",e);
@@ -383,12 +450,31 @@ public class MetricContainer
 				timerBean = this.timerIndex.get(timer);
 				if(timerBean == null)
 				{
+					ObjectName objectName = null;
 					try
 					{
-						ObjectName objectName = new ObjectName(this.objectNamePrefix + ",metric=timer,name=" + timer.getName());
+						objectName = new ObjectName(this.objectNamePrefix + ",metric=timer,name=" + timer.getName());
 						timerBean = new Timer(objectName,timer);
 						this.timerIndex.put(timer,timerBean);
 						ManagementFactory.getPlatformMBeanServer().registerMBean(timerBean,objectName);
+					}
+					catch(InstanceAlreadyExistsException e)
+					{
+						try
+						{
+							ManagementFactory.getPlatformMBeanServer().unregisterMBean(objectName);
+						}
+						catch (Exception ie) {}
+						try
+						{
+							timerBean = new Timer(objectName,timer);
+							this.timerIndex.put(timer,timerBean);
+							ManagementFactory.getPlatformMBeanServer().registerMBean(timerBean,objectName);
+						}
+						catch (Exception ie) 
+						{
+							extension.log(LogService.LOG_ERROR,"re-register timer",e);
+						}
 					}
 					catch (Exception e) 
 					{
@@ -428,6 +514,7 @@ public class MetricContainer
 					{
 						ManagementFactory.getPlatformMBeanServer().unregisterMBean(timerBean.timerObjectName);
 					}
+					catch (InstanceNotFoundException e) {}
 					catch (Exception e) 
 					{
 						extension.log(LogService.LOG_ERROR,"unregister timer",e);
@@ -463,12 +550,31 @@ public class MetricContainer
 				gaugeBean = this.gaugeIndex.get(gauge);
 				if(gaugeBean == null)
 				{
+					ObjectName objectName = null;
 					try
 					{
-						ObjectName objectName = new ObjectName(this.objectNamePrefix + ",metric=gauge,name=" + gauge.getName());
+						objectName = new ObjectName(this.objectNamePrefix + ",metric=gauge,name=" + gauge.getName());
 						gaugeBean = new Gauge(objectName,gauge);
 						this.gaugeIndex.put(gauge,gaugeBean);
 						ManagementFactory.getPlatformMBeanServer().registerMBean(gaugeBean,objectName);
+					}
+					catch(InstanceAlreadyExistsException e)
+					{
+						try
+						{
+							ManagementFactory.getPlatformMBeanServer().unregisterMBean(objectName);
+						}
+						catch (Exception ie) {}
+						try
+						{
+							gaugeBean = new Gauge(objectName,gauge);
+							this.gaugeIndex.put(gauge,gaugeBean);
+							ManagementFactory.getPlatformMBeanServer().registerMBean(gaugeBean,objectName);
+						}
+						catch (Exception ie) 
+						{
+							extension.log(LogService.LOG_ERROR,"re-register gauge",e);
+						}
 					}
 					catch (Exception e) 
 					{
@@ -508,6 +614,7 @@ public class MetricContainer
 					{
 						ManagementFactory.getPlatformMBeanServer().unregisterMBean(gaugeBean.gaugeObjectName);
 					}
+					catch (InstanceNotFoundException e) {}
 					catch (Exception e) 
 					{
 						extension.log(LogService.LOG_ERROR,"unregister gauge",e);

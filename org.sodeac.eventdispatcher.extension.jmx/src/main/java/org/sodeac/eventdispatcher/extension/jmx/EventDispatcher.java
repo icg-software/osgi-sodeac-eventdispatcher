@@ -8,6 +8,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -62,7 +64,7 @@ public class EventDispatcher implements EventDispatcherMBean
 		this.writeLock = this.lock.writeLock();
 		
 		String objectNamePrefix = getObjectNamePrefix();
-		this.metricContainer = new MetricContainer(objectNamePrefix,eventDispatcherExtension);
+		this.metricContainer = new MetricContainer(objectNamePrefix + ",dispatchermetrics=metrics",eventDispatcherExtension);
 		this.managemantObjectName = new ObjectName(objectNamePrefix + ",name=about");
 	}
 	
@@ -122,29 +124,41 @@ public class EventDispatcher implements EventDispatcherMBean
 					}
 					catch(Exception e)
 					{
-						eventDispatcherExtension.log(LogService.LOG_ERROR,"dispose event qeueue",e);
+						eventDispatcherExtension.log(LogService.LOG_ERROR,"dispose event queue",e);
 					}
 					
 					try
 					{
 						ManagementFactory.getPlatformMBeanServer().unregisterMBean(entry.getValue().queueObjectName);
 					}
+					catch (InstanceNotFoundException e) {}
 					catch (Exception e) 
 					{
 						eventDispatcherExtension.log(LogService.LOG_ERROR,"unregister event qeueue",e);
 					}
 				}
-				eventControllerIndex.clear();
+				eventQueueIndex.clear();
 				
 				
 				for(Entry<IEventController,EventController> entry : eventControllerIndex.entrySet())
 				{
 					try
 					{
-						ManagementFactory.getPlatformMBeanServer().unregisterMBean(entry.getValue().controllerObjectName);
+						entry.getValue().dispose();
 					}
 					catch (Exception e) 
 					{
+						eventDispatcherExtension.log(LogService.LOG_ERROR,"dispose controller",e);
+					}
+					
+					try
+					{
+						ManagementFactory.getPlatformMBeanServer().unregisterMBean(entry.getValue().controllerObjectName);
+					}
+					catch (InstanceNotFoundException e) {}
+					catch (Exception e) 
+					{
+						e.printStackTrace();
 						eventDispatcherExtension.log(LogService.LOG_ERROR,"unregister event controller",e);
 					}
 				}
@@ -154,6 +168,7 @@ public class EventDispatcher implements EventDispatcherMBean
 				{
 					ManagementFactory.getPlatformMBeanServer().unregisterMBean(managemantObjectName);
 				}
+				catch (InstanceNotFoundException e) {}
 				catch (Exception e) 
 				{
 					eventDispatcherExtension.log(LogService.LOG_ERROR,"unregister event eventdispatcher",e);
@@ -213,34 +228,48 @@ public class EventDispatcher implements EventDispatcherMBean
 				int counter = 2;
 				String objectNamePrefix = null;
 				ObjectName controllerObjectName = null;
-				if(category == null)
+				if((category == null) || category.isEmpty())
 				{
-					objectNamePrefix = getObjectNamePrefix() + ",objecttype=controller,name=" + name;
-					String inUse = this.eventControllerObjectNameIndex.get(objectNamePrefix);
-					counter = 2;
-					while(inUse != null)
-					{
-						objectNamePrefix = getObjectNamePrefix() + ",objecttype=controller,name=" + name + "" + counter;
-						inUse = this.eventControllerObjectNameIndex.get(objectNamePrefix);
-					}
-					this.eventControllerObjectNameIndex.put(objectNamePrefix,objectNamePrefix);
+					category = "default";
 				}
-				else
+				
+				objectNamePrefix = getObjectNamePrefix() + ",objecttype=controller"+ ",category=" + category +",name=" + name;
+				String inUse = this.eventControllerObjectNameIndex.get(objectNamePrefix);
+				counter = 2;
+				while(inUse != null)
 				{
-					objectNamePrefix = getObjectNamePrefix() + ",objecttype=controller"+ ",category=" + category +",name=" + name;
-					String inUse = this.eventControllerObjectNameIndex.get(objectNamePrefix);
-					counter = 2;
-					while(inUse != null)
-					{
-						objectNamePrefix = getObjectNamePrefix() + ",objecttype=controller"+ ",category=" + category +",name=" + name + "" + counter;
-						inUse = this.eventControllerObjectNameIndex.get(objectNamePrefix);
-					}
-					this.eventControllerObjectNameIndex.put(objectNamePrefix,objectNamePrefix);
+					objectNamePrefix = getObjectNamePrefix() + ",objecttype=controller"+ ",category=" + category +",name=" + name + "" + counter;
+					inUse = this.eventControllerObjectNameIndex.get(objectNamePrefix);
 				}
+				this.eventControllerObjectNameIndex.put(objectNamePrefix,objectNamePrefix);
+				
 				controllerObjectName = new ObjectName(objectNamePrefix);
 				EventController eventControllerBean = new EventController(eventController,properties,controllerObjectName,objectNamePrefix);
 				eventControllerIndex.put(eventController,eventControllerBean);
-				mBeanServer.registerMBean(eventControllerBean, controllerObjectName);
+				try
+				{
+					mBeanServer.registerMBean(eventControllerBean, controllerObjectName);
+				}
+				catch(InstanceAlreadyExistsException e)
+				{
+					try
+					{
+						ManagementFactory.getPlatformMBeanServer().unregisterMBean(controllerObjectName);
+					}
+					catch (Exception ie) {}
+					try
+					{
+						mBeanServer.registerMBean(eventControllerBean, controllerObjectName);
+					}
+					catch (Exception ie) 
+					{
+						this.eventDispatcherExtension.log(LogService.LOG_ERROR,"re-register eventcontroller",e);
+					}
+				}
+				catch (Exception e) 
+				{
+					this.eventDispatcherExtension.log(LogService.LOG_ERROR,"register eventcontroller",e);
+				}
 			}
 			catch (Exception e) 
 			{
@@ -270,28 +299,19 @@ public class EventDispatcher implements EventDispatcherMBean
 				
 				if(category == null)
 				{
-					objectNamePrefix = getObjectNamePrefix() + ",objecttype=queue,queueid=" + name;
-					String inUse = this.eventQueueObjectNameIndex.get(objectNamePrefix);
-					counter = 2;
-					while(inUse != null)
-					{
-						objectNamePrefix = getObjectNamePrefix() + ",objecttype=queue,queueid=" + name + "" + counter;
-						inUse = this.eventQueueObjectNameIndex.get(objectNamePrefix);
-					}
-					this.eventQueueObjectNameIndex.put(objectNamePrefix,objectNamePrefix);
+					category = "default";
 				}
-				else
+				
+				objectNamePrefix = getObjectNamePrefix() + ",objecttype=queue,category=" + category +",queueid=" + name;
+				String inUse = this.eventQueueObjectNameIndex.get(objectNamePrefix);
+				counter = 2;
+				while(inUse != null)
 				{
-					objectNamePrefix = getObjectNamePrefix() + ",objecttype=queue,category=" + category +",queueid=" + name;
-					String inUse = this.eventQueueObjectNameIndex.get(objectNamePrefix);
-					counter = 2;
-					while(inUse != null)
-					{
-						objectNamePrefix = getObjectNamePrefix() + ",objecttype=queue,category=" + category +",queueid=" + name + "" + counter;
-						inUse = this.eventQueueObjectNameIndex.get(objectNamePrefix);
-					}
-					this.eventQueueObjectNameIndex.put(objectNamePrefix,objectNamePrefix);
+					objectNamePrefix = getObjectNamePrefix() + ",objecttype=queue,category=" + category +",queueid=" + name + "" + counter;
+					inUse = this.eventQueueObjectNameIndex.get(objectNamePrefix);
 				}
+				this.eventQueueObjectNameIndex.put(objectNamePrefix,objectNamePrefix);
+				
 				ObjectName queueObjectName = new ObjectName(objectNamePrefix + ",name=about");
 				EventQueue eventQueueBean = new EventQueue(this.eventDispatcherExtension,extensibleQueue,queueObjectName,objectNamePrefix);
 				eventQueueIndex.put(extensibleQueue,eventQueueBean);
@@ -320,7 +340,11 @@ public class EventDispatcher implements EventDispatcherMBean
 				{
 					return;
 				}
-				ManagementFactory.getPlatformMBeanServer().unregisterMBean(eventControllerBean.controllerObjectName);
+				try
+				{
+					ManagementFactory.getPlatformMBeanServer().unregisterMBean(eventControllerBean.controllerObjectName);
+				}
+				catch(InstanceNotFoundException e) {}
 				eventControllerIndex.remove(eventController);
 				eventControllerObjectNameIndex.remove(eventControllerBean.objectNamePrefix);
 			}
@@ -347,7 +371,11 @@ public class EventDispatcher implements EventDispatcherMBean
 				{
 					return;
 				}
-				ManagementFactory.getPlatformMBeanServer().unregisterMBean(eventQueueBean.queueObjectName);
+				try
+				{
+					ManagementFactory.getPlatformMBeanServer().unregisterMBean(eventQueueBean.queueObjectName);
+				}
+				catch(InstanceNotFoundException e) {}
 				eventQueueIndex.remove(eventQueue);
 				eventQueueObjectNameIndex.remove(eventQueueBean.objectNamePrefix);
 				eventQueueBean.dispose();
@@ -389,6 +417,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = counter.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
@@ -433,6 +465,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = counter.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
@@ -477,6 +513,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = meter.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
@@ -521,6 +561,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = meter.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
@@ -566,6 +610,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = histogram.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
@@ -610,6 +658,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = histogram.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
@@ -654,6 +706,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = timer.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
@@ -698,6 +754,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = timer.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
@@ -742,6 +802,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = gauge.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
@@ -786,6 +850,10 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = gauge.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
+		if(metrics.getJobId() != null)
+		{
+			return;
+		}
 		
 		if(extensibleQueue == null)
 		{
