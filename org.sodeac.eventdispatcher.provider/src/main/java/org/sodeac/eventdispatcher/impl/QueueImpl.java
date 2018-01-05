@@ -1051,6 +1051,38 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		return nextRun;
 	}
 	
+	protected long getNextRun()
+	{
+		jobListReadLock.lock();
+		long timeStamp = System.currentTimeMillis();
+		long nextRun = timeStamp + QueueWorker.DEFAULT_WAIT_TIME;
+		try
+		{
+			
+			for(JobContainer jobContainer : jobList)
+			{
+				if(jobContainer.getJobControl().isDone())
+				{
+					continue;
+				}
+				if(jobContainer.getJobControl().getExecutionTimeStamp() > timeStamp)
+				{
+					if(nextRun > jobContainer.getJobControl().getExecutionTimeStamp())
+					{
+						nextRun = jobContainer.getJobControl().getExecutionTimeStamp();
+					}
+					continue;
+				}
+			}
+		}
+		finally 
+		{
+			jobListReadLock.unlock();
+		}
+		
+		return nextRun;
+	}
+	
 	@Override
 	public IPropertyBlock getJobPropertyBlock(String id)
 	{

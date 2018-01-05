@@ -304,19 +304,7 @@ public class QueueWorker extends Thread
 			}
 			
 			this.dueJobList.clear();
-			this.wakeUpTimeStamp = -2; // rescheduling from now results in skipping next sleep
-			try
-			{
-				synchronized (this.waitMonitor)
-				{
-					if((this.wakeUpTimeStamp > 0) || (this.wakeUpTimeStamp == -3))
-					{
-						this.wakeUpTimeStamp = -2;
-					}
-				}
-			}
-			catch (Exception e) {} 
-			long nextRunTimeStamp = eventQueue.getDueJobs(this.dueJobList);
+			eventQueue.getDueJobs(this.dueJobList);
 			
 			if(! dueJobList.isEmpty())
 			{
@@ -773,16 +761,6 @@ public class QueueWorker extends Thread
 			
 			try
 			{
-				nextRunTimeStamp = eventQueue.getDueJobs(this.dueJobList);
-				this.dueJobList.clear();
-			}
-			catch (Exception e) 
-			{
-				log(LogService.LOG_ERROR,"Error while recalc next runtime again",e);
-			}
-			
-			try
-			{
 				boolean shutdownWorker = false;
 				if(System.currentTimeMillis() > (eventQueue.getLastWorkerAction() + DEFAULT_SHUTDOWN_TIME))
 				{
@@ -802,7 +780,9 @@ public class QueueWorker extends Thread
 						{
 							try
 							{
+								this.wakeUpTimeStamp = System.currentTimeMillis() + DEFAULT_WAIT_TIME;
 								waitMonitor.wait(DEFAULT_WAIT_TIME);
+								this.wakeUpTimeStamp = -1;
 							}
 							catch (Exception e) {}
 							catch (ThreadDeath e) {this.go = false;}
@@ -833,12 +813,21 @@ public class QueueWorker extends Thread
 				{
 					if(go)
 					{
-						if((this.isUpdateNotified) || (this.wakeUpTimeStamp == -3))
+						this.wakeUpTimeStamp = -1;
+						
+						if(this.isUpdateNotified)
 						{
-							this.wakeUpTimeStamp = -1;
-						}
-						else
-						{
+							this.isUpdateNotified = false;
+							
+							long nextRunTimeStamp = System.currentTimeMillis() + 1080;
+							try
+							{
+								nextRunTimeStamp = eventQueue.getNextRun();
+							}
+							catch (Exception e) 
+							{
+								log(LogService.LOG_ERROR,"Error while recalc next runtime again",e);
+							}
 							long waitTime = nextRunTimeStamp - System.currentTimeMillis();
 							if(waitTime > DEFAULT_WAIT_TIME)
 							{
@@ -846,7 +835,6 @@ public class QueueWorker extends Thread
 							}
 							if(waitTime > 0)
 							{
-								this.wakeUpTimeStamp = System.currentTimeMillis() + waitTime ;
 								this.inFreeingArea = true;
 								boolean freeWorker = false;
 								if(waitTime >= FREE_TIME)
@@ -859,7 +847,9 @@ public class QueueWorker extends Thread
 									{
 										try
 										{
+											this.wakeUpTimeStamp = System.currentTimeMillis() + DEFAULT_WAIT_TIME ;
 											waitMonitor.wait(DEFAULT_WAIT_TIME);
+											this.wakeUpTimeStamp = -1;
 										}
 										catch (Exception e) {}
 										catch (ThreadDeath e) {this.go = false;}
@@ -872,12 +862,13 @@ public class QueueWorker extends Thread
 								else
 								{
 									this.inFreeingArea = false;
+									this.wakeUpTimeStamp = System.currentTimeMillis() + waitTime ;
 									waitMonitor.wait(waitTime);
+									this.wakeUpTimeStamp = -1;
 								}
 							}
 						}
 					}
-					this.isUpdateNotified = false;
 				}
 			}
 			catch (InterruptedException e) {}
@@ -893,7 +884,6 @@ public class QueueWorker extends Thread
 			{
 				log(LogService.LOG_ERROR,"Error while run QueueWorker",e);
 			}
-			this.wakeUpTimeStamp = -1;
 		}		
 	}
 	
@@ -1015,13 +1005,13 @@ public class QueueWorker extends Thread
 			synchronized (this.waitMonitor)
 			{
 				this.isUpdateNotified = true;
-				if(this.wakeUpTimeStamp == -2)
+				if(this.wakeUpTimeStamp > 0) // waits for new run
 				{
-					this.wakeUpTimeStamp = -3;
-				}
-				else if(this.wakeUpTimeStamp > 0)
-				{
-					if(this.wakeUpTimeStamp > newRuntimeStamp)
+					if(newRuntimeStamp <= System.currentTimeMillis())
+					{
+						waitMonitor.notify();
+					}
+					else if(this.wakeUpTimeStamp > newRuntimeStamp)
 					{
 						waitMonitor.notify();
 					}

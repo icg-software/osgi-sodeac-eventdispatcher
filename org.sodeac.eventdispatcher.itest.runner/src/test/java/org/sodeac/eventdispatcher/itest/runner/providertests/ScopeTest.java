@@ -95,7 +95,7 @@ public class ScopeTest extends AbstractTest
 		assertNotNull("eventDispatcher should not be null" ,eventDispatcher);
 	}
 	
-	@Test(timeout=10000)
+	@Test(timeout=12000)
 	public void test01SimplestDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(ScopeTestSimpleManagementController.QUEUE_ID);
@@ -125,7 +125,25 @@ public class ScopeTest extends AbstractTest
 		IQueueScope scope = queue.getScope(scopeId);
 		assertNotNull("scope shoult be not null",scope);
 		
-		TracingObject tracingObject2 = (TracingObject) scope.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		try
+		{
+			Thread.sleep(1000);
+		}
+		catch (Exception e) {}
+		
+		int counter = 0;
+		TracingObject tracingObject2 = null;
+		while(tracingObject2 == null)
+		{
+			tracingObject2 = (TracingObject) scope.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+			try
+			{
+				Thread.sleep(200);
+			}
+			catch (Exception e) {}
+			assertTrue("tracingObject schould created after 3 Seconds ",counter < 15);
+			counter++;
+		}
 		int tracingEventPosition2 = 0;
 		
 		worklatch = new CountDownLatch(1);
