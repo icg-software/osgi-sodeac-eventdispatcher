@@ -248,7 +248,7 @@ public interface IQueue
 	public boolean isMetricsEnabled();
 	
 	/**
-	 * create {@link IQueueScope} for {@link IQueue}. Does not work, if this queue is already a scope
+	 * create {@link IQueueSessionScope} for {@link IQueue}. Does not work, if this queue is already a session scope.
 	 * 
 	 * @param scopeId unique id of scope (unique by queue) or null for auto-generation
 	 * @param scopeName human readable name of scope (nullable)
@@ -259,14 +259,14 @@ public interface IQueue
 	 * 
 	 * @return new scope, or null, if scope already exists
 	 */
-	public IQueueScope createScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices);
+	public IQueueSessionScope createSessionScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices);
 	
 	/**
 	 * returns scopelist of queue
 	 * 
 	 * @return scopelist of queue
 	 */
-	public List<IQueueScope> getScopes();
+	public List<IQueueSessionScope> getSessionScopes();
 	
 	/**
 	 * returns scopelist of queue with positiv match result for {@code filter}
@@ -275,7 +275,7 @@ public interface IQueue
 	 * 
 	 * @return scopelist of queue with positiv match result for {@code filter}
 	 */
-	public List<IQueueScope> getScopes(Filter filter);
+	public List<IQueueSessionScope> getSessionScopes(Filter filter);
 	
 	
 	/**
@@ -285,5 +285,5 @@ public interface IQueue
 	 * 
 	 * @return  scope with given {@code scopeId} or null, if scope not found
 	 */
-	public IQueueScope getScope(UUID scopeId);
+	public IQueueSessionScope getSessionScope(UUID scopeId);
 }

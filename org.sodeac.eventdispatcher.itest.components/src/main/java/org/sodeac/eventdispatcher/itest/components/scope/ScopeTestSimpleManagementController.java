@@ -79,30 +79,30 @@ public class ScopeTestSimpleManagementController extends AbstractBaseTestControl
 			super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 			UUID scopeId = (UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID);
 			
-			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getScopes().size());
+			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getSessionScopes().size());
 			
 			Map<String,Object> scopeConfiguration = new HashMap<String,Object>();
 			scopeConfiguration.put(IEventDispatcher.PROPERTY_QUEUE_TYPE, SCOPE_TYPE);
-			event.getQueue().createScope(scopeId, "TestScope", scopeConfiguration, null, false,false);
+			event.getQueue().createSessionScope(scopeId, "TestScope", scopeConfiguration, null, false,false);
 			
-			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getScopes().size());
+			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getSessionScopes().size());
 			
 			((CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_WORKLATCH)).countDown();
 		}
 		
 		if(event.getEvent().getTopic().equals(REQUEST_EVENT_SCOPE_REQUEST1))
 		{
-			event.getQueue().getScope((UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID)).scheduleEvent(event.getEvent());
+			event.getQueue().getSessionScope((UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID)).scheduleEvent(event.getEvent());
 		}
 		
 		if(event.getEvent().getTopic().equals(REQUEST_EVENT_SCOPE_REQUEST2))
 		{
-			event.getQueue().getScope((UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID)).scheduleEvent(event.getEvent());
+			event.getQueue().getSessionScope((UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID)).scheduleEvent(event.getEvent());
 		}
 		
 		if(event.getEvent().getTopic().equals(REQUEST_EVENT_SCOPE_SIZE))
 		{
-			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getScopes().size());
+			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getSessionScopes().size());
 		}
 	}
 }

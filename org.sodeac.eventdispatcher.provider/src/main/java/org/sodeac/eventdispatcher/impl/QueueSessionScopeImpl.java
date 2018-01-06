@@ -6,9 +6,9 @@ import java.util.UUID;
 
 import org.osgi.framework.Filter;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueScope;
+import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 
-public class QueueScopeImpl extends QueueImpl implements IQueueScope
+public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionScope
 {
 	private UUID scopeId;
 	
@@ -16,7 +16,7 @@ public class QueueScopeImpl extends QueueImpl implements IQueueScope
 	private boolean adoptContoller = false;
 	private boolean adoptServices = false;
 	
-	protected QueueScopeImpl(UUID scopeId,QueueImpl parent, String scopeName, boolean adoptContoller, boolean adoptServices, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
+	protected QueueSessionScopeImpl(UUID scopeId,QueueImpl parent, String scopeName, boolean adoptContoller, boolean adoptServices, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
 		super(null,(EventDispatcherImpl)parent.getDispatcher(), parent.isMetricsEnabled(), null, null,configurationProperties,stateProperties);
 		
@@ -29,7 +29,7 @@ public class QueueScopeImpl extends QueueImpl implements IQueueScope
 	}
 
 	@Override
-	public IQueue getGlobal()
+	public IQueue getGlobalScope()
 	{
 		return parent;
 	}
@@ -62,20 +62,20 @@ public class QueueScopeImpl extends QueueImpl implements IQueueScope
 		super.dispose();
 	}
 
-	public IQueueScope createScope(String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
+	public IQueueSessionScope createScope(String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
 		return null;
 	}
 
 	@Override
-	public List<IQueueScope> getScopes()
+	public List<IQueueSessionScope> getSessionScopes()
 	{
 		return null;
 	}
 
 
 	@Override
-	public List<IQueueScope> getScopes(Filter filter)
+	public List<IQueueSessionScope> getSessionScopes(Filter filter)
 	{
 		return null;
 	}

@@ -41,7 +41,7 @@ import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IGauge;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IQueueJob;
-import org.sodeac.eventdispatcher.api.IQueueScope;
+import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.ITimer;
@@ -99,9 +99,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		this.lastWorkerAction = System.currentTimeMillis();
 		
-		this.queueScopeList = new ArrayList<QueueScopeImpl>();
-		this.queueScopeIndex = new HashMap<UUID,QueueScopeImpl>();
-		this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueScope>());
+		this.queueScopeList = new ArrayList<QueueSessionScopeImpl>();
+		this.queueScopeIndex = new HashMap<UUID,QueueSessionScopeImpl>();
+		this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueSessionScope>());
 		this.queueScopeListLock = new ReentrantReadWriteLock(true);
 		this.queueScopeListReadLock = this.queueScopeListLock.readLock();
 		this.queueScopeListWriteLock = this.queueScopeListLock.writeLock();
@@ -206,9 +206,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	protected volatile QueueConfigurationModifyListener queueConfigurationModifyListener = null;
 	
-	protected List<QueueScopeImpl> queueScopeList;
-	protected Map<UUID,QueueScopeImpl> queueScopeIndex;
-	protected volatile List<IQueueScope> queueScopeListCopy = null;
+	protected List<QueueSessionScopeImpl> queueScopeList;
+	protected Map<UUID,QueueSessionScopeImpl> queueScopeIndex;
+	protected volatile List<IQueueSessionScope> queueScopeListCopy = null;
 	protected ReentrantReadWriteLock queueScopeListLock;
 	protected ReadLock queueScopeListReadLock;
 	protected WriteLock queueScopeListWriteLock;
@@ -300,7 +300,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			remove = unsetController(controllerContainer);
 		}
 		
-		if(this instanceof QueueScopeImpl)
+		if(this instanceof QueueSessionScopeImpl)
 		{	
 			if(controllerMatch){bindingModifyFlags.setScopeSet(true);}
 			if(add) {bindingModifyFlags.setScopeAdd(true);}
@@ -311,7 +311,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			this.queueScopeListReadLock.lock();
 			try
 			{
-				for(QueueScopeImpl scope : this.queueScopeList)
+				for(QueueSessionScopeImpl scope : this.queueScopeList)
 				{
 					if(scope.isAdoptContoller() && controllerMatch)
 					{
@@ -600,7 +600,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			remove = unsetService(serviceContainer);
 		}
 		
-		if(this instanceof QueueScopeImpl)
+		if(this instanceof QueueSessionScopeImpl)
 		{	
 			if(serviceMatch){bindingModifyFlags.setScopeSet(true);}
 			if(add) {bindingModifyFlags.setScopeAdd(true);}
@@ -611,7 +611,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			this.queueScopeListReadLock.lock();
 			try
 			{
-				for(QueueScopeImpl scope : this.queueScopeList)
+				for(QueueSessionScopeImpl scope : this.queueScopeList)
 				{
 					if(scope.isAdoptServices() && serviceMatch)
 					{
@@ -1887,9 +1887,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		stopQueueWorker();
 		
-		if((this instanceof QueueScopeImpl) && (this.parent != null))
+		if((this instanceof QueueSessionScopeImpl) && (this.parent != null))
 		{
-			parent.removeScope((QueueScopeImpl)this);
+			parent.removeScope((QueueSessionScopeImpl)this);
 			
 			controllerListReadLock.lock();
 			try
@@ -1909,14 +1909,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 	}
 	
-	private void removeScope(QueueScopeImpl scope)
+	private void removeScope(QueueSessionScopeImpl scope)
 	{
 		this.queueScopeListWriteLock.lock();
 		try
 		{
 			this.queueScopeIndex.remove(scope.getScopeId());
 			while(this.queueScopeList.remove(scope)){}
-			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueScope>(this.queueScopeList));
+			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueSessionScope>(this.queueScopeList));
 		}
 		finally 
 		{
@@ -2481,14 +2481,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 
 	@Override
-	public IQueueScope createScope(UUID scopeId, String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller, boolean adoptServices)
+	public IQueueSessionScope createSessionScope(UUID scopeId, String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller, boolean adoptServices)
 	{
 		if(scopeId == null)
 		{
 			scopeId = UUID.randomUUID();
 		}
 		
-		QueueScopeImpl newScope = null;
+		QueueSessionScopeImpl newScope = null;
 		
 		this.queueScopeListWriteLock.lock();
 		try
@@ -2497,10 +2497,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				return null;
 			}
-			newScope = new QueueScopeImpl(scopeId,this, scopeName,adoptContoller,adoptServices,configurationProperties,stateProperties);
+			newScope = new QueueSessionScopeImpl(scopeId,this, scopeName,adoptContoller,adoptServices,configurationProperties,stateProperties);
 			
 			this.queueScopeList.add(newScope);
-			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueScope>(this.queueScopeList));
+			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueSessionScope>(this.queueScopeList));
 			this.queueScopeIndex.put(scopeId, newScope);
 		}
 		finally 
@@ -2518,16 +2518,16 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 
 	@Override
-	public List<IQueueScope> getScopes()
+	public List<IQueueSessionScope> getSessionScopes()
 	{
 		return this.queueScopeListCopy;
 	}
 
 
 	@Override
-	public List<IQueueScope> getScopes(Filter filter)
+	public List<IQueueSessionScope> getSessionScopes(Filter filter)
 	{
-		List<IQueueScope> copyList = this.queueScopeListCopy;
+		List<IQueueSessionScope> copyList = this.queueScopeListCopy;
 		if(copyList.isEmpty())
 		{
 			return copyList;
@@ -2536,8 +2536,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		{
 			return copyList;
 		}
-		List<IQueueScope> filterList = new ArrayList<IQueueScope>();
-		for(IQueueScope scope : copyList)
+		List<IQueueSessionScope> filterList = new ArrayList<IQueueSessionScope>();
+		for(IQueueSessionScope scope : copyList)
 		{
 			if(scope.getConfigurationPropertyBlock().isEmpty())
 			{
@@ -2559,7 +2559,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 
 	@Override
-	public IQueueScope getScope(UUID scopeId)
+	public IQueueSessionScope getSessionScope(UUID scopeId)
 	{
 		this.queueScopeListReadLock.lock();
 		try
