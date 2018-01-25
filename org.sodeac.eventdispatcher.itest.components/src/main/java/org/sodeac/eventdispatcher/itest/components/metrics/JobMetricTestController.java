@@ -131,7 +131,7 @@ public class JobMetricTestController implements IEventController,IOnEventSchedul
 			
 			if(jobCounter < repeat)
 			{
-				jobControl.setExecutionTimeStamp(System.currentTimeMillis() + ((long)sleeptime) + ((long)worktime));
+				jobControl.setExecutionTimeStamp(System.currentTimeMillis() + ((long)sleeptime) + ((long)worktime),true);
 			}
 			
 			try

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Sebastian Palarus
+ * Copyright (c) 2017, 2018 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -360,7 +360,7 @@ public class QueueWorker extends Thread
 									{
 										periodicRepetitionInterval = 1000L * 60L * 60L * 24L * 365L * 108L;
 									}
-									dueJob.getJobControl().setExecutionTimeStamp(System.currentTimeMillis() + periodicRepetitionInterval);
+									dueJob.getJobControl().setExecutionTimeStampPeriodic(System.currentTimeMillis() + periodicRepetitionInterval);
 									dueJob.getJobControl().preRunPeriodicJob();
 								}
 								else if(dueJob.getJob() instanceof IQueueService)
@@ -392,7 +392,7 @@ public class QueueWorker extends Thread
 									{
 										periodicRepetitionInterval = 1000L * 60L * 60L * 24L * 365L * 108L;
 									}
-									dueJob.getJobControl().setExecutionTimeStamp(System.currentTimeMillis() + periodicRepetitionInterval);
+									dueJob.getJobControl().setExecutionTimeStampPeriodic(System.currentTimeMillis() + periodicRepetitionInterval);
 									dueJob.getJobControl().preRunPeriodicJob();
 								}
 								else
@@ -818,59 +818,61 @@ public class QueueWorker extends Thread
 						if(this.isUpdateNotified)
 						{
 							this.isUpdateNotified = false;
+							continue;
+						}
 							
-							long nextRunTimeStamp = System.currentTimeMillis() + 1080;
-							try
+						long nextRunTimeStamp = System.currentTimeMillis() + 1080;
+						try
+						{
+							nextRunTimeStamp = eventQueue.getNextRun();
+						}
+						catch (Exception e) 
+						{
+							log(LogService.LOG_ERROR,"Error while recalc next runtime again",e);
+						}
+						long waitTime = nextRunTimeStamp - System.currentTimeMillis();
+						if(waitTime > DEFAULT_WAIT_TIME)
+						{
+							waitTime = DEFAULT_WAIT_TIME;
+						}
+						if(waitTime > 0)
+						{
+							this.inFreeingArea = true;
+							boolean freeWorker = false;
+							if(waitTime >= FREE_TIME)
 							{
-								nextRunTimeStamp = eventQueue.getNextRun();
+								freeWorker = this.eventQueue.checkFreeWorker(this, waitTime);
 							}
-							catch (Exception e) 
+							if(freeWorker)
 							{
-								log(LogService.LOG_ERROR,"Error while recalc next runtime again",e);
-							}
-							long waitTime = nextRunTimeStamp - System.currentTimeMillis();
-							if(waitTime > DEFAULT_WAIT_TIME)
-							{
-								waitTime = DEFAULT_WAIT_TIME;
-							}
-							if(waitTime > 0)
-							{
-								this.inFreeingArea = true;
-								boolean freeWorker = false;
-								if(waitTime >= FREE_TIME)
+								while((this.eventQueue == null) && (this.go))
 								{
-									freeWorker = this.eventQueue.checkFreeWorker(this, waitTime);
-								}
-								if(freeWorker)
-								{
-									while((this.eventQueue == null) && (this.go))
+									try
 									{
-										try
-										{
-											this.wakeUpTimeStamp = System.currentTimeMillis() + DEFAULT_WAIT_TIME ;
-											waitMonitor.wait(DEFAULT_WAIT_TIME);
-											this.wakeUpTimeStamp = -1;
-										}
-										catch (Exception e) {}
-										catch (ThreadDeath e) {this.go = false;}
-										catch (Error e) {}
+										this.wakeUpTimeStamp = System.currentTimeMillis() + DEFAULT_WAIT_TIME ;
+										waitMonitor.wait(DEFAULT_WAIT_TIME);
+										this.wakeUpTimeStamp = -1;
 									}
-									
-									this.inFreeingArea = false;
-									
+									catch (Exception e) {}
+									catch (ThreadDeath e) {this.go = false;}
+									catch (Error e) {}
 								}
-								else
-								{
-									this.inFreeingArea = false;
-									this.wakeUpTimeStamp = System.currentTimeMillis() + waitTime ;
-									waitMonitor.wait(waitTime);
-									this.wakeUpTimeStamp = -1;
-								}
+								
+								this.inFreeingArea = false;
+								
+							}
+							else
+							{
+								this.inFreeingArea = false;
+								this.wakeUpTimeStamp = System.currentTimeMillis() + waitTime ;
+								waitMonitor.wait(waitTime);
+								this.wakeUpTimeStamp = -1;
 							}
 						}
 					}
 				}
 			}
+			
 			catch (InterruptedException e) {}
 			catch (Exception e) 
 			{

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Sebastian Palarus
+ * Copyright (c) 2017, 2018 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,8 @@
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
 package org.sodeac.eventdispatcher.impl;
+
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
@@ -24,9 +26,12 @@ public class JobControlImpl implements IJobControl
 	
 	private volatile boolean stopJobOnTimeout = false;
 	private volatile boolean inRun = false;
+	private volatile ExecutionTimeStampSource executionTimeStampSource = IJobControl.ExecutionTimeStampSource.SCHEDULE;
 	
 	
 	private IPropertyBlock jobPropertyBlock = null;
+	
+	private ReentrantLock executionTimestampLock = null;
 	
 	public JobControlImpl(IPropertyBlock jobPropertyBlock)
 	{
@@ -37,6 +42,8 @@ public class JobControlImpl implements IJobControl
 		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
 		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
 		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
+		
+		this.executionTimestampLock = new ReentrantLock();
 	}
 	
 	public void preRun()
@@ -90,18 +97,123 @@ public class JobControlImpl implements IJobControl
 	}
 	
 	@Override
-	public long setExecutionTimeStamp(long executionTimeStamp)
+	public ExecutionTimeStampSource getExecutionTimeStampSource()
 	{
-		long old = this.executionTimeStamp;
-		this.executionTimeStamp = executionTimeStamp;
-		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
-		
-		if(inRun)
+		return this.executionTimeStampSource;
+	}
+	
+	public void setExecutionTimeStampSource(ExecutionTimeStampSource executionTimeStampSource)
+	{
+		this.executionTimeStampSource = executionTimeStampSource;
+	}
+
+	public long getExecutionTimeStampIntern()
+	{
+		return this.executionTimeStamp;
+	}
+	
+	@Override
+	public boolean setExecutionTimeStamp(long executionTimeStamp, boolean force)
+	{
+		executionTimestampLock.lock();
+		try
 		{
-			this.done = false;
+			long old = this.executionTimeStamp;
+			if
+			( 
+				(executionTimeStamp < old) || 
+				force || 
+				(old < System.currentTimeMillis()) || 
+				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.SCHEDULE) ||
+				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.WORKER) ||
+				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.PERODIC)
+			) 
+			{
+				this.executionTimeStamp = executionTimeStamp;
+				this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.WORKER;
+				this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+				
+				if(inRun)
+				{
+					this.done = false;
+				}
+				
+				return true;
+			}
+			
+			return false;
+		}
+		finally 
+		{
+			executionTimestampLock.unlock();
+		}
+	}
+	
+	public void setExecutionTimeStampPeriodic(long executionTimeStamp)
+	{
+		executionTimestampLock.lock();
+		try
+		{
+			long old = this.executionTimeStamp;
+			if
+			( 
+				(executionTimeStamp < old) || 
+				(old < System.currentTimeMillis()) || 
+				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.SCHEDULE) ||
+				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.PERODIC) 
+			) 
+			{
+				this.executionTimeStamp = executionTimeStamp;
+				this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.PERODIC;
+				this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+
+			}
+		}
+		finally 
+		{
+			executionTimestampLock.unlock();
+		}
+	}
+	
+	public void setExecutionTimeStampSchedule(long executionTimeStamp)
+	{
+		executionTimestampLock.lock();
+		try
+		{
+			this.executionTimeStamp = executionTimeStamp;
+			this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.SCHEDULE;
+			this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+		}
+		finally 
+		{
+			executionTimestampLock.unlock();
 		}
 		
-		return old;
+	}
+	
+	public void setExecutionTimeStampReschedule(long executionTimeStamp)
+	{
+		executionTimestampLock.lock();
+		try
+		{
+			long old = this.executionTimeStamp;
+			if
+			( 
+				(executionTimeStamp < old) || 
+				(old < System.currentTimeMillis()) || 
+				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.SCHEDULE) ||
+				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.RESCHEDULE) 
+			) 
+			{
+				this.executionTimeStamp = executionTimeStamp;
+				this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.RESCHEDULE;
+				this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);	
+			}
+		}
+		finally 
+		{
+			executionTimestampLock.unlock();
+		}
 	}
 
 	@Override

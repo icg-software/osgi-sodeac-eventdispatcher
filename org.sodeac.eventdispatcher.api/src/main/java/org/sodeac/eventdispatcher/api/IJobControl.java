@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Sebastian Palarus
+ * Copyright (c) 2017, 2018 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,9 @@ package org.sodeac.eventdispatcher.api;
  */
 public interface IJobControl
 {
+	
+	public enum ExecutionTimeStampSource {SCHEDULE,RESCHEDULE,WORKER,PERODIC}
+	
 	/**
 	 * 
 	 * @return true, of job is done, otherwise false
@@ -39,6 +42,12 @@ public interface IJobControl
 	public long getExecutionTimeStamp();
 	
 	/**
+	 * 
+	 * @return SourceType of executionTimestamp
+	 */
+	public ExecutionTimeStampSource getExecutionTimeStampSource();
+
+	/**
 	 * setter for timestamp of execution plan for next run
 	 * 
 	 * <br>
@@ -46,10 +55,11 @@ public interface IJobControl
 	 * additionally job is marked done == false
 	 * 
 	 * @param executionTimeStamp timestamp for next run
+	 * @param force force to set new execution timestamp
 	 * 
-	 * @return overwritten execution timestamp
+	 * @return success state
 	 */
-	public long setExecutionTimeStamp(long executionTimeStamp);
+	public boolean setExecutionTimeStamp(long executionTimeStamp, boolean force);
 	
 	
 	/**

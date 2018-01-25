@@ -18,7 +18,7 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 	
 	protected QueueSessionScopeImpl(UUID scopeId,QueueImpl parent, String scopeName, boolean adoptContoller, boolean adoptServices, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
-		super(null,(EventDispatcherImpl)parent.getDispatcher(), parent.isMetricsEnabled(), null, null,configurationProperties,stateProperties);
+		super(parent.getQueueId() + "." + scopeId.toString(),(EventDispatcherImpl)parent.getDispatcher(), parent.isMetricsEnabled(), null, null,configurationProperties,stateProperties);
 		
 		super.parent = parent;
 		this.scopeName = scopeName;

@@ -39,7 +39,6 @@ import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IEventController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IGauge;
-import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueueService;
@@ -1032,11 +1031,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				{
 					continue;
 				}
-				if(jobContainer.getJobControl().getExecutionTimeStamp() > timeStamp)
+				long executionTimeStampIntern = jobContainer.getJobControl().getExecutionTimeStampIntern();
+				if( executionTimeStampIntern > timeStamp)
 				{
-					if(nextRun > jobContainer.getJobControl().getExecutionTimeStamp())
+					if(nextRun > executionTimeStampIntern)
 					{
-						nextRun = jobContainer.getJobControl().getExecutionTimeStamp();
+						nextRun = executionTimeStampIntern;;
 					}
 					continue;
 				}
@@ -1065,11 +1065,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				{
 					continue;
 				}
-				if(jobContainer.getJobControl().getExecutionTimeStamp() > timeStamp)
+				long executionTimeStampIntern = jobContainer.getJobControl().getExecutionTimeStampIntern();
+				if( executionTimeStampIntern > timeStamp)
 				{
-					if(nextRun > jobContainer.getJobControl().getExecutionTimeStamp())
+					if(nextRun > executionTimeStampIntern)
 					{
-						nextRun = jobContainer.getJobControl().getExecutionTimeStamp();
+						nextRun = executionTimeStampIntern;;
 					}
 					continue;
 				}
@@ -1286,7 +1287,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			JobControlImpl jobControl = new JobControlImpl(propertyBlock);
 			if(executionTimeStamp > 0)
 			{
-				jobControl.setExecutionTimeStamp(executionTimeStamp);
+				jobControl.setExecutionTimeStampSchedule(executionTimeStamp);
 			}
 			if(heartBeatTimeOut > 0)
 			{
@@ -1409,7 +1410,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				return null;
 			}
 			
-			IJobControl jobControl = jobContainer.getJobControl();
+			JobControlImpl jobControl = jobContainer.getJobControl();
 			
 			if(heartBeatTimeOut > 0)
 			{
@@ -1422,7 +1423,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			
 			if(executionTimeStamp > 0)
 			{
-				jobControl.setExecutionTimeStamp(executionTimeStamp);
+				jobControl.setExecutionTimeStampReschedule(executionTimeStamp);
 				this.notifyOrCreateWorker(executionTimeStamp);
 			}
 			
