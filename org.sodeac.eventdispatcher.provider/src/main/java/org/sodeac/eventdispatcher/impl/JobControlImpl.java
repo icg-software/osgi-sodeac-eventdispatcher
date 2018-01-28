@@ -156,18 +156,18 @@ public class JobControlImpl implements IJobControl
 		{
 			long old = this.executionTimeStamp;
 			if
-			( 
-				(executionTimeStamp < old) || 
-				(old < System.currentTimeMillis()) || 
-				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.SCHEDULE) ||
-				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.PERODIC) 
-			) 
+			(
+				(old > System.currentTimeMillis()) &&
+				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.RESCHEDULE) &&
+				(executionTimeStamp > 0)
+			)
 			{
-				this.executionTimeStamp = executionTimeStamp;
-				this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.PERODIC;
-				this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
-
+				return;
 			}
+			
+			this.executionTimeStamp = executionTimeStamp;
+			this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.PERODIC;
+			this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
 		}
 		finally 
 		{

@@ -1032,15 +1032,15 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					continue;
 				}
 				long executionTimeStampIntern = jobContainer.getJobControl().getExecutionTimeStampIntern();
-				if( executionTimeStampIntern > timeStamp)
+				if(executionTimeStampIntern < nextRun)
 				{
-					if(nextRun > executionTimeStampIntern)
-					{
-						nextRun = executionTimeStampIntern;;
-					}
-					continue;
+					nextRun = executionTimeStampIntern;;
 				}
-				dueJobList.add(jobContainer);
+				
+				if( executionTimeStampIntern <= timeStamp)
+				{
+					dueJobList.add(jobContainer);
+				}
 			}
 		}
 		finally 
@@ -1066,13 +1066,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					continue;
 				}
 				long executionTimeStampIntern = jobContainer.getJobControl().getExecutionTimeStampIntern();
-				if( executionTimeStampIntern > timeStamp)
+				if(executionTimeStampIntern < nextRun)
 				{
-					if(nextRun > executionTimeStampIntern)
-					{
-						nextRun = executionTimeStampIntern;;
-					}
-					continue;
+					nextRun = executionTimeStampIntern;
 				}
 			}
 		}
@@ -2148,7 +2144,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				{
 					if(queueWorker != null)
 					{
-						// something goes wrong with spooled worker
+						log(LogService.LOG_WARNING, "something goes wrong wakeup a queueworker",null);
 						try
 						{
 							queueWorker.stopWorker();
@@ -2212,6 +2208,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			if(worker != this.queueWorker)
 			{
 				worker.stopWorker();
+				return false;
+			}
+			
+			if(worker.isUpdateNotified || worker.isSoftUpdated)
+			{
 				return false;
 			}
 			
@@ -2282,6 +2283,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				return false;
 			}
 			
+			if(worker.isUpdateNotified || worker.isSoftUpdated)
+			{
+				return false;
+			}
 			if(! this.newScheduledList.isEmpty())
 			{
 				return false;

@@ -43,7 +43,8 @@ public class QueueWorker extends Thread
 	private QueueImpl eventQueue = null;
 	private IQueueWorker workerWrapper = null;
 	private volatile boolean go = true;
-	private volatile boolean isUpdateNotified = false;
+	protected volatile boolean isUpdateNotified = false;
+	protected volatile boolean isSoftUpdated = false;
 	private volatile Object waitMonitor = new Object();
 	
 	private List<JobContainer> dueJobList = null;
@@ -131,6 +132,12 @@ public class QueueWorker extends Thread
 			
 			try
 			{
+				synchronized (this.waitMonitor)
+				{
+					this.isUpdateNotified = false;
+					this.isSoftUpdated = false;
+				}
+				
 				this.newScheduledList.clear();
 				eventQueue.fetchNewScheduledList(this.newScheduledList);
 				if(! this.newScheduledList.isEmpty())
@@ -837,11 +844,14 @@ public class QueueWorker extends Thread
 						}
 						if(waitTime > 0)
 						{
-							this.inFreeingArea = true;
 							boolean freeWorker = false;
-							if(waitTime >= FREE_TIME)
+							if(! isSoftUpdated)
 							{
-								freeWorker = this.eventQueue.checkFreeWorker(this, waitTime);
+								this.inFreeingArea = true;
+								if(waitTime >= FREE_TIME)
+								{
+									freeWorker = this.eventQueue.checkFreeWorker(this, waitTime);
+								}
 							}
 							if(freeWorker)
 							{
@@ -998,6 +1008,7 @@ public class QueueWorker extends Thread
 	public void notifySoftUpdate()
 	{
 		this.isUpdateNotified = true;
+		this.isSoftUpdated = true;
 	}
 	
 	public void notifyUpdate(long newRuntimeStamp)
@@ -1007,13 +1018,14 @@ public class QueueWorker extends Thread
 			synchronized (this.waitMonitor)
 			{
 				this.isUpdateNotified = true;
+				this.isSoftUpdated = false;
 				if(this.wakeUpTimeStamp > 0) // waits for new run
 				{
 					if(newRuntimeStamp <= System.currentTimeMillis())
 					{
 						waitMonitor.notify();
 					}
-					else if(this.wakeUpTimeStamp > newRuntimeStamp)
+					else if(this.wakeUpTimeStamp >= newRuntimeStamp)
 					{
 						waitMonitor.notify();
 					}
@@ -1031,6 +1043,8 @@ public class QueueWorker extends Thread
 			synchronized (this.waitMonitor)
 			{
 				this.isUpdateNotified = true;
+				this.isSoftUpdated = false;
+				
 				waitMonitor.notify();
 			}	
 		}
@@ -1077,7 +1091,6 @@ public class QueueWorker extends Thread
 		
 		if(! inFreeingArea)
 		{
-			System.out.println("Not IN FreeArea??");
 			return false;
 		}
 		
