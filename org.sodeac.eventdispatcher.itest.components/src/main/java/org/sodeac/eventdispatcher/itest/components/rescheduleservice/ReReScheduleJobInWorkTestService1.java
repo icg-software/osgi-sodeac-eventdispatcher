@@ -37,25 +37,26 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 	service={IEventController.class,EventHandler.class,IQueueService.class},
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_ID+"="+ RescheduleTestService.QUEUE_ID,
+		IEventDispatcher.PROPERTY_QUEUE_ID+"="+ ReReScheduleJobInWorkTestService1.QUEUE_ID,
 		IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL+"=5000",
-		IQueueService.PROPERTY_SERVICE_ID+"=" + RescheduleTestService.SERVICE_ID,
-		EventConstants.EVENT_TOPIC+"=" + RescheduleTestService.SHARED_OBJECT_EVENT,
-		EventConstants.EVENT_TOPIC+"=" + RescheduleTestService.DATA_VALUE_EVENT
+		IQueueService.PROPERTY_SERVICE_ID+"=" + ReReScheduleJobInWorkTestService1.SERVICE_ID,
+		EventConstants.EVENT_TOPIC+"=" + ReReScheduleJobInWorkTestService1.SHARED_OBJECT_EVENT,
+		EventConstants.EVENT_TOPIC+"=" + ReReScheduleJobInWorkTestService1.DATA_VALUE_EVENT
 	}
 )
-public class RescheduleTestService implements EventHandler,IEventController,IOnEventScheduled,IQueueService
+public class ReReScheduleJobInWorkTestService1 implements EventHandler,IEventController,IOnEventScheduled,IQueueService
 {
-	public static final String QUEUE_ID = "rescheduletestservicequeue";
-	public static final String SERVICE_ID = "rescheduletestservice";
-	public static final String SHARED_OBJECT_EVENT = "org/sodeac/eventdispatcher/itest/rescheduleservice/sharedobject";
-	public static final String DATA_VALUE_EVENT = "org/sodeac/eventdispatcher/itest/rescheduleservice/datavalue";
+	public static final String QUEUE_ID = "reschedulejobbyoneventscheduledtestservicequeue1";
+	public static final String SERVICE_ID = "reschedulejobbyoneventscheduledtestservice1";
+	public static final String SHARED_OBJECT_EVENT = "org/sodeac/eventdispatcher/itest/reschedulejobbyoneventscheduledservice1/sharedobject";
+	public static final String DATA_VALUE_EVENT = "org/sodeac/eventdispatcher/itest/reschedulejobbyoneventscheduledservice1/datavalue";
 	public static final String PROPERTY_DATA_OBJECT = "DATA_OBJECT"; 
 	public static final String PROPERTY_DATA_VALUE = "DATA_VALUE"; 
 	
 	public static final long TOLERANCE = 100;
 	
 	private AtomicLong dataObject = null;
+	private volatile boolean reReScheduleInWork = false;
 	
 	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
 	protected volatile IEventDispatcher dispatcher;
@@ -71,6 +72,13 @@ public class RescheduleTestService implements EventHandler,IEventController,IOnE
 			return;
 		}
 		
+		
+		if(reReScheduleInWork)
+		{
+			jobControl.setExecutionTimeStamp(System.currentTimeMillis(), true);
+			reReScheduleInWork = false;
+			return;
+		}
 		List<IQueuedEvent> eventList  = queue.getEventList(null, null, null);
 		if(eventList.isEmpty())
 		{
@@ -108,6 +116,7 @@ public class RescheduleTestService implements EventHandler,IEventController,IOnE
 			return;
 		}
 		
+		reReScheduleInWork = true;
 		event.getQueue().rescheduleJob(SERVICE_ID, System.currentTimeMillis(), -1, -1);
 	}
 
