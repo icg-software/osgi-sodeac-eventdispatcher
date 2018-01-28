@@ -1034,7 +1034,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				long executionTimeStampIntern = jobContainer.getJobControl().getExecutionTimeStampIntern();
 				if(executionTimeStampIntern < nextRun)
 				{
-					nextRun = executionTimeStampIntern;;
+					nextRun = executionTimeStampIntern;
 				}
 				
 				if( executionTimeStampIntern <= timeStamp)
@@ -2185,7 +2185,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 	}
 	
-	protected boolean checkFreeWorker(QueueWorker worker, long waitTime)
+	protected boolean checkFreeWorker(QueueWorker worker, long nextRun)
 	{
 		if(worker == null)
 		{
@@ -2212,11 +2212,6 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 			
 			if(worker.isUpdateNotified || worker.isSoftUpdated)
-			{
-				return false;
-			}
-			
-			if (waitTime < QueueWorker.FREE_TIME)
 			{
 				return false;
 			}
@@ -2251,7 +2246,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				this.currentSpooledQueueWorker.setValid(false);
 			}
-			this.currentSpooledQueueWorker = this.eventDispatcher.scheduleQueueWorker(this, System.currentTimeMillis() + waitTime - QueueWorker.RESCHEDULE_BUFFER_TIME);
+			this.currentSpooledQueueWorker = this.eventDispatcher.scheduleQueueWorker(this, nextRun - QueueWorker.RESCHEDULE_BUFFER_TIME);
 			this.queueWorker = null;
 			this.eventDispatcher.addToWorkerPool(worker);
 			return true;

@@ -33,9 +33,9 @@ import org.sodeac.eventdispatcher.api.ITimer;
 
 public class QueueWorker extends Thread
 {
-	public static final long DEFAULT_WAIT_TIME = 108 * 108;
-	public static final long FREE_TIME = 108;
-	public static final long RESCHEDULE_BUFFER_TIME = 13;
+	public static final long DEFAULT_WAIT_TIME = 108 * 108 * 108 * 7;
+	public static final long FREE_TIME = 108 + 27;
+	public static final long RESCHEDULE_BUFFER_TIME = 27;
 	public static final long DEFAULT_SHUTDOWN_TIME = 1080 * 54;
 	
 	private long spoolTimeStamp = 0;
@@ -828,7 +828,7 @@ public class QueueWorker extends Thread
 							continue;
 						}
 							
-						long nextRunTimeStamp = System.currentTimeMillis() + 1080;
+						long nextRunTimeStamp = System.currentTimeMillis() + DEFAULT_WAIT_TIME;
 						try
 						{
 							nextRunTimeStamp = eventQueue.getNextRun();
@@ -850,7 +850,7 @@ public class QueueWorker extends Thread
 								this.inFreeingArea = true;
 								if(waitTime >= FREE_TIME)
 								{
-									freeWorker = this.eventQueue.checkFreeWorker(this, waitTime);
+									freeWorker = this.eventQueue.checkFreeWorker(this, nextRunTimeStamp);
 								}
 							}
 							if(freeWorker)

@@ -20,7 +20,7 @@ import org.osgi.service.log.LogService;
 
 public class SpooledQueueWorkerScheduler extends Thread
 {
-	public static final long DEFAULT_WAIT_TIME = 108 * 108;
+	public static final long DEFAULT_WAIT_TIME = 108 * 108 * 7;
 	
 	public SpooledQueueWorkerScheduler(EventDispatcherImpl eventDispatcher)
 	{
