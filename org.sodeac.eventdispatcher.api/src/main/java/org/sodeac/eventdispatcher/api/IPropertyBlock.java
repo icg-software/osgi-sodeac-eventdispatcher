@@ -58,7 +58,7 @@ public interface IPropertyBlock
 	 * 
 	 * @return the property with specified key
 	 */
-	public <T> T getTypedProperty(String key, Class<T> resultClass);
+	public <T> T getProperty(String key, Class<T> resultClass);
 	
 	/**
 	 * typed getter for registered property with associated {@code key}
@@ -69,7 +69,7 @@ public interface IPropertyBlock
 	 * 
 	 * @return the property with specified key, or {@code defaultValue} if property does not exists
 	 */
-	public <T> T getTypedProperty(String key, Class<T> resultClass, T defaultValue);
+	public <T> T getProperty(String key, Class<T> resultClass, T defaultValue);
 	
 	/**
 	 * String-typed getter for registered property with associated {@code key}. For Non-string value {@link java.lang.Object#toString()} is used as formatter. 
