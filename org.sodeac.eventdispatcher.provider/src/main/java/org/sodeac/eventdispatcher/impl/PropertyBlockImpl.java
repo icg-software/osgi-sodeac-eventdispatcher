@@ -588,7 +588,14 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T getTypedProperty(String key, T defaultValue)
+	public <T> T getTypedProperty(String key,Class<T> resultClass)
+	{
+		return(T) getProperty(key);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T getTypedProperty(String key,Class<T> resultClass, T defaultValue)
 	{
 		T typedValue = defaultValue;
 		Object current = getProperty(key);

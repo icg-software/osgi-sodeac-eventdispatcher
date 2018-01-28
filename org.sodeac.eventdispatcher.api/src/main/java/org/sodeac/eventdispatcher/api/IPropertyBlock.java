@@ -54,11 +54,22 @@ public interface IPropertyBlock
 	 * typed getter for registered property with associated {@code key}
 	 * 
 	 * @param key the key whose associated property is to be returned
+	 * @param resultClass the type of property
+	 * 
+	 * @return the property with specified key
+	 */
+	public <T> T getTypedProperty(String key, Class<T> resultClass);
+	
+	/**
+	 * typed getter for registered property with associated {@code key}
+	 * 
+	 * @param key the key whose associated property is to be returned
+	 * @param resultClass the type of property
 	 * @param defaultValue return value if property with specified key not exist or is null
 	 * 
 	 * @return the property with specified key, or {@code defaultValue} if property does not exists
 	 */
-	public <T> T getTypedProperty(String key, T defaultValue);
+	public <T> T getTypedProperty(String key, Class<T> resultClass, T defaultValue);
 	
 	/**
 	 * String-typed getter for registered property with associated {@code key}. For Non-string value {@link java.lang.Object#toString()} is used as formatter. 
