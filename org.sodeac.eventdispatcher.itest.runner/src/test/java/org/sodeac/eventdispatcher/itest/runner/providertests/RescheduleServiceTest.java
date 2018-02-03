@@ -143,7 +143,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -183,7 +183,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -415,7 +415,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -455,7 +455,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -687,7 +687,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -727,7 +727,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -959,7 +959,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -999,7 +999,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -1232,7 +1232,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -1272,7 +1272,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -1504,7 +1504,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
@@ -1544,7 +1544,7 @@ public class RescheduleServiceTest extends AbstractTest
 		
 		for(int x = 0; x < 27; x++)
 		{
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < 7; i++)
 			{
 				index++;
 				
