@@ -31,7 +31,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
-import org.sodeac.eventdispatcher.api.IOnEventScheduled;
+import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.components.base.AbstractBaseTestController;
@@ -49,7 +49,7 @@ import org.sodeac.eventdispatcher.itest.components.base.AbstractBaseTestControll
 		EventConstants.EVENT_TOPIC+"=" + ScopeTestSimpleManagementController.REQUEST_EVENT_SCOPE_SIZE
 	}
 )
-public class ScopeTestSimpleManagementController extends AbstractBaseTestController implements EventHandler,IEventController,IOnEventScheduled,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class ScopeTestSimpleManagementController extends AbstractBaseTestController implements EventHandler,IEventController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final String QUEUE_ID 					= "scopetestsimplequeue";
 	public static final String REQUEST_EVENT_SCOPE_CREATE	= "org/sodeac/eventdispatcher/itest/scopetestsimple/request/scopecreate";
@@ -72,7 +72,7 @@ public class ScopeTestSimpleManagementController extends AbstractBaseTestControl
 	}
 	
 	@Override
-	public void onEventScheduled(IQueuedEvent event)
+	public void onScheduleEvent(IQueuedEvent event)
 	{
 		if(event.getEvent().getTopic().equals(REQUEST_EVENT_SCOPE_CREATE))
 		{

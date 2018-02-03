@@ -25,7 +25,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
-import org.sodeac.eventdispatcher.api.IOnEventScheduled;
+import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
@@ -40,7 +40,7 @@ import org.sodeac.eventdispatcher.itest.components.base.AbstractBaseTestControll
 		IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER+"="+"("+IEventDispatcher.PROPERTY_QUEUE_TYPE + "=" + ScopeTestSimpleManagementController.SCOPE_TYPE + ")",
 	}
 )
-public class ScopeTestSimpleScopeController extends AbstractBaseTestController implements IEventController,IOnEventScheduled,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class ScopeTestSimpleScopeController extends AbstractBaseTestController implements IEventController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	
 	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
@@ -48,7 +48,7 @@ public class ScopeTestSimpleScopeController extends AbstractBaseTestController i
 	
 	
 	@Override
-	public void onEventScheduled(IQueuedEvent event)
+	public void onScheduleEvent(IQueuedEvent event)
 	{
 		if(event.getEvent().getTopic().equals(ScopeTestSimpleManagementController.REQUEST_EVENT_SCOPE_REQUEST1))
 		{

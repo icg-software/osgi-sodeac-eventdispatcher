@@ -6,7 +6,7 @@ import javax.management.ObjectName;
 
 import org.sodeac.eventdispatcher.api.IDescriptionProvider;
 import org.sodeac.eventdispatcher.api.IEventController;
-import org.sodeac.eventdispatcher.api.IOnEventScheduled;
+import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IOnJobError;
@@ -52,7 +52,7 @@ public class EventController implements EventControllerMBean
 	@Override
 	public boolean isImplementsOnEventScheduled()
 	{
-		return this.eventController instanceof IOnEventScheduled;
+		return this.eventController instanceof IOnScheduleEvent;
 	}
 
 	@Override

@@ -36,6 +36,7 @@ import org.sodeac.eventdispatcher.itest.components.base.BaseReCreateWorkerTestCo
 import org.sodeac.eventdispatcher.itest.components.base.BaseReScheduleTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseServiceTestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTestController;
+import org.sodeac.eventdispatcher.itest.components.base.BaseTestScheduleEventList;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTestTypeMatchingController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutAndStop1TestController;
 import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutAndStop2TestController;
@@ -44,7 +45,6 @@ import org.sodeac.eventdispatcher.itest.components.base.BaseTimeoutTestControlle
 
 import org.junit.Before;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -185,8 +185,86 @@ public class BaseContainerTest extends AbstractTest
 		
 	}
 	
+	@Test(timeout=20000)
+	public void test02ScheduleEventListDispatcherWorkflow() 
+	{
+		IQueue queue = this.eventDispatcher.getQueue(BaseTestScheduleEventList.QUEUE_ID);
+		assertNotNull("queue should not be null" ,queue);
+		
+		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);
+		assertNotNull("tracingObject should not be null" ,tracingObject);
+		
+		int tracingEventPosition = 0;
+		CountDownLatch latch = new CountDownLatch(1);
+		
+		Map<String,Object> eventProperties = new HashMap<String,Object>();
+		eventProperties.put(BaseTestScheduleEventList.EVENT_PROPERTY_LATCH, latch);
+		Event event =  new Event(BaseTestScheduleEventList.BUSY_EVENT,eventProperties);
+		eventAdmin.sendEvent(event);
+		
+		try
+		{
+			Thread.sleep(BaseTestScheduleEventList.BUSY_TIME / 2);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		eventAdmin.sendEvent(new Event(BaseTestScheduleEventList.SCHEDULE_EVENT,eventProperties));
+		eventAdmin.sendEvent(new Event(BaseTestScheduleEventList.SCHEDULE_EVENT,eventProperties));
+		eventAdmin.sendEvent(new Event(BaseTestScheduleEventList.SCHEDULE_EVENT,eventProperties));
+		
+		try
+		{
+			Thread.sleep(BaseTestScheduleEventList.BUSY_TIME);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		// 1. Queue Observe
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		//  2. Job Done
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Job Done",TracingEvent.ON_JOB_DONE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		// 3. Schedule Event
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_EVENT_SCHEDULED, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		// 4. Schedule Event
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_EVENT_SCHEDULED, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		// 5. Schedule Event
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect Event scheduled",TracingEvent.ON_EVENT_SCHEDULED, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		tracingEventPosition++;
+		
+		//  6. Signal
+		
+		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
+		assertEquals("Expect QueueSignal",TracingEvent.ON_QUEUE_SIGNAL, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("signal should be correct", BaseTestScheduleEventList.SIGNAL_EVENT_SIZE + 3,tracingObject.getTracingEventList().get(tracingEventPosition).getSignal() );
+		tracingEventPosition++;
+				
+	}
+	
 	@Test(timeout=5000 + BaseDelayedTestController.DELAY)
-	public void test02SimpleDelayedDispatcherWorkflow() 
+	public void test03SimpleDelayedDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseDelayedTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -253,7 +331,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000 + BaseTimeoutTestController.SLEEP_VALUE)
-	public void test03SimpleTimeoutDispatcherWorkflow() 
+	public void test04SimpleTimeoutDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseTimeoutTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -302,7 +380,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=7000 + BaseTimeoutAndStop1TestController.SLEEP_VALUE)
-	public void test04TimeoutWithStopDispatcherWorkflow() 
+	public void test05TimeoutWithStopDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseTimeoutAndStop1TestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -376,7 +454,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=7000 + BaseTimeoutAndStop2TestController.SLEEP_VALUE)
-	public void test05TimeoutTimeoutWithStopAndMoreLifetimeDispatcherWorkflow() 
+	public void test06TimeoutTimeoutWithStopAndMoreLifetimeDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseTimeoutAndStop2TestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -474,7 +552,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=60000)
-	public void test06SimpleHearbeatTimeoutDispatcherWorkflow() 
+	public void test07SimpleHearbeatTimeoutDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseHeartbeatTimeoutTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -526,7 +604,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=25000)
-	public void test07RecreateWorkerDispatcherWorkflow() 
+	public void test08RecreateWorkerDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReCreateWorkerTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -659,7 +737,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000)
-	public void test08SimpleExceptionDispatcherWorkflow() 
+	public void test09SimpleExceptionDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseExceptionTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -701,7 +779,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=12000)
-	public void test09SimpleReScheduleDispatcherWorkflow1() 
+	public void test10SimpleReScheduleDispatcherWorkflow1() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReScheduleTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -782,7 +860,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=10000)
-	public void test10SimpleReScheduleDispatcherWorkflow2() 
+	public void test11SimpleReScheduleDispatcherWorkflow2() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseReScheduleTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -858,7 +936,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=12000)
-	public void test11GetJobDispatcherWorkflow() 
+	public void test12GetJobDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseGetJobTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -950,7 +1028,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=10000)
-	public void test12PropertyBlockDispatcherWorkflow() 
+	public void test13PropertyBlockDispatcherWorkflow() 
 	{
 		IPropertyBlock propertyBlock = this.eventDispatcher.createPropertyBlock();
 		
@@ -1028,7 +1106,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=13000)
-	public void test13FilterDispatcherWorkflow() throws InvalidSyntaxException 
+	public void test14FilterDispatcherWorkflow() throws InvalidSyntaxException 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseFilterTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1323,7 +1401,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=13000)
-	public void test14PeriodicJob() throws Exception 
+	public void test15PeriodicJob() throws Exception 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BasePeriodicJobTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1387,7 +1465,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=12000)
-	public void test15GetJobDispatcherWorkflow() throws InterruptedException 
+	public void test16GetJobDispatcherWorkflow() throws InterruptedException 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseServiceTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1474,7 +1552,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000 )
-	public void test16SimpleRegistrationForEventDispatcherWorkflow() 
+	public void test17SimpleRegistrationForEventDispatcherWorkflow() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseDelayedTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
@@ -1535,7 +1613,7 @@ public class BaseContainerTest extends AbstractTest
 	}
 	
 	@Test(timeout=5000 )
-	public void test17TypedControllerBinding() 
+	public void test18TypedControllerBinding() 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseTestTypeMatchingController.QUEUE_ID);
 		

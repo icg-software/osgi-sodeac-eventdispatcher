@@ -23,7 +23,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
-import org.sodeac.eventdispatcher.api.IOnEventScheduled;
+import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.common.job.FireSyncEvent;
@@ -39,13 +39,13 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 		IEventController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + BaseEventRegistrationTestController.EVENT
 	}
 )
-public class BaseEventRegistrationTestController extends AbstractBaseTestController implements IEventController,IOnEventScheduled,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseEventRegistrationTestController extends AbstractBaseTestController implements IEventController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final String 	QUEUE_ID 		= "baseeventregistrationtestqueue";
 	public static final String 	EVENT 			= "org/sodeac/eventdispatcher/itest/baseeventregistrationtest/jobevent";
 	
 	@Override
-	public void onEventScheduled(IQueuedEvent event)
+	public void onScheduleEvent(IQueuedEvent event)
 	{
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));

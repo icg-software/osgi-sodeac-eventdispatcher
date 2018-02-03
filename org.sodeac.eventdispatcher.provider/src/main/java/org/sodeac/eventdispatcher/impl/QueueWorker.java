@@ -11,6 +11,7 @@
 package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,11 +25,13 @@ import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
 import org.sodeac.eventdispatcher.api.IPeriodicQueueJob;
 import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IOnEventScheduled;
+import org.sodeac.eventdispatcher.api.IOnScheduleEventList;
+import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueueWorker;
+import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.ITimer;
 
 public class QueueWorker extends Thread
@@ -150,22 +153,62 @@ public class QueueWorker extends Thread
 					catch(Exception ex) {}
 					catch(Error ex) {}
 					
-					for(QueuedEventImpl event : this.newScheduledList)
+					if(! this.newScheduledList.isEmpty())
 					{
-						eventQueue.touchLastWorkerAction();
+						boolean singleProcess = false;
+						boolean listProcess = false;
+						
 						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
-							try
+							if(conf.getEventController() instanceof IOnScheduleEvent)
 							{
-								if(go)
+								singleProcess = true;
+							}
+							if(conf.getEventController() instanceof IOnScheduleEventList)
+							{
+								listProcess = true;
+							}
+						}
+						if(listProcess)
+						{
+							List<IQueuedEvent> processScheduleList = Collections.unmodifiableList(this.newScheduledList);
+							eventQueue.touchLastWorkerAction();
+							for(ControllerContainer conf : eventQueue.getConfigurationList())
+							{
+								try
 								{
-									if(conf.getEventController() instanceof IOnEventScheduled)
+									if(go)
 									{
-										((IOnEventScheduled)conf.getEventController()).onEventScheduled(event);
+										if(conf.getEventController() instanceof IOnScheduleEventList)
+										{
+											((IOnScheduleEventList)conf.getEventController()).onScheduleEventList(this.eventQueue, processScheduleList);
+										}
 									}
 								}
+								catch (Exception e) {}
 							}
-							catch (Exception e) {}
+							
+						}
+						if(singleProcess)
+						{
+							for(QueuedEventImpl event : this.newScheduledList)
+							{
+								eventQueue.touchLastWorkerAction();
+								for(ControllerContainer conf : eventQueue.getConfigurationList())
+								{
+									try
+									{
+										if(go)
+										{
+											if(conf.getEventController() instanceof IOnScheduleEvent)
+											{
+												((IOnScheduleEvent)conf.getEventController()).onScheduleEvent(event);
+											}
+										}
+									}
+									catch (Exception e) {}
+								}
+							}
 						}
 					}
 				}

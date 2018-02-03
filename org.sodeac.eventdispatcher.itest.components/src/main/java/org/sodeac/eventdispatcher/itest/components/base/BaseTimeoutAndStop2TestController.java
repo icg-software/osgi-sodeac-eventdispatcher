@@ -28,7 +28,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
-import org.sodeac.eventdispatcher.api.IOnEventScheduled;
+import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
@@ -44,7 +44,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 		EventConstants.EVENT_TOPIC+"=" + BaseTimeoutAndStop2TestController.SCHEDULE_EVENT
 	}
 )
-public class BaseTimeoutAndStop2TestController extends AbstractBaseTestController implements EventHandler,IEventController,IOnEventScheduled,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseTimeoutAndStop2TestController extends AbstractBaseTestController implements EventHandler,IEventController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final long 	SLEEP_VALUE		= 10800;
 	public static final long 	TIMEOUT_VALUE	= SLEEP_VALUE / 2;
@@ -62,7 +62,7 @@ public class BaseTimeoutAndStop2TestController extends AbstractBaseTestControlle
 	}
 	
 	@Override
-	public void onEventScheduled(IQueuedEvent event)
+	public void onScheduleEvent(IQueuedEvent event)
 	{
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		IQueueJob job = new BaseTimeOutAndStop2Job(SLEEP_VALUE);

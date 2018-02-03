@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Sebastian Palarus
+ * Copyright (c) 2018 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,21 +10,24 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+import java.util.List;
+
 /**
  * 
- * An extension interface for {@link IEventController} to consume a notification if {@link IQueue} scheduled a {@link IQueuedEvent}
+ * An extension interface for {@link IEventController} to consume a notification if {@link IQueue} has to schedule one or more {@link IQueuedEvent}s
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnEventScheduled extends IEventController
+public interface IOnScheduleEventList extends IEventController
 {
 	/**
-	 * This is fired, if {@link IEventController} schedule a new {@link org.osgi.service.event.Event}.
+	 * This is fired, if {@link IEventController} has to schedule one or more {@link org.osgi.service.event.Event}s.
 	 * <br>
 	 * invoked and synchronized by queue worker
 	 * 
-	 * @param event new scheduled event, contains {@link org.osgi.service.event.Event}
+	 * @param queue related {@link IQueue}
+	 * @param eventList new events, contains {@link org.osgi.service.event.Event}
 	 */
-	public void onEventScheduled(IQueuedEvent event);
+	public void onScheduleEventList(IQueue queue, List<IQueuedEvent> eventList);
 }
