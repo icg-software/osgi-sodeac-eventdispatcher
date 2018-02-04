@@ -41,7 +41,7 @@ public interface IScheduleResult
 	public void addError(Throwable throwable);
 	
 	/**
-	 * getter for {@link this#getErrorList()} > 0
+	 * return schedule result contains errors
 	 * 
 	 * @return true if scheduler or worker published an error, otherwise false,
 	 */
