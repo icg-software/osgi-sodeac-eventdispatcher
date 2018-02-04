@@ -40,7 +40,9 @@
             	org.sodeac.eventdispatcher.itest.components,
             	org.sodeac.eventdispatcher.itest.components.base,
             	org.sodeac.eventdispatcher.itest.components.compressor,
-            	org.sodeac.eventdispatcher.itest.components.scope
+            	org.sodeac.eventdispatcher.itest.components.scope,
+            	org.sodeac.eventdispatcher.itest.components.rescheduleservice,
+            	org.sodeac.eventdispatcher.itest.components.scheduleresult
             </Export-Package>
           </instructions>
           <source>1.8</source>

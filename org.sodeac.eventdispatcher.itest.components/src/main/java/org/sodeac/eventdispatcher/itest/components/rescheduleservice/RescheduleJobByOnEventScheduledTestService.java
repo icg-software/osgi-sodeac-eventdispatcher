@@ -53,7 +53,7 @@ public class RescheduleJobByOnEventScheduledTestService implements EventHandler,
 	public static final String PROPERTY_DATA_OBJECT = "DATA_OBJECT"; 
 	public static final String PROPERTY_DATA_VALUE = "DATA_VALUE"; 
 	
-	public static final long TOLERANCE = 100;
+	public static final long TOLERANCE = 50;
 	
 	private AtomicLong dataObject = null;
 	
