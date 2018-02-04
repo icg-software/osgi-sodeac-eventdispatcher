@@ -39,8 +39,10 @@ public interface IEventDispatcher
 	 * 
 	 * 
 	 * @return Future of {@link IScheduleResult}
+	 * @throws QueueNotFoundException
+	 * @throws QueueIsFullException
 	 */
-	public Future<IScheduleResult> schedule(String queueId,Event event);
+	public Future<IScheduleResult> schedule(String queueId,Event event) throws QueueNotFoundException, QueueIsFullException;
 	
 	/**
 	 * schedule a list of osgi events to eventdispatcher queue
@@ -50,8 +52,10 @@ public interface IEventDispatcher
 	 * 
 	 * 
 	 * @return Future of {@link IScheduleResult}
+	 * @throws QueueNotFoundException
+	 * @throws QueueIsFullException
 	 */
-	public Future<IScheduleResult> schedule(String queueId,List<Event> eventList);
+	public Future<IScheduleResult> schedule(String queueId,List<Event> eventList) throws QueueNotFoundException, QueueIsFullException;
 	
 	/**
 	 * factory-methode creating instance of {@link IPropertyBlock} 

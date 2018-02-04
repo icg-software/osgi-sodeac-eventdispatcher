@@ -42,8 +42,9 @@ public interface IQueue
 	 * @param event osgi-event to schedule 
 	 * 
 	 * @return Future of {@link IScheduleResult}
+	 * @throws QueueIsFullException
 	 */
-	public Future<IScheduleResult> scheduleEvent(Event event);
+	public Future<IScheduleResult> scheduleEvent(Event event) throws QueueIsFullException;
 	
 	/**
 	 * schedule a list of osgi events to queue
@@ -51,8 +52,9 @@ public interface IQueue
 	 * @param eventList list of osgi-events to schedule 
 	 * 
 	 * @return Future of {@link IScheduleResult}
+	 * @throws QueueIsFullException
 	 */
-	public Future<IScheduleResult> scheduleEventList(List<Event> eventList);
+	public Future<IScheduleResult> scheduleEventList(List<Event> eventList) throws QueueIsFullException;
 	
 	/**
 	 * getter for configuration propertyblock of queue

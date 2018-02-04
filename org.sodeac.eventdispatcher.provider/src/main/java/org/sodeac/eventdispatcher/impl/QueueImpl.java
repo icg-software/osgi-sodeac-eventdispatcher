@@ -46,6 +46,7 @@ import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.IScheduleResult;
 import org.sodeac.eventdispatcher.api.ITimer;
+import org.sodeac.eventdispatcher.api.QueueIsFullException;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleQueue;
 
@@ -147,6 +148,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	protected String category = null;
 	protected String name = null;
+	protected volatile int eventListLimit = Integer.MAX_VALUE;
 	
 	protected MetricImpl metrics;
 	protected EventDispatcherImpl eventDispatcher = null;
@@ -224,6 +226,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		eventListWriteLock.lock();
 		try
 		{
+			if(this.eventListLimit <= (this.eventList.size()))
+			{
+				throw new QueueIsFullException(this.queueId, this.eventListLimit);
+			}
 			queuedEvent = new QueuedEventImpl(event,this);
 			queuedEvent.setScheduleResultObject(resultImpl);
 			this.eventList.add(queuedEvent);
@@ -266,6 +272,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		eventListWriteLock.lock();
 		try
 		{
+			if(this.eventListLimit < (this.eventList.size() + eventList.size()))
+			{
+				throw new QueueIsFullException(this.queueId, this.eventListLimit);
+			}
 			for(Event event : eventList)
 			{
 				QueuedEventImpl queuedEvent = new QueuedEventImpl(event,this);
@@ -2624,5 +2634,15 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		{
 			this.queueScopeListReadLock.unlock();
 		}
+	}
+
+	public int getEventListLimit()
+	{
+		return eventListLimit;
+	}
+
+	public void setEventListLimit(int eventListLimit)
+	{
+		this.eventListLimit = eventListLimit;
 	}
 }

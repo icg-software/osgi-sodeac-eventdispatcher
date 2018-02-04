@@ -51,6 +51,7 @@ import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IScheduleResult;
 import org.sodeac.eventdispatcher.api.ITimer;
+import org.sodeac.eventdispatcher.api.QueueNotFoundException;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
 import org.sodeac.eventdispatcher.api.ICounter;
@@ -237,7 +238,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				{
 					log(LogService.LOG_ERROR, "Queue is missing " + queueId,null);
 				}
-				return null; // throw new Queue not found 
+				throw new QueueNotFoundException(queueId);
 			}
 			
 			return queue.scheduleEvent(event);
@@ -295,7 +296,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				{
 					log(LogService.LOG_ERROR, "Queue is missing " + queueId,null);
 				}
-				return null; // throw new Queue not found 
+				throw new QueueNotFoundException(queueId);
 			}
 			
 			return queue.scheduleEventList(eventList);

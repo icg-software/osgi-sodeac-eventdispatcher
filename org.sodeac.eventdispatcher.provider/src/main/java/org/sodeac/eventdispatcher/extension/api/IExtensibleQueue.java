@@ -19,6 +19,9 @@ public interface IExtensibleQueue extends IQueue
 	public String getName();
 	public void setName(String name);
 	
+	public int getEventListLimit();
+	public void setEventListLimit(int eventListLimit);
+	
 	// TODO Schedule Event
 	// TODO Clear EventQueue
 	// TODO Create Snapshot Overview
