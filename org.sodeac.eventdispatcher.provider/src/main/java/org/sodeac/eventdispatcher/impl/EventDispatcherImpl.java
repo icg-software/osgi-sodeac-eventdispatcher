@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -119,10 +118,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private Map<String,Long> queueIsMissingLogIndex = null;
 	private ReentrantLock queueIsMissingLogIndexLock = null;
 	
-	private ExecutorService onJobTimeOutExecuterService = null;
-	private ExecutorService onJobStopExecuterService = null;
-	private ExecutorService onQueueReverseExecuterService = null;
-	private ExecutorService waitForScheduleResultExecuterService = null;
+	private ExecutorService executorService = null;
 	
 	@Override
 	public String getId()
@@ -386,10 +382,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			counterConfigurationSize = metrics.counter( IMetrics.METRICS_EVENT_CONTROLLER);
 			
-			this.onJobTimeOutExecuterService = Executors.newCachedThreadPool();
-			this.onJobStopExecuterService = Executors.newCachedThreadPool();
-			this.onQueueReverseExecuterService = Executors.newCachedThreadPool();
-			this.waitForScheduleResultExecuterService = Executors.newCachedThreadPool();
+			this.executorService = Executors.newCachedThreadPool();
 			
 			this.dispatcherGuardian = new DispatcherGuardian(this);
 			this.dispatcherGuardian.start();
@@ -572,34 +565,6 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				this.workerPoolWriteLock.unlock();
 			}
-			
-			try
-			{
-				this.onJobTimeOutExecuterService.shutdown();
-				this.onJobTimeOutExecuterService.awaitTermination(3, TimeUnit.SECONDS);
-			}
-			catch (Exception e) {}
-			
-			try
-			{
-				this.onJobStopExecuterService.shutdown();
-				this.onJobStopExecuterService.awaitTermination(3, TimeUnit.SECONDS);
-			}
-			catch (Exception e) {}
-			
-			try
-			{
-				this.onQueueReverseExecuterService.shutdown();
-				this.onQueueReverseExecuterService.awaitTermination(3, TimeUnit.SECONDS);
-			}
-			catch (Exception e) {}
-			
-			try
-			{
-				this.waitForScheduleResultExecuterService.shutdown();
-				this.waitForScheduleResultExecuterService.awaitTermination(3, TimeUnit.SECONDS);
-			}
-			catch (Exception e) {}
 			
 			this.context = null;
 			try
@@ -1576,32 +1541,28 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	
 	public void executeOnJobTimeOut(IOnJobTimeout controller, IQueueJob job)
 	{
-		CountDownLatch countDownLatch = new CountDownLatch(1);
-		
-		this.onJobTimeOutExecuterService.execute(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				try
-				{
-					controller.onJobTimeout(job);
-				}
-				catch (Exception e) {}
-				countDownLatch.countDown();
-			}
-		});
-		
 		try
 		{
-			countDownLatch.await(7, TimeUnit.SECONDS);
+			this.executorService.submit(new Callable<IQueueJob>()
+			{
+				@Override
+				public IQueueJob call()
+				{
+					try
+					{
+						controller.onJobTimeout(job);
+					}
+					catch (Exception e) {}
+					return job;
+				}
+			}).get(7, TimeUnit.SECONDS);
 		}
-		catch (Exception ie) {}
+		catch (Exception e) {}
 	}
 	
 	public void executeOnJobStopExecuter(QueueWorker worker, IQueueJob job)
 	{
-		this.onJobStopExecuterService.execute(new Runnable()
+		this.executorService.execute(new Runnable()
 		{
 			@Override
 			@SuppressWarnings("deprecation")
@@ -1664,27 +1625,23 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	
 	public void executeOnQueueReverse(IOnQueueReverse onQueueReverse , IQueue queue)
 	{
-		CountDownLatch countDownLatch = new CountDownLatch(1);
-		
-		this.onQueueReverseExecuterService.execute(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				try
-				{
-					onQueueReverse.onQueueReverse(queue);
-				}
-				catch (Exception e) {}
-				countDownLatch.countDown();
-			}
-		});
-		
 		try
 		{
-			countDownLatch.await(3, TimeUnit.SECONDS);
+			this.executorService.submit(new Callable<IQueue>()
+			{
+				@Override
+				public IQueue call()
+				{
+					try
+					{
+						onQueueReverse.onQueueReverse(queue);
+					}
+					catch (Exception e) {}
+					return queue;
+				}
+			}).get(3, TimeUnit.SECONDS);
 		}
-		catch (Exception ie) {}
+		catch (Exception e) {}
 	}
 	
 	public Future<IScheduleResult> createFutureOfScheduleResult(ScheduleResultImpl scheduleResult)
@@ -1699,7 +1656,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			}
 			
 		};
-		return this.waitForScheduleResultExecuterService.submit(call);
+		return this.executorService.submit(call);
 	}
 	
 	
