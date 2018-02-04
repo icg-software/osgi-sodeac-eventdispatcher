@@ -64,7 +64,7 @@ public class JobMetricTestController implements IEventController,IOnScheduleEven
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(event, JobMetricTestController.QUEUE_ID);
+		dispatcher.schedule(JobMetricTestController.QUEUE_ID, event);
 	}
 	
 	// IOnEventScheduled

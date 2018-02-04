@@ -64,7 +64,7 @@ public class BaseReScheduleTestController extends AbstractBaseTestController imp
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(event, BaseReScheduleTestController.QUEUE_ID);
+		dispatcher.schedule(BaseReScheduleTestController.QUEUE_ID,event);
 	}
 	
 	@Override

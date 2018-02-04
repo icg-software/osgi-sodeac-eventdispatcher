@@ -190,7 +190,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(RescheduleJobByOnEventScheduledTestService.PROPERTY_DATA_VALUE,index);
 				event =  new Event(RescheduleJobByOnEventScheduledTestService.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, RescheduleJobByOnEventScheduledTestService.QUEUE_ID);
+				eventDispatcher.schedule(RescheduleJobByOnEventScheduledTestService.QUEUE_ID, event);
 				
 			}
 			
@@ -269,7 +269,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(RescheduleJobByOnEventScheduledTestService.PROPERTY_DATA_VALUE,index);
 				event =  new Event(RescheduleJobByOnEventScheduledTestService.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, RescheduleJobByOnEventScheduledTestService.QUEUE_ID);
+				eventDispatcher.schedule(RescheduleJobByOnEventScheduledTestService.QUEUE_ID, event);
 				
 			}
 			
@@ -343,7 +343,7 @@ public class RescheduleServiceTest extends AbstractTest
 			eventProperties = new HashMap<String,Object>();
 			eventProperties.put(RescheduleJobByOnEventScheduledTestService.PROPERTY_DATA_VALUE,index);
 			event =  new Event(RescheduleJobByOnEventScheduledTestService.DATA_VALUE_EVENT,eventProperties);
-			eventDispatcher.schedule(event, RescheduleJobByOnEventScheduledTestService.QUEUE_ID);
+			eventDispatcher.schedule(RescheduleJobByOnEventScheduledTestService.QUEUE_ID, event);
 							
 			try
 			{
@@ -462,7 +462,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService1.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService1.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService1.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService1.QUEUE_ID, event);
 				
 			}
 			
@@ -541,7 +541,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService1.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService1.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService1.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService1.QUEUE_ID, event);
 				
 			}
 			
@@ -615,7 +615,7 @@ public class RescheduleServiceTest extends AbstractTest
 			eventProperties = new HashMap<String,Object>();
 			eventProperties.put(ReReScheduleJobInWorkTestService1.PROPERTY_DATA_VALUE,index);
 			event =  new Event(ReReScheduleJobInWorkTestService1.DATA_VALUE_EVENT,eventProperties);
-			eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService1.QUEUE_ID);
+			eventDispatcher.schedule(ReReScheduleJobInWorkTestService1.QUEUE_ID, event);
 							
 			try
 			{
@@ -734,7 +734,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService2.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService2.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService2.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService2.QUEUE_ID, event);
 				
 			}
 			
@@ -813,7 +813,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService2.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService2.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService2.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService2.QUEUE_ID, event);
 				
 			}
 			
@@ -887,7 +887,7 @@ public class RescheduleServiceTest extends AbstractTest
 			eventProperties = new HashMap<String,Object>();
 			eventProperties.put(ReReScheduleJobInWorkTestService2.PROPERTY_DATA_VALUE,index);
 			event =  new Event(ReReScheduleJobInWorkTestService2.DATA_VALUE_EVENT,eventProperties);
-			eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService2.QUEUE_ID);
+			eventDispatcher.schedule(ReReScheduleJobInWorkTestService2.QUEUE_ID, event);
 							
 			try
 			{
@@ -1006,7 +1006,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService3.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService3.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService3.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService3.QUEUE_ID, event);
 				
 			}
 			
@@ -1085,7 +1085,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService3.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService3.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService3.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService3.QUEUE_ID, event);
 				
 			}
 			
@@ -1159,7 +1159,7 @@ public class RescheduleServiceTest extends AbstractTest
 			eventProperties = new HashMap<String,Object>();
 			eventProperties.put(ReReScheduleJobInWorkTestService3.PROPERTY_DATA_VALUE,index);
 			event =  new Event(ReReScheduleJobInWorkTestService3.DATA_VALUE_EVENT,eventProperties);
-			eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService3.QUEUE_ID);
+			eventDispatcher.schedule(ReReScheduleJobInWorkTestService3.QUEUE_ID, event);
 							
 			try
 			{
@@ -1279,7 +1279,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService4.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService4.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService4.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService4.QUEUE_ID, event);
 				
 			}
 			
@@ -1358,7 +1358,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService4.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService4.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService4.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService4.QUEUE_ID, event);
 				
 			}
 			
@@ -1432,7 +1432,7 @@ public class RescheduleServiceTest extends AbstractTest
 			eventProperties = new HashMap<String,Object>();
 			eventProperties.put(ReReScheduleJobInWorkTestService4.PROPERTY_DATA_VALUE,index);
 			event =  new Event(ReReScheduleJobInWorkTestService4.DATA_VALUE_EVENT,eventProperties);
-			eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService4.QUEUE_ID);
+			eventDispatcher.schedule(ReReScheduleJobInWorkTestService4.QUEUE_ID, event);
 							
 			try
 			{
@@ -1551,7 +1551,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService5.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService5.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService5.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService5.QUEUE_ID, event);
 				
 			}
 			
@@ -1630,7 +1630,7 @@ public class RescheduleServiceTest extends AbstractTest
 				eventProperties = new HashMap<String,Object>();
 				eventProperties.put(ReReScheduleJobInWorkTestService5.PROPERTY_DATA_VALUE,index);
 				event =  new Event(ReReScheduleJobInWorkTestService5.DATA_VALUE_EVENT,eventProperties);
-				eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService5.QUEUE_ID);
+				eventDispatcher.schedule(ReReScheduleJobInWorkTestService5.QUEUE_ID, event);
 				
 			}
 			
@@ -1704,7 +1704,7 @@ public class RescheduleServiceTest extends AbstractTest
 			eventProperties = new HashMap<String,Object>();
 			eventProperties.put(ReReScheduleJobInWorkTestService5.PROPERTY_DATA_VALUE,index);
 			event =  new Event(ReReScheduleJobInWorkTestService5.DATA_VALUE_EVENT,eventProperties);
-			eventDispatcher.schedule(event, ReReScheduleJobInWorkTestService5.QUEUE_ID);
+			eventDispatcher.schedule(ReReScheduleJobInWorkTestService5.QUEUE_ID, event);
 							
 			try
 			{

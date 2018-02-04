@@ -42,7 +42,7 @@ public class JobDisableMetricTestController1 extends JobMetricTestController
 	@Override
 	public void handleEvent(Event event)
 	{
-		this.dispatcher.schedule(event, JobDisableMetricTestController1.QUEUE_ID);
+		this.dispatcher.schedule(JobDisableMetricTestController1.QUEUE_ID, event);
 	}
 	
 }

@@ -68,7 +68,7 @@ public class ScopeTestSimpleManagementController extends AbstractBaseTestControl
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(event, ScopeTestSimpleManagementController.QUEUE_ID);
+		dispatcher.schedule(ScopeTestSimpleManagementController.QUEUE_ID, event);
 	}
 	
 	@Override

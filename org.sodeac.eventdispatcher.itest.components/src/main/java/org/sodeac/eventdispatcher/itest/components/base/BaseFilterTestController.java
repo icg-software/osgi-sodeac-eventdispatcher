@@ -69,7 +69,7 @@ public class BaseFilterTestController extends AbstractBaseTestController impleme
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(event, BaseFilterTestController.QUEUE_ID);
+		dispatcher.schedule(BaseFilterTestController.QUEUE_ID,event);
 	}
 	
 	@SuppressWarnings("unchecked")

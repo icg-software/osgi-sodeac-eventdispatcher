@@ -58,7 +58,7 @@ public class BaseTimeoutAndStop1TestController extends AbstractBaseTestControlle
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(event, BaseTimeoutAndStop1TestController.QUEUE_ID);
+		dispatcher.schedule(BaseTimeoutAndStop1TestController.QUEUE_ID, event);
 	}
 	
 	@Override

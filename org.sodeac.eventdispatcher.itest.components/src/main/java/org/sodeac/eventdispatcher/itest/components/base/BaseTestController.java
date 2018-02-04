@@ -57,7 +57,7 @@ public class BaseTestController extends AbstractBaseTestController implements Ev
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(event, BaseTestController.QUEUE_ID);
+		dispatcher.schedule(BaseTestController.QUEUE_ID, event);
 	}
 	
 	@Override

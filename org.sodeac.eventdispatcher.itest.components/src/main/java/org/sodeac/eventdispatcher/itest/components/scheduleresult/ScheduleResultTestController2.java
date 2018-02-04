@@ -60,7 +60,7 @@ public class ScheduleResultTestController2 implements EventHandler, IEventContro
 		try
 		{
 			Map<String,Object> bridge = (Map<String,Object>)event.getProperty(PROPERTY_BRIDGE);
-			Future<IScheduleResult> resultFuture = dispatcher.schedule(event, QUEUE_ID);
+			Future<IScheduleResult> resultFuture = dispatcher.schedule(QUEUE_ID, event);
 			bridge.put(PROPERTY_FUTURE, resultFuture);
 			
 		}

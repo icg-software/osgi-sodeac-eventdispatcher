@@ -258,6 +258,55 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		return this.eventDispatcher.createFutureOfScheduleResult(resultImpl);
 	}
 	
+	@Override
+	public Future<IScheduleResult> scheduleEventList(List<Event> eventList)
+	{
+		List<QueuedEventImpl> queuedEventList = new ArrayList<QueuedEventImpl>();
+		ScheduleResultImpl resultImpl = new ScheduleResultImpl();
+		eventListWriteLock.lock();
+		try
+		{
+			for(Event event : eventList)
+			{
+				QueuedEventImpl queuedEvent = new QueuedEventImpl(event,this);
+				queuedEvent.setScheduleResultObject(resultImpl);
+				queuedEventList.add(queuedEvent);
+				this.eventList.add(queuedEvent);
+			}
+		}
+		finally 
+		{
+			eventListWriteLock.unlock();
+		}
+		
+		this.genericQueueSpoolLock.lock();
+		try
+		{
+			newScheduledListUpdate = true;
+			for(QueuedEventImpl queuedEvent : queuedEventList)
+			{
+				this.newScheduledList.add(queuedEvent);
+			}
+		}
+		finally 
+		{
+			this.genericQueueSpoolLock.unlock();
+		}
+		
+		try
+		{
+			getMetrics().meter(IMetrics.METRICS_SCHEDULE_EVENT).mark(eventList.size());
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric counter", e);
+		}
+		
+		this.notifyOrCreateWorker(-1);
+		
+		return this.eventDispatcher.createFutureOfScheduleResult(resultImpl);
+	}
+	
 	// Controller
 	
 	public void checkForController(ControllerContainer controllerContainer,QueueBindingModifyFlags bindingModifyFlags)

@@ -58,7 +58,7 @@ public class BaseDelayedTestController extends AbstractBaseTestController implem
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(event, BaseDelayedTestController.QUEUE_ID);
+		dispatcher.schedule(BaseDelayedTestController.QUEUE_ID,event);
 	}
 	
 	@Override

@@ -34,12 +34,24 @@ public interface IEventDispatcher
 	/**
 	 * schedule an osgi event to eventdispatcher queue
 	 * 
-	 * @param event osgi-event to schedule to {@link IQueue} 
 	 * @param queueId id of {@link IQueue} 
+	 * @param event osgi-event to schedule to {@link IQueue} 
+	 * 
 	 * 
 	 * @return Future of {@link IScheduleResult}
 	 */
-	public Future<IScheduleResult> schedule(Event event, String queueId);
+	public Future<IScheduleResult> schedule(String queueId,Event event);
+	
+	/**
+	 * schedule a list of osgi events to eventdispatcher queue
+	 * 
+	 * @param queueId id of {@link IQueue} 
+	 * @param eventList list of osgi-events to schedule to {@link IQueue} 
+	 * 
+	 * 
+	 * @return Future of {@link IScheduleResult}
+	 */
+	public Future<IScheduleResult> schedule(String queueId,List<Event> eventList);
 	
 	/**
 	 * factory-methode creating instance of {@link IPropertyBlock} 

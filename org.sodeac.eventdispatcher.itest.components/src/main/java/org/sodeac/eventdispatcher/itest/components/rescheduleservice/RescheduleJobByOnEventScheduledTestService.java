@@ -120,7 +120,7 @@ public class RescheduleJobByOnEventScheduledTestService implements EventHandler,
 		}
 		if(event.getTopic().equals(DATA_VALUE_EVENT))
 		{
-			dispatcher.schedule(event, QUEUE_ID);
+			dispatcher.schedule(QUEUE_ID, event);
 		}
 	}
 

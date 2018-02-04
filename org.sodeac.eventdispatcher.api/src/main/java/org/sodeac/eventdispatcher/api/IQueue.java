@@ -46,6 +46,15 @@ public interface IQueue
 	public Future<IScheduleResult> scheduleEvent(Event event);
 	
 	/**
+	 * schedule a list of osgi events to queue
+	 * 
+	 * @param eventList list of osgi-events to schedule 
+	 * 
+	 * @return Future of {@link IScheduleResult}
+	 */
+	public Future<IScheduleResult> scheduleEventList(List<Event> eventList);
+	
+	/**
 	 * getter for configuration propertyblock of queue
 	 * 
 	 * @return {@link IPropertyBlock} of queue for configuration details

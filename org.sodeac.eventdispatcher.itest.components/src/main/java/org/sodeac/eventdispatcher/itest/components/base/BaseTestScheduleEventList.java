@@ -67,7 +67,7 @@ public class BaseTestScheduleEventList  extends AbstractBaseTestController imple
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(event, BaseTestScheduleEventList.QUEUE_ID);
+		dispatcher.schedule(BaseTestScheduleEventList.QUEUE_ID,event);
 	}
 	
 	@Override

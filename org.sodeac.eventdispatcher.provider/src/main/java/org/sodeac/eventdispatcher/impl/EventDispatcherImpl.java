@@ -195,7 +195,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public Future<IScheduleResult> schedule(Event event, String queueId)
+	public Future<IScheduleResult> schedule(String queueId, Event event)
 	{
 		osgiLifecycleReadLock.lock();
 		try
@@ -245,6 +245,64 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			}
 			
 			return queue.scheduleEvent(event);
+		}
+		finally 
+		{
+			osgiLifecycleReadLock.unlock();
+		}
+	}
+	
+	@Override
+	public Future<IScheduleResult> schedule(String queueId, List<Event> eventList)
+	{
+		osgiLifecycleReadLock.lock();
+		try
+		{
+			if(this.context == null)
+			{
+				return null;
+			}
+			
+			if(! activated)
+			{
+				return null;
+			}
+			
+			QueueImpl queue = null;
+			this.queueIndexReadLock.lock();
+			try
+			{
+				queue = this.queueIndex.get(queueId);
+			}
+			finally 
+			{
+				this.queueIndexReadLock.unlock();
+			}
+			if(queue == null)
+			{
+				
+				boolean log = false;
+				this.queueIsMissingLogIndexLock.lock();
+				try
+				{
+					if(( this.queueIsMissingLogIndex.get(queueId) == null) || (this.queueIsMissingLogIndex.get(queueId).longValue() < (System.currentTimeMillis() - (1000L * 60L * 60L))))
+					{
+						log = true;
+						this.queueIsMissingLogIndex.put(queueId,System.currentTimeMillis());
+					}
+				}
+				finally 
+				{
+					this.queueIsMissingLogIndexLock.unlock();
+				}
+				if(log)
+				{
+					log(LogService.LOG_ERROR, "Queue is missing " + queueId,null);
+				}
+				return null; // throw new Queue not found 
+			}
+			
+			return queue.scheduleEventList(eventList);
 		}
 		finally 
 		{
