@@ -79,4 +79,11 @@ public interface IQueuedEvent
 	 * @return properties of wrapped {@link org.osgi.service.event.Event}
 	 */
 	public Map<String,Object> getNativeEventProperties();
+	
+	/**
+	 * getter for {@link IScheduleResult} to inform schedule invoker about result
+	 * 
+	 * @return schedule result object
+	 */
+	public IScheduleResult getScheduleResultObject();
 }

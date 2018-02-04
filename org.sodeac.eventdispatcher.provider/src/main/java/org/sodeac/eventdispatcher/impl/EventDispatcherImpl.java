@@ -18,9 +18,11 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -48,6 +50,7 @@ import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
+import org.sodeac.eventdispatcher.api.IScheduleResult;
 import org.sodeac.eventdispatcher.api.ITimer;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
@@ -119,6 +122,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private ExecutorService onJobTimeOutExecuterService = null;
 	private ExecutorService onJobStopExecuterService = null;
 	private ExecutorService onQueueReverseExecuterService = null;
+	private ExecutorService waitForScheduleResultExecuterService = null;
 	
 	@Override
 	public String getId()
@@ -191,19 +195,19 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public boolean schedule(Event event, String queueId)
+	public Future<IScheduleResult> schedule(Event event, String queueId)
 	{
 		osgiLifecycleReadLock.lock();
 		try
 		{
 			if(this.context == null)
 			{
-				return false;
+				return null;
 			}
 			
 			if(! activated)
 			{
-				return false;
+				return null;
 			}
 			
 			QueueImpl queue = null;
@@ -237,7 +241,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				{
 					log(LogService.LOG_ERROR, "Queue is missing " + queueId,null);
 				}
-				return false; 
+				return null; // throw new Queue not found 
 			}
 			
 			return queue.scheduleEvent(event);
@@ -327,6 +331,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			this.onJobTimeOutExecuterService = Executors.newCachedThreadPool();
 			this.onJobStopExecuterService = Executors.newCachedThreadPool();
 			this.onQueueReverseExecuterService = Executors.newCachedThreadPool();
+			this.waitForScheduleResultExecuterService = Executors.newCachedThreadPool();
 			
 			this.dispatcherGuardian = new DispatcherGuardian(this);
 			this.dispatcherGuardian.start();
@@ -528,6 +533,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				this.onQueueReverseExecuterService.shutdown();
 				this.onQueueReverseExecuterService.awaitTermination(3, TimeUnit.SECONDS);
+			}
+			catch (Exception e) {}
+			
+			try
+			{
+				this.waitForScheduleResultExecuterService.shutdown();
+				this.waitForScheduleResultExecuterService.awaitTermination(3, TimeUnit.SECONDS);
 			}
 			catch (Exception e) {}
 			
@@ -1616,6 +1628,22 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 		catch (Exception ie) {}
 	}
+	
+	public Future<IScheduleResult> createFutureOfScheduleResult(ScheduleResultImpl scheduleResult)
+	{
+		Callable<IScheduleResult> call = new Callable<IScheduleResult>()
+		{
+			@Override
+			public IScheduleResult call() throws Exception
+			{
+				scheduleResult.waitForScheduledIsFinished();
+				return scheduleResult;
+			}
+			
+		};
+		return this.waitForScheduleResultExecuterService.submit(call);
+	}
+	
 	
 	public void onConfigurationModify(QueueImpl queue)
 	{

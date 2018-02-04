@@ -12,7 +12,9 @@ package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.osgi.service.event.Event;
@@ -32,6 +34,7 @@ import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueueWorker;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
+import org.sodeac.eventdispatcher.api.IScheduleResult;
 import org.sodeac.eventdispatcher.api.ITimer;
 
 public class QueueWorker extends Thread
@@ -123,6 +126,8 @@ public class QueueWorker extends Thread
 	@Override
 	public void run()
 	{
+		List<IQueuedEvent> processScheduleList = Collections.unmodifiableList(this.newScheduledList);
+		Map<IScheduleResult,IScheduleResult> scheduledResultIndex = new HashMap<IScheduleResult,IScheduleResult>();
 		while(go)
 		{
 			
@@ -158,6 +163,16 @@ public class QueueWorker extends Thread
 						boolean singleProcess = false;
 						boolean listProcess = false;
 						
+						scheduledResultIndex.clear();
+						for(IQueuedEvent event : processScheduleList)
+						{
+							try
+							{
+								scheduledResultIndex.put(event.getScheduleResultObject(), event.getScheduleResultObject());
+							}
+							catch (Exception ie) {}
+						}
+						
 						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
 							if(conf.getEventController() instanceof IOnScheduleEvent)
@@ -171,7 +186,7 @@ public class QueueWorker extends Thread
 						}
 						if(listProcess)
 						{
-							List<IQueuedEvent> processScheduleList = Collections.unmodifiableList(this.newScheduledList);
+							
 							eventQueue.touchLastWorkerAction();
 							for(ControllerContainer conf : eventQueue.getConfigurationList())
 							{
@@ -185,7 +200,17 @@ public class QueueWorker extends Thread
 										}
 									}
 								}
-								catch (Exception e) {}
+								catch (Exception e) 
+								{
+									for(IScheduleResult scheduleResult : scheduledResultIndex.keySet())
+									{
+										try
+										{
+											scheduleResult.addError(e);
+										}
+										catch (Exception ie) {}										
+									}
+								}
 							}
 							
 						}
@@ -206,13 +231,37 @@ public class QueueWorker extends Thread
 											}
 										}
 									}
-									catch (Exception e) {}
+									catch (Exception e) 
+									{
+										try
+										{
+											event.getScheduleResultObject().addError(e);
+										}
+										catch (Exception ie) {}		
+									}
 								}
 							}
+						}
+						for(IScheduleResult scheduleResult : scheduledResultIndex.keySet())
+						{
+							try
+							{
+								((ScheduleResultImpl)scheduleResult).schedulePhaseIsFinished();
+							}
+							catch (Exception ie) {}										
+						}
+						for(QueuedEventImpl event : this.newScheduledList)
+						{
+							try
+							{
+								event.setScheduleResultObject(null);
+							}
+							catch(Exception e) {}
 						}
 					}
 				}
 				this.newScheduledList.clear();
+				scheduledResultIndex.clear();
 			}
 			catch (Exception e) 
 			{

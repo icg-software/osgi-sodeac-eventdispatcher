@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -43,6 +44,7 @@ import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
+import org.sodeac.eventdispatcher.api.IScheduleResult;
 import org.sodeac.eventdispatcher.api.ITimer;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleQueue;
@@ -215,13 +217,15 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected QueueImpl parent = null;
 	
 	@Override
-	public boolean scheduleEvent(Event event)
+	public Future<IScheduleResult> scheduleEvent(Event event)
 	{
 		QueuedEventImpl queuedEvent = null;
+		ScheduleResultImpl resultImpl = new ScheduleResultImpl();
 		eventListWriteLock.lock();
 		try
 		{
 			queuedEvent = new QueuedEventImpl(event,this);
+			queuedEvent.setScheduleResultObject(resultImpl);
 			this.eventList.add(queuedEvent);
 		}
 		finally 
@@ -251,7 +255,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		this.notifyOrCreateWorker(-1);
 		
-		return true;
+		return this.eventDispatcher.createFutureOfScheduleResult(resultImpl);
 	}
 	
 	// Controller

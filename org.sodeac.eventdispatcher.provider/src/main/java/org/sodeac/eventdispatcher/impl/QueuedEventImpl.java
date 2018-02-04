@@ -21,9 +21,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.osgi.service.event.Event;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
+import org.sodeac.eventdispatcher.api.IScheduleResult;
 
 public class QueuedEventImpl implements IQueuedEvent
 {
+	private ScheduleResultImpl scheduleResult = null;
 	private QueueImpl queue = null;
 	private Event event = null;
 	private String uuid = null;
@@ -47,6 +49,17 @@ public class QueuedEventImpl implements IQueuedEvent
 	public Event getEvent()
 	{
 		return this.event;
+	}
+	
+	@Override
+	public IScheduleResult getScheduleResultObject()
+	{
+		return this.scheduleResult;
+	}
+
+	public void setScheduleResultObject(ScheduleResultImpl scheduleResult)
+	{
+		this.scheduleResult = scheduleResult;
 	}
 
 	@Override

@@ -13,6 +13,7 @@ package org.sodeac.eventdispatcher.api;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 import org.osgi.framework.Filter;
 import org.osgi.service.event.Event;
@@ -40,9 +41,9 @@ public interface IQueue
 	 * 
 	 * @param event osgi-event to schedule 
 	 * 
-	 * @return true
+	 * @return Future of {@link IScheduleResult}
 	 */
-	public boolean scheduleEvent(Event event);
+	public Future<IScheduleResult> scheduleEvent(Event event);
 	
 	/**
 	 * getter for configuration propertyblock of queue

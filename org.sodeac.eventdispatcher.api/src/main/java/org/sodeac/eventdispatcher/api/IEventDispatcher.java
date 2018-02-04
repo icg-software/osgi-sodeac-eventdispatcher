@@ -11,6 +11,7 @@
 package org.sodeac.eventdispatcher.api;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 import org.osgi.service.event.Event;
 
@@ -36,9 +37,9 @@ public interface IEventDispatcher
 	 * @param event osgi-event to schedule to {@link IQueue} 
 	 * @param queueId id of {@link IQueue} 
 	 * 
-	 * @return false if queue is missing, otherwise true 
+	 * @return Future of {@link IScheduleResult}
 	 */
-	public boolean schedule(Event event, String queueId);
+	public Future<IScheduleResult> schedule(Event event, String queueId);
 	
 	/**
 	 * factory-methode creating instance of {@link IPropertyBlock} 
