@@ -57,11 +57,19 @@ public class ScheduleResultImpl implements IScheduleResult
 	@Override
 	public void addError(Throwable throwable)
 	{
-		if(this.errorList == null)
+		this.lock.lock();
+		try
 		{
-			this.errorList = new ArrayList<Throwable>();
+			if(this.errorList == null)
+			{
+				this.errorList = new ArrayList<Throwable>();
+			}
+			this.errorList.add(throwable);
 		}
-		this.errorList.add(throwable);
+		finally 
+		{
+			this.lock.unlock();
+		}
 	}
 	
 	@Override
