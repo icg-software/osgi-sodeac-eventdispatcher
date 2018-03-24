@@ -211,7 +211,15 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 					gauge = new SodeacGaugeWrapper<>(gauge,key,names2name(names),this);
 				}
 				
-				this.dispatcher.getMetricRegistry().register(key, (Gauge<?>)gauge);
+				try
+				{
+					this.dispatcher.getMetricRegistry().register(key, (Gauge<?>)gauge);
+				}
+				catch (Exception e) 
+				{
+					this.dispatcher.getMetricRegistry().remove(key);
+					this.dispatcher.getMetricRegistry().register(key, (Gauge<?>)gauge);
+				}
 				
 				for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
 				{
@@ -221,7 +229,7 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 					}
 					catch (Exception e) 
 					{
-						this.dispatcher.log(LogService.LOG_ERROR, "Exception while register counter", e);
+						this.dispatcher.log(LogService.LOG_ERROR, "Exception while register gauge", e);
 					}
 				}
 			}
@@ -269,7 +277,15 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 			
 			for(Entry<String,IGauge<?>> entry : this.gaugeIndex.entrySet())
 			{
-				this.dispatcher.getMetricRegistry().register(entry.getKey(), (Gauge<?>)entry.getValue());
+				try
+				{
+					this.dispatcher.getMetricRegistry().register(entry.getKey(), (Gauge<?>)entry.getValue());
+				}
+				catch (Exception e) 
+				{
+					this.dispatcher.getMetricRegistry().remove(entry.getKey());
+					this.dispatcher.getMetricRegistry().register(entry.getKey(), (Gauge<?>)entry.getValue());
+				}
 			}
 		}
 		finally
@@ -629,7 +645,15 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 				return meter;
 			}
 			MetricRegistry registry = this.dispatcher.getMetricRegistry();
-			meter = new MeterImpl(registry.meter(key),key,names2name(names),this);
+			try
+			{
+				meter = new MeterImpl(registry.meter(key),key,names2name(names),this);
+			}
+			catch (Exception e) 
+			{
+				registry.remove(key);
+				meter = new MeterImpl(registry.meter(key),key,names2name(names),this);
+			}
 			this.meterIndex.put(key,meter);
 			
 			for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
@@ -700,7 +724,15 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 				return timer;
 			}
 			MetricRegistry registry = this.dispatcher.getMetricRegistry();
-			timer = new TimerImpl(registry.timer(key),key,names2name(names),this);
+			try
+			{
+				timer = new TimerImpl(registry.timer(key),key,names2name(names),this);
+			}
+			catch (Exception e) 
+			{
+				registry.remove(key);
+				timer = new TimerImpl(registry.timer(key),key,names2name(names),this);
+			}
 			this.timerIndex.put(key,timer);
 			
 			for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
@@ -770,7 +802,15 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 				return counter;
 			}
 			MetricRegistry registry = this.dispatcher.getMetricRegistry();
-			counter = new CounterImpl(registry.counter(key),key,names2name(names),this);
+			try
+			{
+				counter = new CounterImpl(registry.counter(key),key,names2name(names),this);
+			}
+			catch (Exception e) 
+			{
+				registry.remove(key);
+				counter = new CounterImpl(registry.counter(key),key,names2name(names),this);
+			}
 			this.counterIndex.put(key,counter);
 			
 			for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
@@ -840,7 +880,15 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 				return histogram;
 			}
 			MetricRegistry registry = this.dispatcher.getMetricRegistry();
-			histogram = new HistogramImpl(registry.histogram(key),key,names2name(names),this);
+			try
+			{
+				histogram = new HistogramImpl(registry.histogram(key),key,names2name(names),this);
+			}
+			catch (Exception e) 
+			{
+				registry.remove(key);
+				histogram = new HistogramImpl(registry.histogram(key),key,names2name(names),this);
+			}
 			this.histogramIndex.put(key,histogram);
 			
 			for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())

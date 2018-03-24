@@ -965,6 +965,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 						if(jobContainerEntry.getValue().getJob() == serviceContainer.getQueueService())
 						{
 							jobContainerEntry.getValue().getJobControl().setDone();
+							((MetricImpl)jobContainerEntry.getValue().getMetrics()).dispose();
 						}
 					}
 					catch (Exception e) 
@@ -1936,14 +1937,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 		}
 		
-		try
-		{
-			if(metrics != null)
-			{
-				metrics.dispose();
-			}
-		}
-		catch (Exception e) {}
+		
 		
 		stopQueueWorker();
 		
@@ -1967,6 +1961,53 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				controllerListReadLock.unlock();
 			}
 		}
+		
+		serviceListWriteLock.lock();
+		try
+		{
+			this.serviceList.clear();
+			this.serviceIndex.clear();
+			this.serviceListCopy = null;
+			
+		}
+		finally 
+		{
+			serviceListWriteLock.unlock();
+		}
+		
+		try
+		{
+			jobListReadLock.lock();
+			try
+			{
+				for(Entry<String,JobContainer> jobContainerEntry : this.jobIndex.entrySet())
+				{
+					try
+					{
+						jobContainerEntry.getValue().getJobControl().setDone();
+						((MetricImpl)jobContainerEntry.getValue().getMetrics()).dispose();
+					}
+					catch (Exception e) 
+					{
+						log(LogService.LOG_ERROR, "set queue job / service done", e);
+					}
+				}
+			}
+			finally 
+			{
+				jobListReadLock.unlock();
+			}
+		}
+		catch (Exception e) {}
+		
+		try
+		{
+			if(metrics != null)
+			{
+				metrics.dispose();
+			}
+		}
+		catch (Exception e) {}
 	}
 	
 	private void removeScope(QueueSessionScopeImpl scope)
