@@ -108,13 +108,13 @@ public abstract class AbstractTest
 		MavenArtifactUrlReference karafUrl = maven()
 			.groupId("org.apache.karaf")
 			.artifactId("apache-karaf")
-			.version("4.1.4")
+			.version("4.1.5")
 			.type("zip");
 
 		MavenUrlReference karafStandardRepo = maven()
 			.groupId("org.apache.karaf.features")
 			.artifactId("standard")
-			.version("4.1.4")
+			.version("4.1.5")
 			.classifier("features")
 			.type("xml");
 		
@@ -131,8 +131,8 @@ public abstract class AbstractTest
 			mavenBundle("io.dropwizard.metrics", "metrics-core", "3.2.5").start(),
 			mavenBundle("org.easymock", "easymock", "3.4").start(),
 			reactorBundle("org.sodeac.eventdispatcher.api","0.9.0").start(),
-			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.0").start(),
-			reactorBundle("org.sodeac.eventdispatcher.extension.jmx","0.9.0").start(),
+			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.1").start(),
+			reactorBundle("org.sodeac.eventdispatcher.extension.jmx","0.9.1").start(),
 			reactorBundle("org.sodeac.eventdispatcher.common","0.9.0").start(),
 			reactorBundle("org.sodeac.eventdispatcher.itest.components","0.9.0").start()
 		};
