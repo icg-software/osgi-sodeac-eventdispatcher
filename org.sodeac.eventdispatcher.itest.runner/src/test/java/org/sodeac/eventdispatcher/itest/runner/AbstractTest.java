@@ -128,11 +128,11 @@ public abstract class AbstractTest
 			cleanCaches( true ),
 			logLevel(LogLevel.INFO),
 			features(karafStandardRepo , "scr"),
-			mavenBundle("io.dropwizard.metrics", "metrics-core", "3.2.5").start(),
+			mavenBundle("io.dropwizard.metrics", "metrics-core", "3.2.6").start(),
 			mavenBundle("org.easymock", "easymock", "3.4").start(),
 			reactorBundle("org.sodeac.eventdispatcher.api","0.9.0").start(),
-			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.1").start(),
-			reactorBundle("org.sodeac.eventdispatcher.extension.jmx","0.9.1").start(),
+			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.2").start(),
+			reactorBundle("org.sodeac.eventdispatcher.extension.jmx","0.9.2").start(),
 			reactorBundle("org.sodeac.eventdispatcher.common","0.9.0").start(),
 			reactorBundle("org.sodeac.eventdispatcher.itest.components","0.9.0").start()
 		};

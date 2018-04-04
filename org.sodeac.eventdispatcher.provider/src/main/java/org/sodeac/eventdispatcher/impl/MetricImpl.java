@@ -424,92 +424,108 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 		
 			MetricRegistry metricRegistry = dispatcher.getMetricRegistry();
 			
-			for(Entry<String, IMeter> entry : meterIndex.entrySet())
+			if(meterIndex != null)
 			{
-				for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
-				{
-					try
-					{
-						extension.unregisterMeter(dispatcher, (MeterImpl)entry.getValue());
-					}
-					catch (Exception e) 
-					{
-						this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister meter", e);
-					}
-				}
-				metricRegistry.remove(entry.getKey());
-			}
-			meterIndex.clear();
-			for(Entry<String, ITimer> entry : timerIndex.entrySet())
-			{
-				for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
-				{
-					try
-					{
-						extension.unregisterTimer(dispatcher, (TimerImpl)entry.getValue());
-					}
-					catch (Exception e) 
-					{
-						this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister timer", e);
-					}
-				}
-				metricRegistry.remove(entry.getKey());
-			}
-			timerIndex.clear();
-			
-			for(Entry<String, ICounter> entry : counterIndex.entrySet())
-			{
-				for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
-				{
-					try
-					{
-						extension.unregisterCounter(dispatcher, (CounterImpl)entry.getValue());
-					}
-					catch (Exception e) 
-					{
-						this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister counter", e);
-					}
-				}
-				metricRegistry.remove(entry.getKey());
-			}
-			counterIndex.clear();
-			
-			for(Entry<String, IHistogram> entry : histogramIndex.entrySet())
-			{
-				for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
-				{
-					try
-					{
-						extension.unregisterHistogram(dispatcher, (HistogramImpl)entry.getValue());
-					}
-					catch (Exception e) 
-					{
-						this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister histogram", e);
-					}
-				}
-				metricRegistry.remove(entry.getKey());
-			}
-			histogramIndex.clear();
-			
-			for(Entry<String, IGauge<?>> entry : gaugeIndex.entrySet())
-			{
-				if(entry.getValue() instanceof IExtensibleGauge<?>)
+				for(Entry<String, IMeter> entry : meterIndex.entrySet())
 				{
 					for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
 					{
 						try
 						{
-							extension.unregisterGauge(dispatcher, (IExtensibleGauge<?>)entry.getValue());
+							extension.unregisterMeter(dispatcher, (MeterImpl)entry.getValue());
 						}
 						catch (Exception e) 
 						{
-							this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister gauge", e);
+							this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister meter", e);
 						}
 					}
+					metricRegistry.remove(entry.getKey());
 				}
-				metricRegistry.remove(entry.getKey());
+				meterIndex.clear();
 			}
-			gaugeIndex.clear();
+			
+			if(timerIndex != null)
+			{
+				for(Entry<String, ITimer> entry : timerIndex.entrySet())
+				{
+					for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
+					{
+						try
+						{
+							extension.unregisterTimer(dispatcher, (TimerImpl)entry.getValue());
+						}
+						catch (Exception e) 
+						{
+							this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister timer", e);
+						}
+					}
+					metricRegistry.remove(entry.getKey());
+				}
+				timerIndex.clear();
+			}
+			
+			if(counterIndex != null)
+			{
+				for(Entry<String, ICounter> entry : counterIndex.entrySet())
+				{
+					for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
+					{
+						try
+						{
+							extension.unregisterCounter(dispatcher, (CounterImpl)entry.getValue());
+						}
+						catch (Exception e) 
+						{
+							this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister counter", e);
+						}
+					}
+					metricRegistry.remove(entry.getKey());
+				}
+				counterIndex.clear();
+			}
+			
+			if(histogramIndex != null)
+			{
+				for(Entry<String, IHistogram> entry : histogramIndex.entrySet())
+				{
+					for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
+					{
+						try
+						{
+							extension.unregisterHistogram(dispatcher, (HistogramImpl)entry.getValue());
+						}
+						catch (Exception e) 
+						{
+							this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister histogram", e);
+						}
+					}
+					metricRegistry.remove(entry.getKey());
+				}
+				histogramIndex.clear();
+			}
+			
+			if(gaugeIndex != null)
+			{
+				for(Entry<String, IGauge<?>> entry : gaugeIndex.entrySet())
+				{
+					if(entry.getValue() instanceof IExtensibleGauge<?>)
+					{
+						for(IEventDispatcherExtension extension : this.dispatcher.getEventDispatcherExtensionList())
+						{
+							try
+							{
+								extension.unregisterGauge(dispatcher, (IExtensibleGauge<?>)entry.getValue());
+							}
+							catch (Exception e) 
+							{
+								this.dispatcher.log(LogService.LOG_ERROR, "Exception while unregister gauge", e);
+							}
+						}
+					}
+					metricRegistry.remove(entry.getKey());
+				}
+				gaugeIndex.clear();
+			}
 			
 			this.meterIndex = null;
 			this.timerIndex = null;

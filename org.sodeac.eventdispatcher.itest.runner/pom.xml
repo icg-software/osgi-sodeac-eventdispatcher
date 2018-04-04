@@ -23,12 +23,12 @@
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.provider</artifactId>
-      <version>0.9.1</version>
+      <version>0.9.2</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.extension.jmx</artifactId>
-      <version>0.9.1</version>
+      <version>0.9.2</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
