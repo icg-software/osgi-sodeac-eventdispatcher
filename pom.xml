@@ -4,8 +4,8 @@
   <artifactId>sodeac-eventdispatcher-parent</artifactId>
   <version>0.9.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Sodeac StreamPartitioner Parent</name>
-  <description>Parent pom for Sodeac StreamPartitioner modules</description>
+  <name>Sodeac Eventdispatcher Parent</name>
+  <description>Parent pom for Sodeac Eventdispatcher modules</description>
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
