@@ -1,27 +1,35 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>org.sodeac.eventdispatcher.extension.jmx</artifactId>
-  <version>0.9.2</version>
+  <version>0.9.2-SNAPSHOT</version>
   <packaging>bundle</packaging>
   <name>JMX Extension for Sodeac Event Dispatcher</name>
+  
   <parent>
     <groupId>org.sodeac</groupId>
     <artifactId>sodeac-eventdispatcher-parent</artifactId>
-    <version>0.9.0</version>
+    <version>0.9.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
+  
+  <properties>
+    <!-- bundle.version>${project.version}</bundle.version-->
+    <bundle.version>0.9.2</bundle.version>
+  </properties>
+  
   <dependencies>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.api</artifactId>
-      <version>0.9.0</version>
+      <version>0.9.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.provider</artifactId>
-      <version>0.9.2</version>
+      <version>0.9.2-SNAPSHOT</version>
     </dependency>
   </dependencies>
+  
   <build>
     <plugins>
       <plugin>
@@ -31,8 +39,8 @@
         <version>3.5.0</version>
         <configuration>
           <instructions>
-          	<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Bundle-Version>${project.version}</Bundle-Version>
+          	<Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
+            <Bundle-Version>${bundle.version}</Bundle-Version>
             <Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
             <Bundle-ActivationPolicy>lazy</Bundle-ActivationPolicy>
           	<Import-Package>
