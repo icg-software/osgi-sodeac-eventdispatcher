@@ -59,7 +59,7 @@ import org.sodeac.eventdispatcher.api.IEventController;
 
 import com.codahale.metrics.MetricRegistry;
 
-@Component(name="EventDispatcherProvider" ,service=IEventDispatcher.class,immediate=true,property={IEventDispatcher.PROPERTY_ID + "=" + IEventDispatcher.DEFAULT_DISPATCHER_ID})
+@Component(name="EventDispatcherProvider" ,service=IEventDispatcher.class,property={IEventDispatcher.PROPERTY_ID + "=" + IEventDispatcher.DEFAULT_DISPATCHER_ID})
 public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDispatcher
 {
 	private Map<String,QueueImpl> queueIndex;

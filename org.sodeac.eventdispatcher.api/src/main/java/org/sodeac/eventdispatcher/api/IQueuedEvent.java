@@ -86,4 +86,12 @@ public interface IQueuedEvent
 	 * @return schedule result object
 	 */
 	public IScheduleResult getScheduleResultObject();
+	
+	/**
+	 * remove event from parent queue
+	 */
+	public default void removeFromQueue()
+	{
+		getQueue().removeEvent(getUUID());
+	}
 }

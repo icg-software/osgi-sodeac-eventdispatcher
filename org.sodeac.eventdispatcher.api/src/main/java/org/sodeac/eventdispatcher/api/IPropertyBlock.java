@@ -124,4 +124,37 @@ public interface IPropertyBlock
 	 * @return a map of previously property registered
 	 */
 	public Map<String,Object> clear();
+	
+	/**
+	 * register an adapter 
+	 * 
+	 * @param adapterClass type of adapter
+	 * @param adapter implementation of adapter
+	 */
+	public default <T> void setAdapter(Class<T> adapterClass, T adapter)
+	{
+		setProperty(adapterClass.getCanonicalName(), adapter);
+	}
+	
+	/**
+	 * getter for registered adapter
+	 * 
+	 * @param adapterClass type of adapter
+	 * 
+	 * @return registered adapter with specified adapterClass
+	 */
+	public default <T> T getAdapter(Class<T> adapterClass)
+	{
+		return getProperty(adapterClass.getCanonicalName(), adapterClass);
+	}
+	
+	/**
+	 * remove registered adapter
+	 * 
+	 * @param adapterClass type of adapter
+	 */
+	public default <T> void removeAdapter(Class<T> adapterClass)
+	{
+		removeProperty(adapterClass.getCanonicalName());
+	}
 }

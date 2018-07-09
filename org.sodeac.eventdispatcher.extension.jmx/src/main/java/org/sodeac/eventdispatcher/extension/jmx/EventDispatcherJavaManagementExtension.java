@@ -25,7 +25,7 @@ import org.sodeac.eventdispatcher.extension.api.IExtensibleMeter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleQueue;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleTimer;
 
-@Component(service=IEventDispatcherExtension.class,immediate=true)
+@Component(service=IEventDispatcherExtension.class)
 public class EventDispatcherJavaManagementExtension implements IEventDispatcherExtension
 {
 	public EventDispatcherJavaManagementExtension()
