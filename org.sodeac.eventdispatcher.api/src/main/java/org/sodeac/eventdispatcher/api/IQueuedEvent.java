@@ -88,6 +88,19 @@ public interface IQueuedEvent
 	public IScheduleResult getScheduleResultObject();
 	
 	/**
+	 * get registered adapter
+	 * 
+	 * @param adapterClass type of adapter
+	 * 
+	 * @return registered adapter with specified adapterClass
+	 */
+	@SuppressWarnings("unchecked")
+	public default <T> T getAdapter(Class<T> adapterClass)
+	{
+		return (T)getProperty(adapterClass.getCanonicalName());
+	}
+	
+	/**
 	 * remove event from parent queue
 	 */
 	public default void removeFromQueue()

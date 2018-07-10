@@ -137,7 +137,7 @@ public interface IPropertyBlock
 	}
 	
 	/**
-	 * getter for registered adapter
+	 * get registered adapter
 	 * 
 	 * @param adapterClass type of adapter
 	 * 

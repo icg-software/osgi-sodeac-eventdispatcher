@@ -19,6 +19,7 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.osgi.service.event.Event;
+import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.IScheduleResult;
@@ -183,6 +184,34 @@ public class QueuedEventImpl implements IQueuedEvent
 			nativeProperties = props;
 		}
 		return props;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T getAdapter(Class<T> adapterClass)
+	{
+		if(adapterClass == IPropertyBlock.class)
+		{
+			if(this.propertyBlock == null)
+			{
+				lock.lock();
+				try
+				{
+					if(this.propertyBlock == null)
+					{
+						this.propertyBlock =  (PropertyBlockImpl)queue.getDispatcher().createPropertyBlock();
+						this.emptyKeyList = null;
+						this.emptyProperties = null;
+					}
+				}
+				finally 
+				{
+					lock.unlock();
+				}
+			}
+			return (T)this.propertyBlock;
+		}
+		return IQueuedEvent.super.getAdapter(adapterClass);
 	}
 
 	@Override
