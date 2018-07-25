@@ -49,6 +49,7 @@ import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
+import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IScheduleResult;
 import org.sodeac.eventdispatcher.api.ITimer;
 import org.sodeac.eventdispatcher.api.QueueNotFoundException;
@@ -1186,6 +1187,63 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		return registered;
 	}
 	
+	private void checkControllerForQueue(QueueImpl queue)
+	{
+		if(queue.getControllerSize() > 0)
+		{
+			return;
+		}
+		
+		if(queue instanceof IQueueSessionScope)
+		{
+			return;
+		}
+		
+		this.queueIndexWriteLock.lock();
+		try
+		{
+			try
+			{
+				getMetrics().meter(IMetrics.METRICS_QUEUE,IMetrics.METRICS_DISPOSE).mark();
+			}
+			catch(Exception e)
+			{
+				log(LogService.LOG_ERROR, "mark metric queue disponse", e);
+			}
+				
+			ITimer.Context removeQueueTimerContext = null;
+			try
+			{
+				removeQueueTimerContext = getMetrics().timer(IMetrics.METRICS_QUEUE,IMetrics.METRICS_DISPOSE).time();
+			}
+			catch(Exception e)
+			{
+				log(LogService.LOG_ERROR, "metric timer queue dispose", e);
+			}
+					
+			try
+			{
+				queue.dispose();
+			}
+			catch(Exception e)
+			{
+				log(LogService.LOG_ERROR,"dispose queue after removed all controller",e);
+			}
+					
+			this.queueIndex.remove(queue.getQueueId());
+			counterQueueSize.dec();
+			
+			if(removeQueueTimerContext != null)
+			{
+				try {removeQueueTimerContext.stop();}catch (Exception e) {}
+			}
+		}
+		finally 
+		{
+			this.queueIndexWriteLock.unlock();
+		}
+	}
+	
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
 	public void bindQueueService(IQueueService queueService,Map<String, ?> properties)
 	{
@@ -1194,7 +1252,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			if(this.context ==  null)
 			{
-				// wait for activate, before than collect in serviceListScheduled
+				// wait for activate, => collect in serviceListScheduled
 				
 				serviceListWriteLock.lock();
 				try
@@ -1762,6 +1820,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		if(timerContext != null)
 		{
 			try {timerContext.stop();}catch (Exception e) {}
+		}
+		
+		if(queue.getControllerSize() < 1)
+		{
+			checkControllerForQueue(queue);
 		}
 	}
 }

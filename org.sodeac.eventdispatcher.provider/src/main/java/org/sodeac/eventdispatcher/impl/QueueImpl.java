@@ -596,6 +596,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				}
 			}
 			
+			// reverseEvent
+			
+			if(toDelete.getEventController() instanceof IOnQueueReverse)
+			{
+				this.eventDispatcher.executeOnQueueReverse((IOnQueueReverse)toDelete.getEventController(), this);
+			}
+			
 			return true;
 		}
 		finally 
@@ -2012,9 +2019,32 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	private void removeScope(QueueSessionScopeImpl scope)
 	{
+		List<QueueSessionScopeImpl> childList = null;
 		this.queueScopeListWriteLock.lock();
 		try
 		{
+			UUID scopeId = scope.getScopeId();
+			if(scopeId != null)
+			{
+				List<IQueueSessionScope> copyList = this.queueScopeListCopy;
+				if(!((copyList == null) || copyList.isEmpty()))
+				{
+					QueueSessionScopeImpl scopeTest;
+					for(IQueueSessionScope copyItem : copyList)
+					{
+						scopeTest = (QueueSessionScopeImpl)copyItem;
+						if(scopeId.equals(scopeTest.getParentScopeId()))
+						{
+							if(childList == null)
+							{
+								childList = new ArrayList<QueueSessionScopeImpl>();
+							}
+							childList.add(scopeTest);
+							scopeTest.unlinkFromParent();
+						}
+					}
+				}
+			}
 			this.queueScopeIndex.remove(scope.getScopeId());
 			while(this.queueScopeList.remove(scope)){}
 			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueSessionScope>(this.queueScopeList));
@@ -2023,6 +2053,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		{
 			this.queueScopeListWriteLock.unlock();
 		}	
+		
+		if(childList != null)
+		{
+			for(QueueSessionScopeImpl childItem : childList)
+			{
+				childItem.dispose();
+			}
+		}
 	}
 	
 	public void stopQueueWorker()
@@ -2586,7 +2624,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 
 	@Override
-	public IQueueSessionScope createSessionScope(UUID scopeId, String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller, boolean adoptServices)
+	public IQueueSessionScope createSessionScope(UUID scopeId, String scopeName, IQueueSessionScope parentScope, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller, boolean adoptServices)
 	{
 		if(scopeId == null)
 		{
@@ -2602,7 +2640,20 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				return null;
 			}
-			newScope = new QueueSessionScopeImpl(scopeId,this, scopeName,adoptContoller,adoptServices,configurationProperties,stateProperties);
+			
+			UUID parentScopeId = null;
+			if(parentScope != null)
+			{
+				if((parentScope.getGlobalScope() == this) && (parentScope.getScopeId() != null))
+				{
+					if(this.queueScopeIndex.get(parentScope.getScopeId()) != null)
+					{
+						parentScopeId = parentScope.getScopeId();
+					}
+				}
+			}
+			
+			newScope = new QueueSessionScopeImpl(scopeId,parentScopeId,this, scopeName,adoptContoller,adoptServices,configurationProperties,stateProperties);
 			
 			this.queueScopeList.add(newScope);
 			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueSessionScope>(this.queueScopeList));
@@ -2660,7 +2711,36 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				log(LogService.LOG_ERROR,"get scopelist by filter",e);
 			}
 		}
-		return filterList;
+		return Collections.unmodifiableList(filterList);
+	}
+	
+	protected List<IQueueSessionScope> getChildSessionScopes(UUID parentScopeId)
+	{
+		List<IQueueSessionScope> copyList = this.queueScopeListCopy;
+		if(copyList.isEmpty())
+		{
+			return copyList;
+		}
+		List<IQueueSessionScope> filterList = new ArrayList<IQueueSessionScope>();
+		for(IQueueSessionScope scope : copyList)
+		{
+			UUID currentParentScopeId = ((QueueSessionScopeImpl)scope).getParentScopeId();
+			if((parentScopeId == null) && (currentParentScopeId == null))
+			{
+				filterList.add(scope);
+				continue;
+			}
+			if(currentParentScopeId == null)
+			{
+				continue;
+			}
+			if(currentParentScopeId.equals(parentScopeId))
+			{
+				continue;
+			}
+			
+		}
+		return Collections.unmodifiableList(filterList);
 	}
 
 	@Override

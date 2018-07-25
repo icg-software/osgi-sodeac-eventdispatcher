@@ -264,6 +264,7 @@ public interface IQueue
 	 * 
 	 * @param scopeId unique id of scope (unique by queue) or null for auto-generation
 	 * @param scopeName human readable name of scope (nullable)
+	 * @param parentScope parent scope to define tree structure for scopes
 	 * @param configurationProperties blue print for configuration propertyblock of new scope (nullable)
 	 * @param stateProperties blue print for state propertyblock of new scope (nullable)
 	 * @param adoptContoller keep controller of parent queue
@@ -271,7 +272,13 @@ public interface IQueue
 	 * 
 	 * @return new scope, or null, if scope already exists
 	 */
-	public IQueueSessionScope createSessionScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices);
+	public IQueueSessionScope createSessionScope(UUID scopeId,String scopeName, IQueueSessionScope parentScope, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices);
+	
+	@Deprecated
+	public default IQueueSessionScope createSessionScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices)
+	{
+		return createSessionScope(scopeId, scopeName, null, configurationProperties, stateProperties, adoptContoller, adoptServices);
+	}
 	
 	/**
 	 * returns scopelist of queue

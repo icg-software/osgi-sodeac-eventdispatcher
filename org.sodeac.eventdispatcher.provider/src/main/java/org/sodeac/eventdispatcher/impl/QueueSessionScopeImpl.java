@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,12 +23,12 @@ import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionScope
 {
 	private UUID scopeId;
-	
+	private UUID parentScopeId;
 	private String scopeName = null;
 	private boolean adoptContoller = false;
 	private boolean adoptServices = false;
 	
-	protected QueueSessionScopeImpl(UUID scopeId,QueueImpl parent, String scopeName, boolean adoptContoller, boolean adoptServices, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
+	protected QueueSessionScopeImpl(UUID scopeId,UUID parentScopeId,QueueImpl parent, String scopeName, boolean adoptContoller, boolean adoptServices, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
 		super(parent.getQueueId() + "." + scopeId.toString(),(EventDispatcherImpl)parent.getDispatcher(), parent.isMetricsEnabled(), null, null,configurationProperties,stateProperties);
 		
@@ -35,6 +37,7 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 		this.adoptContoller = adoptContoller;
 		this.adoptServices = adoptServices;
 		this.scopeId = scopeId;
+		this.parentScopeId = parentScopeId;
 		super.queueId = parent.getQueueId() + "." + this.scopeId.toString();
 	}
 
@@ -48,6 +51,32 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 	public UUID getScopeId()
 	{
 		return scopeId;
+	}
+	
+	protected UUID getParentScopeId()
+	{
+		return this.parentScopeId;
+	}
+	
+	protected void unlinkFromParent()
+	{
+		this.parentScopeId = null;
+	}
+	
+	@Override
+	public IQueueSessionScope getParentScope()
+	{
+		return this.parentScopeId == null ? null : this.parent.getSessionScope(this.parentScopeId);
+	}
+
+	@Override
+	public List<IQueueSessionScope> getChildScopes()
+	{
+		if(this.parentScopeId == null)
+		{
+			return Collections.unmodifiableList(new ArrayList<IQueueSessionScope>());
+		}
+		return parent.getChildSessionScopes(this.parentScopeId);
 	}
 
 	@Override
