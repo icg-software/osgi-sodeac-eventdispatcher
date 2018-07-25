@@ -28,6 +28,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingObject;
 import org.sodeac.eventdispatcher.itest.components.scope.ScopeTestSimpleManagementController;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -58,6 +59,7 @@ import javax.inject.Inject;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+//@Ignore
 public class ScopeTest extends AbstractTest
 {
 	@Inject
