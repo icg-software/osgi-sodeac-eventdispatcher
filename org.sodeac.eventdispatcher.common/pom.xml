@@ -44,8 +44,10 @@
             <Export-Package>
             	org.sodeac.eventdispatcher.common;version="${bundle.version}",
             	org.sodeac.eventdispatcher.common.controller;version="${bundle.version}",
-            	org.sodeac.eventdispatcher.common.job;version="${bundle.version}"
+            	org.sodeac.eventdispatcher.common.job;version="${bundle.version}",
+            	org.sodeac.eventdispatcher.common.service.api;version="${bundle.version}"
             </Export-Package>
+            <Private-Package>org.sodeac.eventdispatcher.common.service.impl</Private-Package>
           </instructions>
           <source>1.8</source>
           <target>1.8</target>
