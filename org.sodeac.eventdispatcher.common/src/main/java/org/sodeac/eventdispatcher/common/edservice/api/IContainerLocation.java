@@ -8,18 +8,21 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common.service.api;
+package org.sodeac.eventdispatcher.common.edservice.api;
 
-import java.util.Dictionary;
+import java.util.UUID;
 
-import org.osgi.framework.Bundle;
-public interface IServiceRegistrationAdapter
+public interface IContainerLocation
 {
-	public static final String SIGNAL_REGISTRATION_UPDATE = "SIGNAL_REGISTRATION_UPDATE";
+	public static final UUID LOCAL_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+	public static final String LOCAL_NAME = "local";
 	
-	public void register(IEventDrivenService service, Dictionary<String, ?> properties, Bundle bundle);
-	public void unregister(IEventDrivenService service, Dictionary<String, ?> properties, Bundle bundle);
-	
-	public void updateRegistrations();
-	public boolean isEmpty();
+	public UUID getClusterId();
+	public String getClusterName();
+	public UUID getDataCenterId();
+	public String getDataCenterName();
+	public UUID getMachineId();
+	public String getMachineName();
+	public UUID getContainerId();
+	public String getContainerName();
 }

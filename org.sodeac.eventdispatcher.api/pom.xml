@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>org.sodeac.eventdispatcher.api</artifactId>
-  <version>0.9.2-SNAPSHOT</version>
+  <version>0.9.3-SNAPSHOT</version>
   <packaging>bundle</packaging>
   <name>Sodeac Event Dispatcher API</name>
   <parent>
@@ -13,7 +13,7 @@
   
   <properties>
     <!-- bundle.version>${project.version}</bundle.version-->
-    <bundle.version>0.9.2</bundle.version>
+    <bundle.version>0.9.3</bundle.version>
   </properties>
   
   <build>
@@ -29,7 +29,10 @@
             <Bundle-Version>${bundle.version}</Bundle-Version>
             <Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
             <Bundle-ActivationPolicy>lazy</Bundle-ActivationPolicy>
-            <Export-Package>org.sodeac.eventdispatcher.api;version="${bundle.version}"</Export-Package>
+            <Export-Package>
+            	org.sodeac.eventdispatcher.api;version="${bundle.version}",
+            	org.sodeac.eventdispatcher.annotation;version="${bundle.version}"
+            </Export-Package>
           </instructions>
           <source>1.8</source>
           <target>1.8</target>

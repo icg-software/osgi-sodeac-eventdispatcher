@@ -18,7 +18,6 @@ import org.sodeac.eventdispatcher.api.IQueueService;
 
 public interface IExtensibleEventDispatcher extends IEventDispatcher
 {
-	public String getId();
 	public String getBundleId();
 	public String getBundleVersion();
 	// TODO Properties / Metrics

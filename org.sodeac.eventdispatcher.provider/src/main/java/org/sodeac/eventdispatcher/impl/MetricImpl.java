@@ -118,7 +118,7 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public <T> IGauge<T> getGauge(Class<T> type, String... names)
 	{
-		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_GAUGE, names);
+		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.jobId, POSTFIX_GAUGE, names);
 
 		try
 		{
@@ -194,7 +194,7 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public IGauge<?> registerGauge(IGauge<?> gauge, String... names)
 	{
-		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_GAUGE, names);
+		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.jobId, POSTFIX_GAUGE, names);
 		try
 		{
 			this.metricsWriteLock.lock();
@@ -616,7 +616,7 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public IMeter meter(String... names)
 	{
-		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_METER, names);
+		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.jobId, POSTFIX_METER, names);
 		
 		try
 		{
@@ -695,7 +695,7 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public ITimer timer(String... names)
 	{
-		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_TIMER, names);
+		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.jobId, POSTFIX_TIMER, names);
 		
 		try
 		{
@@ -774,7 +774,7 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public ICounter counter(String... names)
 	{
-		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_COUNTER, names);
+		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.jobId, POSTFIX_COUNTER, names);
 		try
 		{
 			this.metricsReadLock.lock();
@@ -852,7 +852,7 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public IHistogram histogram(String... names)
 	{
-		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getQueueId(), this.jobId, POSTFIX_HISTORGRAM, names);
+		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.jobId, POSTFIX_HISTORGRAM, names);
 		try
 		{
 			this.metricsReadLock.lock();

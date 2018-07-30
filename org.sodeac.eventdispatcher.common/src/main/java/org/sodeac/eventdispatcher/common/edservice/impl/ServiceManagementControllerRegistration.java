@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common.service.impl;
+package org.sodeac.eventdispatcher.common.edservice.impl;
 
 import java.util.ArrayList;
 import java.util.Dictionary;
@@ -32,8 +32,9 @@ import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.common.service.api.IEventDrivenService;
-import org.sodeac.eventdispatcher.common.service.api.IServiceRegistrationAdapter;
+import org.sodeac.eventdispatcher.common.edservice.api.IEventDrivenService;
+import org.sodeac.eventdispatcher.common.edservice.api.IServiceRegistrationAdapter;
+import org.sodeac.eventdispatcher.common.edservice.impl.servicediscovery.EServiceRegistrationAdapter;
 
 @Component(immediate=true,service=ServiceManagementControllerRegistration.class)
 public class ServiceManagementControllerRegistration
@@ -50,11 +51,28 @@ public class ServiceManagementControllerRegistration
 	protected volatile ComponentContext context = null;
 	
 	private List<EventDrivenServiceRegistration> services = new ArrayList<EventDrivenServiceRegistration>();
+	private List<EventDrivenServiceRegistration> earlyBirds = new ArrayList<EventDrivenServiceRegistration>();
 	
 	@Activate
 	private void activate(ComponentContext context, Map<String, ?> properties)
 	{
-		this.context = context;
+		
+		writeLock.lock();
+		try
+		{
+			this.context = context;
+		}
+		finally 
+		{
+			writeLock.unlock();
+		}
+		
+		for(EventDrivenServiceRegistration serviceReg : earlyBirds)
+		{
+			bindService(serviceReg.service, serviceReg.serviceServiceReference);
+		}
+		
+		earlyBirds.clear();
 	}
 	
 	@Deactivate
@@ -76,6 +94,29 @@ public class ServiceManagementControllerRegistration
 		if(serviceQueueId.isEmpty())
 		{
 			return;
+		}
+		
+		if(this.context == null)
+		{
+			writeLock.lock();
+			try
+			{
+				if(this.context == null)
+				{
+					EventDrivenServiceRegistration registration = new EventDrivenServiceRegistration();
+					registration.service = service;
+					registration.serviceServiceReference = serviceReference;
+					
+					earlyBirds.add(registration);
+					
+					return;
+				}
+			}
+			finally 
+			{
+				writeLock.unlock();
+			}
+			
 		}
 		
 		writeLock.lock();
@@ -165,12 +206,14 @@ public class ServiceManagementControllerRegistration
 		@Override
 		public void onQueueReverse(IQueue queue)
 		{
+			// TODO Reverse not synchronized, Problem?
 			IServiceRegistrationAdapter serviceRegistrationAdapter = queue.getConfigurationPropertyBlock().getAdapter(IServiceRegistrationAdapter.class);
 			if(serviceRegistrationAdapter == null)
 			{
 				return;
 			}
 			serviceRegistrationAdapter.unregister(eventDrivenServiceRegistration.service, this.eventDrivenServiceRegistration.serviceProperties, this.eventDrivenServiceRegistration.serviceServiceReference.getBundle());
+			// Signal is synchronized
 			queue.signal(IServiceRegistrationAdapter.SIGNAL_REGISTRATION_UPDATE);
 		}
 
@@ -180,7 +223,7 @@ public class ServiceManagementControllerRegistration
 			IServiceRegistrationAdapter serviceRegistrationAdapter = queue.getConfigurationPropertyBlock().getAdapter(IServiceRegistrationAdapter.class);
 			if(serviceRegistrationAdapter == null)
 			{
-				serviceRegistrationAdapter = new ServiceRegistrationAdapter(queue);
+				serviceRegistrationAdapter = new EServiceRegistrationAdapter(queue);
 				queue.getConfigurationPropertyBlock().setAdapter(IServiceRegistrationAdapter.class,serviceRegistrationAdapter);
 			}
 			Dictionary<String, Object> properties = new Hashtable<String, Object>();

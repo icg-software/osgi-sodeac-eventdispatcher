@@ -11,6 +11,8 @@
 package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -432,7 +434,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					String topic = (String)properties.get(IEventController.PROPERTY_CONSUME_EVENT_TOPIC);
 					if(! topic.isEmpty())
 					{
-						ConsumeEventHandler handler = controllerContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId, topic));
+						ConsumeEventHandler handler = controllerContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId));
 						Dictionary<String, Object> registerProperties = new Hashtable<String,Object>();
 						registerProperties.put(EventConstants.EVENT_TOPIC,topic);
 						ServiceRegistration<EventHandler> registration = eventDispatcher.getContext().getBundleContext().registerService(EventHandler.class, handler, registerProperties);
@@ -486,21 +488,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					
 					if(! topicList.isEmpty())
 					{
-						for(String topic : topicList)
-						{
-							controllerContainer.addConsumeEventHandler(new ConsumeEventHandler(eventDispatcher, queueId, topic));
-						}
+						String[] topics = topicList.toArray(new String[0]);
 						
-						if(controllerContainer.getConsumeEventHandlerList() != null)
-						{
-							for(ConsumeEventHandler handler :  controllerContainer.getConsumeEventHandlerList())
-							{
-								Dictionary<String, Object> registerProperties = new Hashtable<String,Object>();
-								registerProperties.put(EventConstants.EVENT_TOPIC,handler.getTopic());
-								ServiceRegistration<EventHandler> registration = eventDispatcher.getContext().getBundleContext().registerService(EventHandler.class, handler, registerProperties);
-								handler.setRegistration(registration);
-							}
-						}
+						ConsumeEventHandler handler = new ConsumeEventHandler(eventDispatcher, queueId);
+						Dictionary<String, Object> registerProperties = new Hashtable<String,Object>();
+						registerProperties.put(EventConstants.EVENT_TOPIC,topics);
+						ServiceRegistration<EventHandler> registration = eventDispatcher.getContext().getBundleContext().registerService(EventHandler.class, handler, registerProperties);
+						handler.setRegistration(registration);
 					}
 				}
 			}
@@ -566,20 +560,29 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		controllerListWriteLock.lock();
 		try
 		{
-			ControllerContainer toDelete = this.controllerIndex.get(configurationContainer);
-			if(toDelete  ==  null)
+			ControllerContainer unlinkFromQueue = this.controllerIndex.get(configurationContainer);
+			if(unlinkFromQueue  ==  null)
 			{
 				return false;
 			}
 			
-			while(this.controllerList.remove(toDelete)) {}
-			this.controllerIndex.remove(toDelete);
+			while(this.controllerList.remove(unlinkFromQueue)) {}
+			this.controllerIndex.remove(unlinkFromQueue);
 			this.controllerListCopy = null;
 				
-			if(toDelete.getConsumeEventHandlerList() != null)
+			List<ConsumeEventHandler> consumerList = unlinkFromQueue.getConsumeEventHandlerList();
+			if(consumerList != null)
 			{
-				for(ConsumeEventHandler handler : toDelete.getConsumeEventHandlerList() )
+				for(ConsumeEventHandler handler : consumerList )
 				{
+					if(handler.getQueueId() == null)
+					{
+						continue;
+					}
+					if(! handler.getQueueId().equals(this.queueId))
+					{
+						continue;
+					}
 					ServiceRegistration<EventHandler> registration = handler.getRegistration();
 					handler.setRegistration(null);
 					try
@@ -593,14 +596,16 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					{
 						log(LogService.LOG_ERROR,"Unregistration Consuming Event for queue " + queueId , e);
 					}
+					
+					unlinkFromQueue.removeConsumeEventHandler(handler);
 				}
 			}
 			
 			// reverseEvent
 			
-			if(toDelete.getEventController() instanceof IOnQueueReverse)
+			if(unlinkFromQueue.getEventController() instanceof IOnQueueReverse)
 			{
-				this.eventDispatcher.executeOnQueueReverse((IOnQueueReverse)toDelete.getEventController(), this);
+				this.eventDispatcher.executeOnQueueReverse((IOnQueueReverse)unlinkFromQueue.getEventController(), this);
 			}
 			
 			return true;
@@ -626,33 +631,60 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	// Services
 	
+	@SuppressWarnings("unchecked")
 	public void checkForService(ServiceContainer serviceContainer, QueueBindingModifyFlags bindingModifyFlags)
 	{
 		boolean serviceMatch = false;
-		if(queueId.equals(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)))
+		
+		List<String> queueIdList = null;
+		if(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof String)
 		{
-			serviceMatch = true;
+			queueIdList = new ArrayList<String>();
+			queueIdList.add((String)serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID));
+		}
+		else if(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof String[])
+		{
+			queueIdList = new ArrayList<String>(Arrays.asList((String[])serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)));
+		}
+		else if(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof Collection<?>)
+		{
+			queueIdList = new ArrayList<String>((Collection<String>)serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID));
 		}
 		else
 		{
+			queueIdList = new ArrayList<String>();
+		}
+		
+		for(String configuredQueueId : queueIdList)
+		{
+			if(queueId.equals(configuredQueueId )) 
+			{
+				serviceMatch = true;
+				break;
+			}
+		}
+		if(! serviceMatch)
+		{
 			if(! this.configurationPropertyBlock.isEmpty())
 			{
-				String queueConfigurationFilter = serviceContainer.getNonEmptyStringProperty(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER,"");
-				if(! queueConfigurationFilter.isEmpty())
+				try
 				{
-					try
+					List<Filter> filterList = serviceContainer.getGetQueueMatchFilter();
+					if(filterList != null)
 					{
-						Filter filter = serviceContainer.getGetQueueMatchFilter();
-						
-						if(filter.matches(this.configurationPropertyBlock.getProperties()))
+						for(Filter filter : filterList)
 						{
-							serviceMatch = true;
+							if(filter.matches(this.configurationPropertyBlock.getProperties()))
+							{
+								serviceMatch = true;
+								break;
+							}
 						}
 					}
-					catch (Exception e) 
-					{
-						log(LogService.LOG_ERROR,"check queue binding for service",e);
-					}
+				}
+				catch (Exception e) 
+				{
+					log(LogService.LOG_ERROR,"check queue binding for service",e);
 				}
 			}
 		}
@@ -828,7 +860,6 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		long delay = 0;
 		long timeout = -1;
 		long hbtimeout = -1;
-		
 		
 		try
 		{
@@ -1027,7 +1058,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 
 	@Override
-	public String getQueueId()
+	public String getId()
 	{
 		return this.queueId;
 	}

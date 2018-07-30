@@ -11,6 +11,8 @@
 package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -94,6 +96,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private ReadLock serviceListReadLock;
 	private WriteLock serviceListWriteLock;
 	
+	private PropertyBlockImpl propertyBlock;
+	
 	private String id = IEventDispatcher.DEFAULT_DISPATCHER_ID;
 	
 	private volatile ComponentContext context = null;
@@ -125,7 +129,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	@Override
 	public String getId()
 	{
-		return this.id;
+		return this.context == null ? null : this.id;
 	}
 	
 	@Override
@@ -190,6 +194,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		this.serviceListWriteLock = this.serviceListLock.writeLock();
 		
 		this.metrics = new MetricImpl(this, new PropertyBlockImpl(this),true);
+		this.propertyBlock = createPropertyBlock();
+
 	}
 	
 	@Override
@@ -750,6 +756,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			String dispatcherId = IEventDispatcher.DEFAULT_DISPATCHER_ID;
 			if((properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID) != null) && (properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID).toString().length() > 0))
 			{
+				// TODO List
 				dispatcherId = properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID).toString();
 			}
 			if(! dispatcherId.equals(this.id))
@@ -791,6 +798,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	private boolean registerEventController(ControllerContainer controllerContainer)
 	{
 		this.extensionListReadLock.lock();
@@ -803,9 +811,44 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			controllerContainer.setRegistered(true);
 			
-			String queueConfigurationFilter = controllerContainer.getNonEmptyStringProperty(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER,"");
-			String queueId = controllerContainer.getNonEmptyStringProperty(IEventDispatcher.PROPERTY_QUEUE_ID,"");
-			if( queueId.isEmpty() && queueConfigurationFilter.isEmpty() )
+			List<String> queueIdList = null;
+			List<String> queueConfigurationFilterList = null;
+			if(controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof String)
+			{
+				queueIdList = new ArrayList<String>();
+				queueIdList.add((String)controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID));
+			}
+			else if(controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof String[])
+			{
+				queueIdList = new ArrayList<String>(Arrays.asList((String[])controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)));
+			}
+			else if(controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof Collection<?>)
+			{
+				queueIdList = new ArrayList<String>((Collection<String>)controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID));
+			}
+			else
+			{
+				queueIdList = new ArrayList<String>();
+			}
+			
+			if(controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String)
+			{
+				queueConfigurationFilterList = new ArrayList<String>();
+				queueConfigurationFilterList.add((String)controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
+			}
+			else if(controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String[])
+			{
+				queueConfigurationFilterList = new ArrayList<String>(Arrays.asList((String[])controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER)));
+			}
+			else if(controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof Collection<?>)
+			{
+				queueConfigurationFilterList = new ArrayList<String>((Collection<String>)controllerContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
+			}
+			else
+			{
+				queueConfigurationFilterList = new ArrayList<String>();
+			}
+			if( queueIdList.isEmpty() && queueConfigurationFilterList.isEmpty() )
 			{
 				if(this.logService != null)
 				{
@@ -837,9 +880,17 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			boolean controllerInUse = false;
 			
-			if((queueId != null) && (! queueId.isEmpty()))
+			for(String queueId : queueIdList)
 			{	
-			
+				if(queueId == null)
+				{
+					continue;
+				}
+				if(queueId.isEmpty())
+				{
+					continue;
+				}
+				
 				this.queueIndexReadLock.lock();
 				try
 				{
@@ -943,8 +994,17 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				}
 			}
 		
-			if(! queueConfigurationFilter.isEmpty())
+			for(String queueConfigurationFilter : queueConfigurationFilterList)
 			{
+				if(queueConfigurationFilter == null)
+				{
+					continue;
+				}
+				if(queueConfigurationFilter.isEmpty())
+				{
+					continue;
+				}
+				
 				try
 				{
 					QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
@@ -1109,24 +1169,6 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			this.queueIndexReadLock.unlock();
 		}
 		
-		if(controllerContainer.getEventController() instanceof IOnQueueReverse)
-		{
-			try
-			{
-				if(registeredOnQueueList != null)
-				{
-					for(QueueImpl queue : registeredOnQueueList)
-					{	
-						this.executeOnQueueReverse((IOnQueueReverse)controllerContainer.getEventController(), queue);
-					}
-				}
-			}
-			catch (Exception e) 
-			{
-				log(LogService.LOG_ERROR, "Exception on onQueueReverse() event controller", e);
-			}
-		}
-		
 		if(queueRemoveList != null)
 		{
 			this.queueIndexWriteLock.lock();
@@ -1163,7 +1205,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 						log(LogService.LOG_ERROR,"dispose queue after remove all controller",e);
 					}
 					
-					this.queueIndex.remove(queue.getQueueId());
+					this.queueIndex.remove(queue.getId());
 					counterQueueSize.dec();
 					
 					if(removeQueueTimerContext != null)
@@ -1230,7 +1272,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				log(LogService.LOG_ERROR,"dispose queue after removed all controller",e);
 			}
 					
-			this.queueIndex.remove(queue.getQueueId());
+			this.queueIndex.remove(queue.getId());
 			counterQueueSize.dec();
 			
 			if(removeQueueTimerContext != null)
@@ -1278,6 +1320,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			String dispatcherId = IEventDispatcher.DEFAULT_DISPATCHER_ID;
 			if((properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID) != null) && (properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID).toString().length() > 0))
 			{
+				// TODO List
 				dispatcherId = properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID).toString();
 			}
 			if(! dispatcherId.equals(this.id))
@@ -1315,6 +1358,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	private boolean registerQueueService(ServiceContainer serviceContainer)
 	{
 		extensionListReadLock.lock();
@@ -1327,19 +1371,52 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			serviceContainer.setRegistered(true);
 			
-			String queueConfigurationFilter = serviceContainer.getNonEmptyStringProperty(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER,"");
-			String queueId = serviceContainer.getNonEmptyStringProperty(IQueueService.PROPERTY_QUEUE_ID,"");
+			List<String> queueIdList = null;
+			List<String> queueConfigurationFilterList = null;
+			if(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof String)
+			{
+				queueIdList = new ArrayList<String>();
+				queueIdList.add((String)serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID));
+			}
+			else if(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof String[])
+			{
+				queueIdList = new ArrayList<String>(Arrays.asList((String[])serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID)));
+			}
+			else if(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof Collection<?>)
+			{
+				queueIdList = new ArrayList<String>((Collection<String>)serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_ID));
+			}
+			else
+			{
+				queueIdList = new ArrayList<String>();
+			}
 			
-			if(queueId.isEmpty() && queueConfigurationFilter.isEmpty())
+			if(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String)
+			{
+				queueConfigurationFilterList = new ArrayList<String>();
+				queueConfigurationFilterList.add((String)serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
+			}
+			else if(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String[])
+			{
+				queueConfigurationFilterList = new ArrayList<String>(Arrays.asList((String[])serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER)));
+			}
+			else if(serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof Collection<?>)
+			{
+				queueConfigurationFilterList = new ArrayList<String>((Collection<String>)serviceContainer.getProperties().get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
+			}
+			else
+			{
+				queueConfigurationFilterList = new ArrayList<String>();
+			}
+			if( queueIdList.isEmpty() && queueConfigurationFilterList.isEmpty() )
 			{
 				log(LogService.LOG_WARNING, "Missing queueId or queueConfigurationFilter for service", null);
-				
 				return false;
 			}
 			
 			QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
 			
-			if(queueConfigurationFilter.isEmpty())
+			for(String queueId : queueIdList)
 			{
 				this.queueIndexReadLock.lock();
 				try
@@ -1355,7 +1432,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					this.queueIndexReadLock.unlock();
 				}
 			}
-			else
+			if(! queueConfigurationFilterList.isEmpty())
 			{
 				this.queueIndexReadLock.lock();
 				try
@@ -1481,7 +1558,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 
 	@Override
-	public IPropertyBlock createPropertyBlock()
+	public PropertyBlockImpl createPropertyBlock()
 	{
 		return new PropertyBlockImpl(this);
 	}
@@ -1826,5 +1903,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			checkControllerForQueue(queue);
 		}
+	}
+
+	@Override
+	public IPropertyBlock getPropertyBlock()
+	{
+		return this.propertyBlock;
 	}
 }

@@ -16,12 +16,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
+import org.sodeac.eventdispatcher.api.IPropertyBlockOperationHandler;
+import org.sodeac.eventdispatcher.api.IPropertyBlockOperationResult;
+import org.sodeac.eventdispatcher.api.IPropertyLock;
+import org.sodeac.eventdispatcher.api.PropertyIsLockedException;
 import org.sodeac.eventdispatcher.extension.api.IExtensiblePropertyBlock;
 import org.sodeac.eventdispatcher.extension.api.IPropertyBlockModifyListener;
 import org.sodeac.eventdispatcher.extension.api.PropertyBlockModifyItem;
@@ -35,6 +40,8 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		this.propertiesLock = new ReentrantReadWriteLock(true);
 		this.propertiesReadLock = this.propertiesLock.readLock();
 		this.propertiesWriteLock = this.propertiesLock.writeLock();
+		
+		this.lockedProperties = null;
 		
 		this.dispatcher = dispatcher;
 	}
@@ -52,7 +59,9 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	private ReadLock propertiesReadLock;
 	private WriteLock propertiesWriteLock;
 	
-	private EventDispatcherImpl dispatcher = null;
+	private Map<String,UUID> lockedProperties;
+	
+	private EventDispatcherImpl dispatcher;
 	
 	@Override
 	public Object setProperty(String key, Object value)
@@ -64,6 +73,10 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		propertiesWriteLock.lock();
 		try
 		{
+			if((this.lockedProperties != null) && (this.lockedProperties.get(key) != null))
+			{
+				throw new PropertyIsLockedException("writable access to \"" + key + "\" denied by lock");
+			}
 			if(this.properties == null)
 			{
 				this.properties = new HashMap<String,Object>();
@@ -79,7 +92,10 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			this.properties.put(key, value);
 			this.propertiesCopy = null;
 			this.keyList = null;
-			listenerList = this.modifyListenerList;
+			if((this.modifyListenerList != null) && (!modifyListenerList.isEmpty()))
+			{
+				listenerList = new ArrayList<IPropertyBlockModifyListener>(this.modifyListenerList);
+			}
 			
 		}
 		finally 
@@ -137,6 +153,17 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		propertiesWriteLock.lock();
 		try
 		{
+			if(this.lockedProperties != null)
+			{
+				for(String key : propertySet.keySet())
+				{
+					if(this.lockedProperties.get(key) != null)
+					{
+						throw new PropertyIsLockedException("writable access to \"" + key + "\" denied by lock");
+					}
+				}
+			}
+			
 			if(this.properties == null)
 			{
 				this.properties = new HashMap<String,Object>();
@@ -292,6 +319,11 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		{
 			propertiesWriteLock.lock();
 			
+			if((this.lockedProperties != null) && (this.lockedProperties.get(key) != null))
+			{
+				throw new PropertyIsLockedException("writable access to \"" + key + "\" denied by lock");
+			}
+			
 			if(! properties.containsKey(key))
 			{
 				return null;
@@ -302,7 +334,10 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			this.properties.remove(key);
 			this.propertiesCopy = null;
 			this.keyList = null;
-			listenerList = this.modifyListenerList;
+			if((this.modifyListenerList != null) && (!modifyListenerList.isEmpty()))
+			{
+				listenerList = new ArrayList<IPropertyBlockModifyListener>(this.modifyListenerList);
+			}
 			
 		}
 		finally 
@@ -409,6 +444,11 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		propertiesWriteLock.lock();
 		try
 		{
+			if((this.lockedProperties != null) && (!this.lockedProperties.isEmpty()))
+			{
+				throw new PropertyIsLockedException("clear failed. property block as locks");
+			}
+			
 			if(this.properties == null)
 			{
 				return EMPTY_PROPERTIES;
@@ -631,5 +671,99 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			stringValue = defaultValue;
 		}
 		return stringValue;
+	}
+
+	@Override
+	public IPropertyLock lockProperty(String key)
+	{
+		if(key == null)
+		{
+			return null;
+		}
+		
+		if(key.isEmpty())
+		{
+			return null;
+		}
+		
+		propertiesWriteLock.lock();
+		try
+		{
+			if(this.lockedProperties == null)
+			{
+				this.lockedProperties = new HashMap<String,UUID>();
+			}
+			else if(this.lockedProperties.get(key) != null)
+			{
+				return null;
+			}
+			
+			UUID pin = UUID.randomUUID();
+			this.lockedProperties.put(key, pin);
+			return new PropertyLockImpl(this, key, pin);
+		}
+		finally 
+		{
+			propertiesWriteLock.unlock();
+		}
+	}
+	
+	protected void unlockAllProperties()
+	{
+		propertiesWriteLock.lock();
+		try
+		{
+			this.lockedProperties = null;
+		}
+		finally 
+		{
+			propertiesWriteLock.unlock();
+		}
+	}
+	
+	protected boolean unlockProperty(PropertyLockImpl lock)
+	{
+		if(lock == null)
+		{
+			return false;
+		}
+		if(this != lock.getBlock())
+		{
+			return false;
+		}
+		if((lock.getKey() == null) || lock.getKey().isEmpty())
+		{
+			return false;
+		}
+		if(lock.getPin() == null)
+		{
+			return false;
+		}
+		propertiesWriteLock.lock();
+		try
+		{
+			if(this.lockedProperties == null)
+			{
+				return true;
+			}
+			UUID currentPin = this.lockedProperties.get(lock.getKey());
+			if((currentPin == null) || currentPin.equals(lock.getPin()))
+			{
+				this.lockedProperties.remove(lock.getKey());
+				return true;
+			}
+		}
+		finally 
+		{
+			propertiesWriteLock.unlock();
+		}
+		return false;
+	}
+
+	@Override
+	public IPropertyBlockOperationResult operate(IPropertyBlockOperationHandler operationHandler)
+	{
+		// TODO recognize access from same process in origin methodes
+		throw new RuntimeException("Not yet implemented");
 	}
 }

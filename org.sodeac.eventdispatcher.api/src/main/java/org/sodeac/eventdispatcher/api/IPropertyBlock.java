@@ -28,8 +28,9 @@ public interface IPropertyBlock
 	 * @param value property to be associated with the specified key 
 	 * 
 	 * @return previews property registered with {@code key}, or null
+	 * @throws PropertyIsLockedException
 	 */
-	public Object setProperty(String key,Object value);
+	public Object setProperty(String key,Object value) throws PropertyIsLockedException;
 	
 	/**
 	 * register a set of properties
@@ -38,8 +39,9 @@ public interface IPropertyBlock
 	 * @param ignoreIfEquals switch to skip updates, if old value equals new value 
 	 * 
 	 * @return a map of previously property registered
+	 * @throws PropertyIsLockedException
 	 */
-	public Map<String,Object> setPropertySet(Map<String,Object> propertySet, boolean ignoreIfEquals);
+	public Map<String,Object> setPropertySet(Map<String,Object> propertySet, boolean ignoreIfEquals) throws PropertyIsLockedException;
 	
 	/**
 	 * getter for registered property with associated {@code key}
@@ -86,8 +88,9 @@ public interface IPropertyBlock
 	 * @param key key the key whose associated property is to be removed
 	 * 
 	 * @return the removed property with specified key, or null if property does not exists
+	 * @throws PropertyIsLockedException
 	 */
-	public Object removeProperty(String key);
+	public Object removeProperty(String key) throws PropertyIsLockedException;
 	
 	/**
 	 * returns an immutable deep copy of property-container as {@link java.util.Map}
@@ -122,16 +125,18 @@ public interface IPropertyBlock
 	 * remove all property entries
 	 * 
 	 * @return a map of previously property registered
+	 * @throws PropertyIsLockedException
 	 */
-	public Map<String,Object> clear();
+	public Map<String,Object> clear() throws PropertyIsLockedException;
 	
 	/**
 	 * register an adapter 
 	 * 
 	 * @param adapterClass type of adapter
 	 * @param adapter implementation of adapter
+	 * @throws PropertyIsLockedException
 	 */
-	public default <T> void setAdapter(Class<T> adapterClass, T adapter)
+	public default <T> void setAdapter(Class<T> adapterClass, T adapter) throws PropertyIsLockedException
 	{
 		setProperty(adapterClass.getCanonicalName(), adapter);
 	}
@@ -152,9 +157,26 @@ public interface IPropertyBlock
 	 * remove registered adapter
 	 * 
 	 * @param adapterClass type of adapter
+	 * @throws PropertyIsLockedException
 	 */
-	public default <T> void removeAdapter(Class<T> adapterClass)
+	public default <T> void removeAdapter(Class<T> adapterClass) throws PropertyIsLockedException
 	{
 		removeProperty(adapterClass.getCanonicalName());
 	}
+	
+	/**
+	 * locks a property to prevent writable access
+	 * 
+	 * @param key the key whose associated property is to be locked
+	 * @return a {@link IPropertyBlock} or null, if property is already locked
+	 */
+	public IPropertyLock lockProperty(String key);
+	
+	/**
+	 * Enables complex editing in locked mode with {@link IPropertyBlockOperationHandler}.
+	 * 
+	 * @param operationHandler handle to edit property
+	 * @return audit trail
+	 */
+	public IPropertyBlockOperationResult operate(IPropertyBlockOperationHandler operationHandler);
 }

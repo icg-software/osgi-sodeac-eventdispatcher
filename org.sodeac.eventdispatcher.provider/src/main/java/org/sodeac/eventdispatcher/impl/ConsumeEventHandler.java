@@ -19,15 +19,13 @@ public class ConsumeEventHandler implements EventHandler
 {
 	private IEventDispatcher dispatcher = null;
 	private String queueId = null;
-	private String topic = null;
 	private ServiceRegistration<EventHandler> registration = null;
 	
-	public ConsumeEventHandler(IEventDispatcher dispatcher,String queueId,String topic)
+	public ConsumeEventHandler(IEventDispatcher dispatcher,String queueId)
 	{
 		super();
 		this.dispatcher = dispatcher;
 		this.queueId = queueId;
-		this.topic = topic;
 	}
 
 	@Override
@@ -36,9 +34,9 @@ public class ConsumeEventHandler implements EventHandler
 		this.dispatcher.schedule(this.queueId, event);
 	}
 
-	public String getTopic()
+	public String getQueueId()
 	{
-		return topic;
+		return queueId;
 	}
 
 	public ServiceRegistration<EventHandler> getRegistration()

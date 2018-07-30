@@ -77,7 +77,7 @@ public class QueueWorker extends Thread
 		this.signalList = new ArrayList<String>();
 		this.onQueueObserveList = new ArrayList<IOnQueueObserve>();
 		super.setDaemon(true);
-		super.setName(QueueWorker.class.getSimpleName() + " " + this.eventQueue.getQueueId());
+		super.setName(QueueWorker.class.getSimpleName() + " " + this.eventQueue.getId());
 	}
 
 	private void checkQueueObserve()
@@ -1193,7 +1193,7 @@ public class QueueWorker extends Thread
 		}
 		else
 		{
-			super.setName(QueueWorker.class.getSimpleName() + " " + this.eventQueue.getQueueId());
+			super.setName(QueueWorker.class.getSimpleName() + " " + this.eventQueue.getId());
 		}
 		
 		return true;

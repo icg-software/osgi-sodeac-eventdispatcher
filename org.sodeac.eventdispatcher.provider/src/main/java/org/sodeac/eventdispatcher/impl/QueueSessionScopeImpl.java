@@ -30,7 +30,7 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 	
 	protected QueueSessionScopeImpl(UUID scopeId,UUID parentScopeId,QueueImpl parent, String scopeName, boolean adoptContoller, boolean adoptServices, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
-		super(parent.getQueueId() + "." + scopeId.toString(),(EventDispatcherImpl)parent.getDispatcher(), parent.isMetricsEnabled(), null, null,configurationProperties,stateProperties);
+		super(parent.getId() + "." + scopeId.toString(),(EventDispatcherImpl)parent.getDispatcher(), parent.isMetricsEnabled(), null, null,configurationProperties,stateProperties);
 		
 		super.parent = parent;
 		this.scopeName = scopeName;
@@ -38,7 +38,7 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 		this.adoptServices = adoptServices;
 		this.scopeId = scopeId;
 		this.parentScopeId = parentScopeId;
-		super.queueId = parent.getQueueId() + "." + this.scopeId.toString();
+		super.queueId = parent.getId() + "." + this.scopeId.toString();
 	}
 
 	@Override

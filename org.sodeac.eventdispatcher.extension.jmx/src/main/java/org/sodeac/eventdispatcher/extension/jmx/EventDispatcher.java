@@ -301,7 +301,7 @@ public class EventDispatcher implements EventDispatcherMBean
 			{
 				MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 				
-				String name = extensibleQueue.getQueueId();
+				String name = extensibleQueue.getId();
 				String category = extensibleQueue.getCategory();
 				
 				int counter = 2;

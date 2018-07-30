@@ -107,4 +107,12 @@ public interface IQueuedEvent
 	{
 		getQueue().removeEvent(getUUID());
 	}
+	
+	/**
+	 * get create-timestamp
+	 * 
+	 * @return create-timestamp
+	 */
+	public long getCreateTimeStamp();
+	
 }

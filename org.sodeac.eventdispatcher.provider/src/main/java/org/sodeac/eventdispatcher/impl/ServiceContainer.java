@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.osgi.framework.Filter;
@@ -24,8 +28,7 @@ public class ServiceContainer
 	private IQueueService queueService = null;
 	private boolean registered = false;
 
-	private String cachedServiceQueueConfigurationFilter = null;
-	private Filter cachedServiceFilter = null;
+	private volatile List<Filter> cachedServiceFilter = null;
 	
 	public Map<String, ?> getProperties()
 	{
@@ -74,22 +77,50 @@ public class ServiceContainer
 		return stringValue;
 	}
 	
-	public synchronized Filter getGetQueueMatchFilter() throws InvalidSyntaxException
+	public void clearCache()
 	{
-		Filter filter = null;
-		String queueConfigurationFilter = getNonEmptyStringProperty(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER,"");
-		if(queueConfigurationFilter.isEmpty())
+		this.cachedServiceFilter = null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public synchronized List<Filter> getGetQueueMatchFilter() throws InvalidSyntaxException
+	{
+		List<Filter> serviceFilter = this.cachedServiceFilter;
+		if(serviceFilter != null)
 		{
-			return filter;
+			return serviceFilter;
+		}
+		serviceFilter = new ArrayList<Filter>();
+		List<String> queueConfigurationFilterList = null;
+		if(this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String)
+		{
+			queueConfigurationFilterList = new ArrayList<String>();
+			queueConfigurationFilterList.add((String)this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
+		}
+		else if(this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String[])
+		{
+			queueConfigurationFilterList = new ArrayList<String>(Arrays.asList((String[])this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER)));
+		}
+		else if(this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof Collection<?>)
+		{
+			queueConfigurationFilterList = new ArrayList<String>((Collection<String>)this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
+		}
+		else
+		{
+			queueConfigurationFilterList = new ArrayList<String>();
 		}
 		
-		if((cachedServiceQueueConfigurationFilter == null) || (!cachedServiceQueueConfigurationFilter.equals(queueConfigurationFilter)))
+		if(queueConfigurationFilterList.isEmpty() )
 		{
-			cachedServiceFilter = FrameworkUtil.createFilter(queueConfigurationFilter);
-			cachedServiceQueueConfigurationFilter = queueConfigurationFilter;
+			this.cachedServiceFilter = serviceFilter;
+			return null;
 		}
 		
-		filter = cachedServiceFilter;
-		return filter;
+		for(String queueConfigurationFilter : queueConfigurationFilterList)
+		{
+			serviceFilter.add(FrameworkUtil.createFilter(queueConfigurationFilter));
+		}
+		this.cachedServiceFilter = serviceFilter;
+		return serviceFilter;
 	}
 }

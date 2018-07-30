@@ -33,7 +33,7 @@ public interface IQueue
 	 * 
 	 * @return id of queue
 	 */
-	public String getQueueId();
+	public String getId();
 	
 	
 	/**

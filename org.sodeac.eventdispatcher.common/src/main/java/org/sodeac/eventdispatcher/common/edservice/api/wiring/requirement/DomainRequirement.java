@@ -8,9 +8,15 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common.service.api;
+package org.sodeac.eventdispatcher.common.edservice.api.wiring.requirement;
 
-public interface IEventDrivenService
+import org.sodeac.eventdispatcher.common.edservice.api.wiring.Requirement;
+import org.sodeac.eventdispatcher.common.edservice.api.wiring.capability.DomainCapability;
+
+public class DomainRequirement extends Requirement
 {
-	public static final String PROPERTY_SERVICE_QUEUE_ID = "service.queueid";
+	public DomainRequirement(String domain)
+	{
+		super(DomainCapability.NAMESPACE, "(" + DomainCapability.CAPABILITY_NAME_DOMAIN + "=" + domain + ")", false);
+	}
 }

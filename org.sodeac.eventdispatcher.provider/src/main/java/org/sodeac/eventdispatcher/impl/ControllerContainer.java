@@ -11,8 +11,12 @@
 package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
@@ -24,9 +28,22 @@ import org.sodeac.eventdispatcher.api.IEventDispatcher;
 
 public class ControllerContainer
 {
+	public ControllerContainer()
+	{
+		super();
+		this.consumeEventHandlerListLock = new ReentrantReadWriteLock();
+		this.consumeEventHandlerListWriteLock = consumeEventHandlerListLock.writeLock();
+		this.consumeEventHandlerListReadLock = consumeEventHandlerListLock.readLock();
+	}
+	
+	private ReentrantReadWriteLock consumeEventHandlerListLock;
+	private ReadLock consumeEventHandlerListReadLock;
+	private WriteLock consumeEventHandlerListWriteLock;
+	
 	private Map<String, ?> properties = null;
 	private IEventController eventController = null;
-	private List<ConsumeEventHandler> consumeEventHandlerList = null;
+	private volatile List<ConsumeEventHandler> consumeEventHandlerList = null;
+	private volatile List<ConsumeEventHandler> consumeEventHandlerCopyeList = null;
 	private boolean registered = false;
 	
 	private String cachedControllerQueueConfigurationFilter = null;
@@ -58,16 +75,63 @@ public class ControllerContainer
 	}
 	public ConsumeEventHandler addConsumeEventHandler(ConsumeEventHandler consumeEventHandler)
 	{
-		if(this.consumeEventHandlerList == null)
+		consumeEventHandlerListWriteLock.lock();
+		try
 		{
-			this.consumeEventHandlerList = new ArrayList<ConsumeEventHandler>();
+			if(this.consumeEventHandlerList == null)
+			{
+				this.consumeEventHandlerList = new ArrayList<ConsumeEventHandler>();
+			}
+			this.consumeEventHandlerList.add(consumeEventHandler);
+			consumeEventHandlerCopyeList = null;
+			return consumeEventHandler;
 		}
-		this.consumeEventHandlerList.add(consumeEventHandler);
-		return consumeEventHandler;
+		finally
+		{
+			consumeEventHandlerListWriteLock.unlock();
+		}
 	}
+	
+	public void removeConsumeEventHandler(ConsumeEventHandler consumeEventHandler)
+	{
+		consumeEventHandlerListWriteLock.lock();
+		try
+		{
+			consumeEventHandlerCopyeList = null;
+			
+			if(this.consumeEventHandlerList == null)
+			{
+				return ;
+			}
+			
+			while(this.consumeEventHandlerList.remove(consumeEventHandler)) {};
+		}
+		finally
+		{
+			consumeEventHandlerListWriteLock.unlock();
+		}
+	}
+	
 	public List<ConsumeEventHandler> getConsumeEventHandlerList()
 	{
-		return consumeEventHandlerList;
+		if(this.consumeEventHandlerList == null)
+		{
+			return null;
+		}
+		consumeEventHandlerListReadLock.lock();
+		try
+		{
+			if(consumeEventHandlerCopyeList == null)
+			{
+				consumeEventHandlerCopyeList = Collections.unmodifiableList(new ArrayList<ConsumeEventHandler>(consumeEventHandlerList));
+			}
+			return consumeEventHandlerCopyeList;
+		}
+		finally 
+		{
+			consumeEventHandlerListReadLock.unlock();
+		}
+		
 	}
 	
 	public String getNonEmptyStringProperty(String key, String defaultValue)

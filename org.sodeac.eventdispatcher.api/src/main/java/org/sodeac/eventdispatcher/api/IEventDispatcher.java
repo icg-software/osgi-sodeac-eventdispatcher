@@ -78,4 +78,18 @@ public interface IEventDispatcher
 	 * @return instance of {@link IQueue} registered with {@code queueId}
 	 */
 	public IQueue getQueue(String queueId);
+	
+	/**
+	 * getter for propertyblock of dispatcher
+	 * 
+	 * @return {@link IPropertyBlock} of dispatcher
+	 */
+	public IPropertyBlock getPropertyBlock();
+	
+	/**
+	 * getter for id of dispatcher.
+	 * 
+	 * @return id of dispatcher
+	 */
+	public String getId();
 }

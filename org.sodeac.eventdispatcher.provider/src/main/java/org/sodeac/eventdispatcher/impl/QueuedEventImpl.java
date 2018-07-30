@@ -36,6 +36,7 @@ public class QueuedEventImpl implements IQueuedEvent
 	private volatile Map<String,Object> nativeProperties;
 	private List<String> emptyKeyList = null;
 	private Map<String, Object>  emptyProperties = null;
+	private long createTimeStamp;
 	
 	public QueuedEventImpl(Event event,QueueImpl queue)
 	{
@@ -44,6 +45,7 @@ public class QueuedEventImpl implements IQueuedEvent
 		this.queue = queue;
 		this.lock = new ReentrantLock();
 		this.uuid = UUID.randomUUID().toString();
+		this.createTimeStamp = System.currentTimeMillis();
 	}
 
 	@Override
@@ -218,6 +220,12 @@ public class QueuedEventImpl implements IQueuedEvent
 	public IQueue getQueue()
 	{
 		return this.queue;
+	}
+
+	@Override
+	public long getCreateTimeStamp()
+	{
+		return this.createTimeStamp;
 	}
 
 }
