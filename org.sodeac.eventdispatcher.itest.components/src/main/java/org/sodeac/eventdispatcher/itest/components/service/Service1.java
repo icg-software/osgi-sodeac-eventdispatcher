@@ -8,20 +8,20 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.sodeac.eventdispatcher.api.IEventController;
-import org.sodeac.eventdispatcher.common.edservice.api.IEventDrivenService;
-import org.sodeac.eventdispatcher.common.edservice.api.wiring.Capability;
-import org.sodeac.eventdispatcher.common.edservice.api.wiring.capability.DomainCapability;
-import org.sodeac.eventdispatcher.common.edservice.api.wiring.capability.ServiceCapability;
+import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveService;
+import org.sodeac.eventdispatcher.common.reactiveservice.api.wiring.Capability;
+import org.sodeac.eventdispatcher.common.reactiveservice.api.wiring.capability.DomainCapability;
+import org.sodeac.eventdispatcher.common.reactiveservice.api.wiring.capability.ServiceCapability;
 
 @Component
 (
-	service={IEventController.class,IEventDrivenService.class},
+	service={IEventController.class,IReactiveService.class},
 	property=
 	{
-		IEventDrivenService.PROPERTY_SERVICE_QUEUE_ID+"="+Service1.DOMAIN + ".queue"
+		IReactiveService.PROPERTY_SERVICE_QUEUE_ID+"="+Service1.DOMAIN + ".queue"
 	}
 )
-public class Service1 implements IEventController, IEventDrivenService
+public class Service1 implements IEventController, IReactiveService
 {
 	public static final String DOMAIN = "org.sodeac.eventdispatcher.itest";
 	public static final String SERVICE = "org.sodeac.eventdispatcher.itest.service1";

@@ -38,11 +38,11 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.EventAdmin;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.common.edservice.api.DiscoverEServiceRequest;
-import org.sodeac.eventdispatcher.common.edservice.api.DiscoverEServiceResponse;
-import org.sodeac.eventdispatcher.common.edservice.api.IEServiceDiscovery;
-import org.sodeac.eventdispatcher.common.edservice.api.IEventDrivenService;
-import org.sodeac.eventdispatcher.common.edservice.api.wiring.Capability;
+import org.sodeac.eventdispatcher.common.reactiveservice.api.DiscoverReactiveServiceRequest;
+import org.sodeac.eventdispatcher.common.reactiveservice.api.DiscoverReactiveServiceResponse;
+import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveServiceDiscovery;
+import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveService;
+import org.sodeac.eventdispatcher.common.reactiveservice.api.wiring.Capability;
 import org.sodeac.eventdispatcher.itest.components.scope.ScopeTestSimpleManagementController;
 import org.sodeac.eventdispatcher.itest.components.service.Service1;
 import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
@@ -63,7 +63,7 @@ public class ServiceTest extends AbstractTest
 	private EventAdmin eventAdmin;
 	
 	@Inject
-	private IEServiceDiscovery serviceDiscovery;
+	private IReactiveServiceDiscovery serviceDiscovery;
 	
 	public static final String QUEUE_ID_CREATE_AND_REMOVE = "servicequeue.create.remove";
 	
@@ -110,7 +110,7 @@ public class ServiceTest extends AbstractTest
 		IQueue queue = this.eventDispatcher.getQueue(QUEUE_ID_CREATE_AND_REMOVE);
 		assertNull("queue should be null" ,queue);
 		
-		IEventDrivenService eventDrivenService = new IEventDrivenService()
+		IReactiveService eventDrivenService = new IReactiveService()
 		{
 
 			@Override
@@ -118,8 +118,8 @@ public class ServiceTest extends AbstractTest
 		};
 		
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
-		properties.put(IEventDrivenService.PROPERTY_SERVICE_QUEUE_ID, QUEUE_ID_CREATE_AND_REMOVE);
-		ServiceRegistration<IEventDrivenService> registration = testComponentBundle.getBundleContext().registerService(IEventDrivenService.class,eventDrivenService, properties);
+		properties.put(IReactiveService.PROPERTY_SERVICE_QUEUE_ID, QUEUE_ID_CREATE_AND_REMOVE);
+		ServiceRegistration<IReactiveService> registration = testComponentBundle.getBundleContext().registerService(IReactiveService.class,eventDrivenService, properties);
 		
 		try {Thread.sleep(2000);} catch (Exception e) {}
 		
@@ -158,7 +158,7 @@ public class ServiceTest extends AbstractTest
 		
 		assertNull("queue should be null" ,queue);
 		
-		registration = testComponentBundle.getBundleContext().registerService(IEventDrivenService.class,eventDrivenService, properties);
+		registration = testComponentBundle.getBundleContext().registerService(IReactiveService.class,eventDrivenService, properties);
 		
 		try {Thread.sleep(2000);} catch (Exception e) {}
 		
@@ -201,30 +201,30 @@ public class ServiceTest extends AbstractTest
 	@Test(timeout=60000)
 	public void test003DiscoveryService() 
 	{
-		super.waitQueueIsUp(eventDispatcher, IEServiceDiscovery.QUEUE_ID, 3000);
+		super.waitQueueIsUp(eventDispatcher, IReactiveServiceDiscovery.QUEUE_ID, 3000);
 		
 		assertNotNull("servicediscovery should not be null" ,this.serviceDiscovery);
-		DiscoverEServiceResponse response = this.serviceDiscovery.discoverService(new DiscoverEServiceRequest(Service1.DOMAIN, Service1.SERVICE, null, null));
+		DiscoverReactiveServiceResponse response = this.serviceDiscovery.discoverService(new DiscoverReactiveServiceRequest(Service1.DOMAIN, Service1.SERVICE, null, null));
 		assertNotNull("response should not be null" ,response);
 		assertEquals("size of discovered services should be correct", 1, response.getServiceReferenceList().size());
 		
-		response = this.serviceDiscovery.discoverService(new DiscoverEServiceRequest("????", Service1.SERVICE, null, null));
+		response = this.serviceDiscovery.discoverService(new DiscoverReactiveServiceRequest("????", Service1.SERVICE, null, null));
 		assertNotNull("response should not be null" ,response);
 		assertEquals("size of discovered services should be correct", 0, response.getServiceReferenceList().size());
 		
-		response = this.serviceDiscovery.discoverService(new DiscoverEServiceRequest(Service1.DOMAIN, "????", null, null));
+		response = this.serviceDiscovery.discoverService(new DiscoverReactiveServiceRequest(Service1.DOMAIN, "????", null, null));
 		assertNotNull("response should not be null" ,response);
 		assertEquals("size of discovered services should be correct", 0, response.getServiceReferenceList().size());
 		
-		response = this.serviceDiscovery.discoverService(new DiscoverEServiceRequest(null, Service1.SERVICE, null, null));
+		response = this.serviceDiscovery.discoverService(new DiscoverReactiveServiceRequest(null, Service1.SERVICE, null, null));
 		assertNotNull("response should not be null" ,response);
 		assertEquals("size of discovered services should be correct", 0, response.getServiceReferenceList().size());
 		
-		response = this.serviceDiscovery.discoverService(new DiscoverEServiceRequest(Service1.DOMAIN, null, null, null));
+		response = this.serviceDiscovery.discoverService(new DiscoverReactiveServiceRequest(Service1.DOMAIN, null, null, null));
 		assertNotNull("response should not be null" ,response);
 		assertEquals("size of discovered services should be correct", 0, response.getServiceReferenceList().size());
 		
-		response = this.serviceDiscovery.discoverService(new DiscoverEServiceRequest(null, null, null, null));
+		response = this.serviceDiscovery.discoverService(new DiscoverReactiveServiceRequest(null, null, null, null));
 		assertNotNull("response should not be null" ,response);
 		assertEquals("size of discovered services should be correct", 0, response.getServiceReferenceList().size());
 			
