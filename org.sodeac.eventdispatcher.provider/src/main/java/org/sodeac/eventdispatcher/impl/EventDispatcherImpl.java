@@ -420,7 +420,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		for(IEventDispatcherExtension eventDispatcherExtension : this.extensionListScheduled)
 		{
-			this.bindEventDispatcherExtension(eventDispatcherExtension);
+			try
+			{
+				this.bindEventDispatcherExtension(eventDispatcherExtension);
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR, "Exception bind scheduled extension", e);
+			}
 		}
 		
 		this.extensionListScheduled.clear();
@@ -428,15 +435,28 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		for(ScheduledService schedulesService : this.serviceListScheduled)
 		{
-			this.bindQueueService(schedulesService.queueService, schedulesService.serviceReference, schedulesService.properties);
+			try
+			{
+				this.bindQueueService(schedulesService.queueService, schedulesService.serviceReference, schedulesService.properties);
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR, "Exception bind scheduled queue service", e);
+			}
 		}
-		
 		this.serviceListScheduled.clear();
 		this.serviceListScheduled = null;
 		
 		for(ScheduledController container : this.controllerListScheduled)
 		{
-			this.bindQueueController(container.queueController, container.serviceReference, container.properties);
+			try
+			{
+				this.bindQueueController(container.queueController, container.serviceReference, container.properties);
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR, "Exception bind scheduled queue controller", e);
+			}
 		}
 		
 		this.controllerListScheduled.clear();
@@ -1133,8 +1153,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					}
 					if(queue != null)
 					{
-						modifyFlags.reset();
-						queue.checkForController(controllerContainer, modifyFlags);
+						queue.setController(controllerContainer);
 					}
 					else if((queue == null) && boundedQueueId.isAutoCreateQueue()) // autocreate
 					{
