@@ -916,16 +916,40 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					}
 				}
 			}
-			// TODO this.registerQueueController(queueController, configurable, serviceReference.getBundle(), properties); here unlocked
+			this.registerQueueControllerLifecycled(queueController, configurable, serviceReference.getBundle(), properties);
 		}
 		finally 
 		{
 			osgiLifecycleReadLock.unlock();
 		}
-		this.registerQueueController(queueController, configurable, serviceReference.getBundle(), properties);
 	}
 	
+	@Override
 	public void registerQueueController(IQueueController queueController, IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties)
+	{
+		if(configuration == null)
+		{
+			return;
+		}
+		
+		if(this.context == null)
+		{
+			return;
+		}
+		
+		osgiLifecycleReadLock.lock();
+		try
+		{
+			registerQueueControllerLifecycled(queueController, configuration, bundle, properties);
+		}
+		finally 
+		{
+			osgiLifecycleReadLock.unlock();
+		}
+		
+	}
+	
+	private void registerQueueControllerLifecycled(IQueueController queueController, IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties)
 	{
 		if(configuration == null)
 		{
@@ -997,41 +1021,32 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 		
 		ControllerContainer controllerContainer = null;
-		osgiLifecycleReadLock.lock();
+		
+		controllerListWriteLock.lock();
 		try
 		{
-			controllerListWriteLock.lock();
-			try
+			controllerContainer = this.controllerReverseIndex.get(queueController);
+			
+			if(controllerContainer == null)
 			{
-				controllerContainer = this.controllerReverseIndex.get(queueController);
+				controllerContainer = new ControllerContainer(this,boundByIdList, boundedByQueueConfigurationList, subscribeEventList);
+				controllerContainer.setQueueController(queueController);
+				controllerContainer.setProperties(properties);
 				
-				if(controllerContainer == null)
+				this.controllerReverseIndex.put(queueController,controllerContainer);
+				this.controllerList.add(controllerContainer);
+				
+				if(this.counterConfigurationSize != null)
 				{
-					controllerContainer = new ControllerContainer(this,boundByIdList, boundedByQueueConfigurationList, subscribeEventList);
-					controllerContainer.setQueueController(queueController);
-					controllerContainer.setProperties(properties);
-					
-					this.controllerReverseIndex.put(queueController,controllerContainer);
-					this.controllerList.add(controllerContainer);
-					
-					if(this.counterConfigurationSize != null)
-					{
-						this.counterConfigurationSize.inc();
-					}
+					this.counterConfigurationSize.inc();
 				}
 			}
-			finally 
-			{
-				controllerListWriteLock.unlock();
-			}
-			
 			registerQueueController(controllerContainer);
 		}
 		finally 
 		{
-			osgiLifecycleReadLock.unlock();
+			controllerListWriteLock.unlock();
 		}
-		
 	}
 	
 	private boolean registerQueueController(ControllerContainer controllerContainer)
@@ -1088,6 +1103,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			QueueImpl queue = null;
 			
 			boolean controllerInUse = false;
+			QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
 			
 			if(controllerContainer.getBoundByIdList() != null)
 			{
@@ -1110,16 +1126,17 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					try
 					{
 						queue = this.queueIndex.get(boundedQueueId.getQueueId());
-						// TODO Update config metrics
-						// TODO Update config private Worker
-						// TODO Update names Category
-						// TODO set Controller
 					}
 					finally 
 					{
 						this.queueIndexReadLock.unlock();
 					}
-					if((queue == null) && boundedQueueId.isAutoCreateQueue()) // autocreate
+					if(queue != null)
+					{
+						modifyFlags.reset();
+						queue.checkForController(controllerContainer, modifyFlags);
+					}
+					else if((queue == null) && boundedQueueId.isAutoCreateQueue()) // autocreate
 					{
 						this.queueIndexWriteLock.lock();
 						try
@@ -1178,8 +1195,6 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 								serviceListReadLock.lock();
 								try
 								{
-									QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
-									
 									for(ServiceContainer serviceContainer :  this.serviceList )
 									{
 										modifyFlags.reset();
@@ -1233,8 +1248,6 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					
 					try
 					{
-						QueueBindingModifyFlags modifyFlags = new QueueBindingModifyFlags();
-						
 						this.queueIndexReadLock.lock();
 						try
 						{
@@ -1706,18 +1719,39 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 						.setPeriodicRepetitionIntervalMS(periodicRepetitionInterval)
 				);
 			}
-			// registerQueueService(queueService, configurable, serviceReference.getBundle(), properties);
+			registerQueueServiceLifecycled(queueService, configurable, serviceReference.getBundle(), properties);
 		}
 		finally 
 		{
 			osgiLifecycleReadLock.unlock();
 		}
-		registerQueueService(queueService, configurable, serviceReference.getBundle(), properties);
-		
 	}
 	
 	@Override
 	public void registerQueueService(IQueueService queueService,IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties)
+	{
+		if(configuration == null)
+		{
+			return;
+		}
+		
+		if(this.context == null)
+		{
+			return;
+		}
+		
+		osgiLifecycleReadLock.lock();
+		try
+		{
+			registerQueueServiceLifecycled(queueService, configuration, bundle, properties);
+		}
+		finally 
+		{
+			extensionListReadLock.unlock();
+		}
+	}
+	
+	public void registerQueueServiceLifecycled(IQueueService queueService,IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties)
 	{
 		if(configuration == null)
 		{
@@ -1789,37 +1823,26 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 		
 		ServiceContainer serviceContainer = null;
-		osgiLifecycleReadLock.lock();
+		serviceListWriteLock.lock();
 		try
 		{
+			serviceContainer = serviceReverseIndex.get(queueService);
 			
-			serviceListWriteLock.lock();
-			try
+			if(serviceContainer == null)
 			{
-				serviceContainer = serviceReverseIndex.get(queueService);
+				serviceContainer = new ServiceContainer(this, boundByIdList, boundedByQueueConfigurationList, serviceConfigurationList);
+				serviceContainer.setQueueService(queueService);
+				serviceContainer.setProperties(properties);
 				
-				if(serviceContainer == null)
-				{
-					serviceContainer = new ServiceContainer(this, boundByIdList, boundedByQueueConfigurationList, serviceConfigurationList);
-					serviceContainer.setQueueService(queueService);
-					serviceContainer.setProperties(properties);
-					
-					this.serviceList.add(serviceContainer);
-					this.serviceReverseIndex.put(queueService,serviceContainer);
-				}				
+				this.serviceList.add(serviceContainer);
+				this.serviceReverseIndex.put(queueService,serviceContainer);
 			}
-			finally 
-			{
-				serviceListWriteLock.unlock();
-			}
-			
 			registerQueueService(serviceContainer);
 		}
 		finally 
 		{
-			osgiLifecycleReadLock.unlock();
+			serviceListWriteLock.unlock();
 		}
-		
 	}
 	
 	private boolean registerQueueService(ServiceContainer serviceContainer)
@@ -1869,17 +1892,21 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 						continue;
 					}
 					this.queueIndexReadLock.lock();
+					QueueImpl queue = null;
 					try
 					{
-						QueueImpl queue = this.queueIndex.get(boundedByQueueId.getQueueId());
-						if(queue != null)
-						{
-							queue.checkForService(serviceContainer, modifyFlags);
-						}
+						queue = this.queueIndex.get(boundedByQueueId.getQueueId());
+						
 					}
 					finally 
 					{
 						this.queueIndexReadLock.unlock();
+					}
+					
+					if(queue != null)
+					{
+						modifyFlags.reset();
+						queue.checkForService(serviceContainer, modifyFlags);
 					}
 				}
 			}
@@ -1913,6 +1940,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	{
 		this.unbindQueueService(queueService);
 	}
+	
 	public void unbindQueueService(IQueueService queueService)
 	{
 		ServiceContainer serviceContainer = null;
