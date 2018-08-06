@@ -17,25 +17,25 @@ package org.sodeac.eventdispatcher.api;
  * @author Sebastian Palarus
  *
  */
-public interface IEventController
+public interface IQueueController extends IQueueComponent
 {
 	/**
-	 * configuration property key to declare an {@link IEventController} as consumer of {@link org.osgi.service.event.Event} with given topics (value of property)
+	 * configuration property key to declare an {@link IQueueController} as consumer of {@link org.osgi.service.event.Event} with given topics (value of property)
 	 */
 	public static final String PROPERTY_CONSUME_EVENT_TOPIC 	= "consume_event_topic";
 	
 	/**
-	 * configuration property key to declare an {@link IEventController} for disabling metrics on observe {@link IQueue} ( alternative {@link IDisableMetricsOnQueueObserve})
+	 * configuration property key to declare an {@link IQueueController} for disabling metrics on observe {@link IQueue}
 	 */
 	public static final String PROPERTY_DISABLE_METRICS			= "queue_disable_metrics";
 	
 	/**
-	 * configuration property key to declare the name of {@link IEventController} in jmx tools
+	 * configuration property key to declare the name of {@link IQueueController} in jmx tools
 	 */
 	public static final String PROPERTY_JMX_NAME				= "jmxname";
 	
 	/**
-	 * configuration property key to declare category subfolder of {@link IEventController} in jmx tools
+	 * configuration property key to declare category subfolder of {@link IQueueController} in jmx tools
 	 */
 	public static final String PROPERTY_JMX_CATEGORY			= "jmxcategory";
 	

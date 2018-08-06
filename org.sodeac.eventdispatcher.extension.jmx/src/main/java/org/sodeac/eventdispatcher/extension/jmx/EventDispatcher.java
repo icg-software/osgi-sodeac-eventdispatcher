@@ -25,7 +25,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import org.osgi.service.log.LogService;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleCounter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleGauge;
@@ -44,7 +44,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	protected String bundleVersion;
 	protected String id = "";
 	
-	private Map<IEventController,EventController> eventControllerIndex = null;
+	private Map<IQueueController,EventController> eventControllerIndex = null;
 	private Map<String,String> eventControllerObjectNameIndex = null;
 	private Map<IExtensibleQueue,EventQueue> eventQueueIndex = null;
 	private Map<String,String> eventQueueObjectNameIndex = null;
@@ -65,7 +65,7 @@ public class EventDispatcher implements EventDispatcherMBean
 		this.bundleVersion = eventDispatcher.getBundleVersion();
 		this.eventDispatcherExtension = eventDispatcherExtension;
 		
-		this.eventControllerIndex = new HashMap<IEventController,EventController>();
+		this.eventControllerIndex = new HashMap<IQueueController,EventController>();
 		this.eventControllerObjectNameIndex = new HashMap<String,String>();
 		this.eventQueueIndex = new HashMap<IExtensibleQueue,EventQueue>();
 		this.eventQueueObjectNameIndex = new HashMap<String,String>();
@@ -150,7 +150,7 @@ public class EventDispatcher implements EventDispatcherMBean
 				eventQueueIndex.clear();
 				
 				
-				for(Entry<IEventController,EventController> entry : eventControllerIndex.entrySet())
+				for(Entry<IQueueController,EventController> entry : eventControllerIndex.entrySet())
 				{
 					try
 					{
@@ -214,7 +214,7 @@ public class EventDispatcher implements EventDispatcherMBean
 		}
 	}
 
-	public void registerEventController(IEventController eventController, Map<String, ?> properties)
+	public void registerEventController(IQueueController eventController, Map<String, ?> properties)
 	{
 		writeLock.lock();
 		try
@@ -224,15 +224,15 @@ public class EventDispatcher implements EventDispatcherMBean
 				MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 				
 				String name  = eventController.getClass().getSimpleName();
-				if((properties.get(IEventController.PROPERTY_JMX_NAME) != null) && (! properties.get(IEventController.PROPERTY_JMX_NAME).toString().isEmpty()))
+				if((properties.get(IQueueController.PROPERTY_JMX_NAME) != null) && (! properties.get(IQueueController.PROPERTY_JMX_NAME).toString().isEmpty()))
 				{
-					name = properties.get(IEventController.PROPERTY_JMX_NAME).toString();
+					name = properties.get(IQueueController.PROPERTY_JMX_NAME).toString();
 				}
 				
 				String category = null;
-				if((properties.get(IEventController.PROPERTY_JMX_CATEGORY) != null) && (! properties.get(IEventController.PROPERTY_JMX_CATEGORY).toString().isEmpty()))
+				if((properties.get(IQueueController.PROPERTY_JMX_CATEGORY) != null) && (! properties.get(IQueueController.PROPERTY_JMX_CATEGORY).toString().isEmpty()))
 				{
-					category = properties.get(IEventController.PROPERTY_JMX_CATEGORY).toString();
+					category = properties.get(IQueueController.PROPERTY_JMX_CATEGORY).toString();
 				}
 	
 				int counter = 2;
@@ -338,7 +338,7 @@ public class EventDispatcher implements EventDispatcherMBean
 		}
 	}
 
-	public void unregisterEventController(IEventController eventController)
+	public void unregisterEventController(IQueueController eventController)
 	{
 		writeLock.lock();
 		try

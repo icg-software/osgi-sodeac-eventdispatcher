@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -28,8 +29,8 @@ import org.sodeac.eventdispatcher.api.IPropertyBlockOperationResult;
 import org.sodeac.eventdispatcher.api.IPropertyLock;
 import org.sodeac.eventdispatcher.api.PropertyIsLockedException;
 import org.sodeac.eventdispatcher.extension.api.IExtensiblePropertyBlock;
-import org.sodeac.eventdispatcher.extension.api.IPropertyBlockModifyListener;
-import org.sodeac.eventdispatcher.extension.api.PropertyBlockModifyItem;
+import org.sodeac.eventdispatcher.api.IPropertyBlockModifyListener;
+import org.sodeac.eventdispatcher.api.PropertyBlockModifyItem;
 
 public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBlock
 {
@@ -763,7 +764,391 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	@Override
 	public IPropertyBlockOperationResult operate(IPropertyBlockOperationHandler operationHandler)
 	{
-		// TODO recognize access from same process in origin methodes
-		throw new RuntimeException("Not yet implemented");
+		UnlockedWrapper wrapper = new UnlockedWrapper();
+		List<IPropertyBlockModifyListener> listenerList = null;
+		
+		propertiesWriteLock.lock();
+		try
+		{
+			operationHandler.handle(wrapper);
+			
+			if((wrapper.modifyList != null) && (!wrapper.modifyList.isEmpty()) && (!this.modifyListenerList.isEmpty()))
+			{
+				listenerList = this.modifyListenerList;
+			}
+			if(wrapper.modifyList != null)
+			{
+				wrapper.modifyList = Collections.unmodifiableList(wrapper.modifyList);
+			}
+		}
+		finally 
+		{
+			wrapper.valid.set(false);
+			propertiesWriteLock.unlock();
+		}
+		
+		if(listenerList != null)
+		{
+			for(IPropertyBlockModifyListener listener : listenerList)
+			{
+				listener.onModifySet(wrapper.modifyList);
+			}
+		}
+		
+		return new PropertyBlockOperationResult(wrapper.modifyList);
+	}
+	
+	private class PropertyBlockOperationResult implements IPropertyBlockOperationResult
+	{
+		private  List<PropertyBlockModifyItem> modifyList = null;
+		
+		public PropertyBlockOperationResult( List<PropertyBlockModifyItem> modifyList)
+		{
+			super();
+			this.modifyList = modifyList;
+		}
+		
+		@Override
+		public List<PropertyBlockModifyItem> getModifyList()
+		{
+			return this.modifyList;
+		}
+		
+		
+	}
+	
+	private class UnlockedWrapper implements IPropertyBlock
+	{
+		private List<PropertyBlockModifyItem> modifyList = null;
+		private AtomicBoolean valid = null;
+		
+		public UnlockedWrapper()
+		{
+			super();
+			valid = new AtomicBoolean(true);
+		}
+	
+		@Override
+		public Object setProperty(String key, Object value) throws PropertyIsLockedException
+		{
+			checkValid();
+			
+			Object old = null;
+			IPropertyBlockModifyListener.ModifyType modifyType = IPropertyBlockModifyListener.ModifyType.INSERT;
+			
+			if((PropertyBlockImpl.this.lockedProperties != null) && (PropertyBlockImpl.this.lockedProperties.get(key) != null))
+			{
+				throw new PropertyIsLockedException("writable access to \"" + key + "\" denied by lock");
+			}
+			if(PropertyBlockImpl.this.properties == null)
+			{
+				PropertyBlockImpl.this.properties = new HashMap<String,Object>();
+			}
+			else
+			{
+				if(PropertyBlockImpl.this.properties.containsKey(key))
+				{
+					modifyType = IPropertyBlockModifyListener.ModifyType.UPDATE;
+				}
+				old = PropertyBlockImpl.this.properties.get(key);
+			}
+			PropertyBlockImpl.this.properties.put(key, value);
+			PropertyBlockImpl.this.propertiesCopy = null;
+			PropertyBlockImpl.this.keyList = null;
+			if(this.modifyList == null)
+			{
+				this.modifyList = new ArrayList<PropertyBlockModifyItem>();
+			}
+			this.modifyList.add(new PropertyBlockModifyItem(modifyType,key,old,value));
+			
+			return old;
+		}
+
+		@Override
+		public Map<String, Object> setPropertySet(Map<String, Object> propertySet, boolean ignoreIfEquals) throws PropertyIsLockedException
+		{
+			checkValid();
+			
+			if(propertySet == null)
+			{
+				return EMPTY_PROPERTIES;
+			}
+			
+			if(propertySet.isEmpty())
+			{
+				return EMPTY_PROPERTIES;
+			}
+			Map<String,Object> oldValue = new HashMap<String,Object>();
+			for(Entry<String, Object> entry : propertySet.entrySet())
+			{
+				oldValue.put(entry.getKey(),this.setProperty(entry.getKey(), entry.getValue()));
+			}
+			return oldValue;
+		}
+
+		@Override
+		public Object getProperty(String key)
+		{
+			checkValid();
+			
+			if(PropertyBlockImpl.this.properties == null)
+			{
+				return null;
+			}
+			return PropertyBlockImpl.this.properties.get(key);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <T> T getProperty(String key, Class<T> resultClass)
+		{
+			checkValid();
+			
+			if(PropertyBlockImpl.this.properties == null)
+			{
+				return null;
+			}
+			return (T)PropertyBlockImpl.this.properties.get(key);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <T> T getProperty(String key, Class<T> resultClass, T defaultValue)
+		{
+			checkValid();
+			
+			T typedValue = defaultValue;
+			Object current = getProperty(key);
+			if(current != null)
+			{
+				typedValue = (T)current;
+			}
+			else
+			{
+				typedValue = defaultValue;
+			}
+			return typedValue;
+		}
+
+		@Override
+		public String getNonEmptyStringProperty(String key, String defaultValue)
+		{
+			checkValid();
+			
+			String stringValue = defaultValue;
+			Object current = getProperty(key);
+			if(current != null)
+			{
+				if(! (current instanceof String))
+				{
+					current = current.toString();
+				}
+			}
+			if((current != null) && (! ((String)current).isEmpty()))
+			{
+				stringValue = (String)current;
+			}
+			else
+			{
+				stringValue = defaultValue;
+			}
+			return stringValue;
+		}
+
+		@Override
+		public Object removeProperty(String key) throws PropertyIsLockedException
+		{
+			checkValid();
+			
+			if(PropertyBlockImpl.this.properties == null)
+			{
+				return null;
+			}
+			
+			if(! properties.containsKey(key))
+			{
+				return null;
+			}
+			
+			Object oldPropertyValue = null;
+			
+			if((PropertyBlockImpl.this.lockedProperties != null) && (PropertyBlockImpl.this.lockedProperties.get(key) != null))
+			{
+				throw new PropertyIsLockedException("writable access to \"" + key + "\" denied by lock");
+			}
+				
+				
+			oldPropertyValue = PropertyBlockImpl.this.properties.get(key);
+				
+			PropertyBlockImpl.this.properties.remove(key);
+			PropertyBlockImpl.this.propertiesCopy = null;
+			PropertyBlockImpl.this.keyList = null;
+			
+			if(this.modifyList == null)
+			{
+				this.modifyList = new ArrayList<PropertyBlockModifyItem>();
+			}
+			this.modifyList.add(new PropertyBlockModifyItem(IPropertyBlockModifyListener.ModifyType.REMOVE,key,oldPropertyValue,null));
+			
+			return oldPropertyValue;
+		}
+
+		@Override
+		public Map<String, Object> getProperties()
+		{
+			checkValid();
+			
+			if(PropertyBlockImpl.this.properties == null)
+			{
+				return EMPTY_PROPERTIES;
+			}
+			
+			Map<String,Object> props = PropertyBlockImpl.this.propertiesCopy;
+			if(props == null)
+			{
+				if(PropertyBlockImpl.this.properties == null)
+				{
+					return EMPTY_PROPERTIES;
+				}
+				PropertyBlockImpl.this.propertiesCopy = Collections.unmodifiableMap(new HashMap<String,Object>(PropertyBlockImpl.this.properties));
+				props = PropertyBlockImpl.this.propertiesCopy; 
+			}
+			return props;
+		}
+
+		@Override
+		public List<String> getPropertyKeys()
+		{
+			checkValid();
+			
+			if(PropertyBlockImpl.this.properties == null)
+			{
+				return EMPTY_KEYLIST;
+			}
+			
+			if(PropertyBlockImpl.this.keyList == null)
+			{
+				PropertyBlockImpl.this.keyList = Collections.unmodifiableList(new ArrayList<String>(PropertyBlockImpl.this.properties.keySet()));
+			}
+			return PropertyBlockImpl.this.keyList;
+		}
+
+		@Override
+		public boolean isEmpty()
+		{
+			checkValid();
+			
+			if(PropertyBlockImpl.this.properties == null)
+			{
+				return false;
+			}
+			
+			return PropertyBlockImpl.this.properties.isEmpty();
+		}
+
+		@Override
+		public boolean containsKey(Object key)
+		{
+			checkValid();
+			
+			if(PropertyBlockImpl.this.properties == null)
+			{
+				return false;
+			}
+
+			return PropertyBlockImpl.this.properties.containsKey(key);
+		}
+
+		@Override
+		public Map<String, Object> clear() throws PropertyIsLockedException
+		{
+			checkValid();
+			
+			Map<String, Object> oldValues = null;
+			
+			if(PropertyBlockImpl.this.properties == null)
+			{
+				return EMPTY_PROPERTIES;
+			}
+			if(PropertyBlockImpl.this.properties.isEmpty())
+			{
+				return EMPTY_PROPERTIES;
+			}
+			
+			if((PropertyBlockImpl.this.lockedProperties != null) && (!PropertyBlockImpl.this.lockedProperties.isEmpty()))
+			{
+				throw new PropertyIsLockedException("clear failed. property block as locks");
+			}
+			
+			oldValues = new HashMap<>(PropertyBlockImpl.this.properties);
+			for(Entry<String,Object> oldEntry : oldValues.entrySet())
+			{
+				if(this.modifyList == null)
+				{
+					this.modifyList = new ArrayList<PropertyBlockModifyItem>();
+				}
+				this.modifyList.add(new PropertyBlockModifyItem(IPropertyBlockModifyListener.ModifyType.REMOVE, oldEntry.getKey(), oldEntry.getValue(), null));
+				
+			}
+				
+			PropertyBlockImpl.this.keyList = null;
+			PropertyBlockImpl.this.properties.clear();
+			PropertyBlockImpl.this.propertiesCopy = null;
+			
+			return oldValues;
+		}
+
+		@Override
+		public IPropertyLock lockProperty(String key)
+		{
+			checkValid();
+			
+			if(key == null)
+			{
+				return null;
+			}
+			
+			if(key.isEmpty())
+			{
+				return null;
+			}
+			
+			if(PropertyBlockImpl.this.lockedProperties == null)
+			{
+				PropertyBlockImpl.this.lockedProperties = new HashMap<String,UUID>();
+			}
+			else if(PropertyBlockImpl.this.lockedProperties.get(key) != null)
+			{
+				return null;
+			}
+				
+			UUID pin = UUID.randomUUID();
+			PropertyBlockImpl.this.lockedProperties.put(key, pin);
+			return new PropertyLockImpl(PropertyBlockImpl.this, key, pin);
+
+		}
+
+		@Override
+		public IPropertyBlockOperationResult operate(IPropertyBlockOperationHandler operationHandler)
+		{
+			checkValid();
+			
+			operationHandler.handle(this);
+			
+			if(this.modifyList == null)
+			{
+				return new PropertyBlockOperationResult(null);
+			}
+			return new PropertyBlockOperationResult(Collections.unmodifiableList(this.modifyList));
+		}
+		
+		private void checkValid()
+		{
+			if(! this.valid.get())
+			{
+				throw new RuntimeException("PropertyBlock Wrapper not valid");
+			}
+		}
+		
 	}
 }

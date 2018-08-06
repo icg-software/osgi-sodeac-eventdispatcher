@@ -15,7 +15,7 @@ import java.util.Map;
 import javax.management.ObjectName;
 
 import org.sodeac.eventdispatcher.api.IDescriptionProvider;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
 import org.sodeac.eventdispatcher.api.IOnFireEvent;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
@@ -29,12 +29,12 @@ import org.sodeac.eventdispatcher.api.IStateInfoProvider;
 
 public class EventController implements EventControllerMBean
 {
-	public IEventController eventController;
+	public IQueueController eventController;
 	public Map<String,?> properties;
 	public ObjectName controllerObjectName;
 	public String objectNamePrefix; 
 	
-	public EventController(IEventController eventController,Map<String,?> properties,ObjectName name, String objectNamePrefix)
+	public EventController(IQueueController eventController,Map<String,?> properties,ObjectName name, String objectNamePrefix)
 	{
 		super();
 		this.eventController = eventController;

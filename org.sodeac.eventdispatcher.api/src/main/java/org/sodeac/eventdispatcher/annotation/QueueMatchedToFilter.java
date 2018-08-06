@@ -13,15 +13,26 @@ package org.sodeac.eventdispatcher.annotation;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.MetricsRequirement;
+import org.sodeac.eventdispatcher.api.PrivateQueueWorkerRequirement;
+
+@Documented
 @Retention(RUNTIME)
 @Target(TYPE)
-@EventDispatcherAnnotation
-@Repeatable(EventQueueConfigurationFilters.class)
-public @interface EventQueueConfigurationFilter
+@EventDispatcherAnnotation(tag="org.sodeac.eventdispatcher.api.IEventDispatcher")
+@Repeatable(QueuesMatchedToFilter.class)
+public @interface QueueMatchedToFilter
 {
 	String value();
+	String dispatcherId() default IEventDispatcher.DEFAULT_DISPATCHER_ID;
+	String name() default "";
+	String category() default "";
+	MetricsRequirement queueMetricRequirement() default MetricsRequirement.RequireMetrics;
+	PrivateQueueWorkerRequirement privateQueueWorkerRequirement() default PrivateQueueWorkerRequirement.NoPreferenceOrRequirement;
 }

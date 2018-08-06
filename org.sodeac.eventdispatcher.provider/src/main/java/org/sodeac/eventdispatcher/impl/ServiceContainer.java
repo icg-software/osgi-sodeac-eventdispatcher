@@ -11,24 +11,126 @@
 package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.InvalidSyntaxException;
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IQueueService;
+import org.sodeac.eventdispatcher.api.MetricsRequirement;
+import org.sodeac.eventdispatcher.api.QueueComponentConfiguration;
+import org.sodeac.xuri.ldapfilter.Attribute;
+import org.sodeac.xuri.ldapfilter.AttributeLinker;
+import org.sodeac.xuri.ldapfilter.IFilterItem;
+import org.sodeac.xuri.ldapfilter.LDAPFilterDecodingHandler;
 
 public class ServiceContainer
 {
-	private Map<String, ?> properties = null;
-	private IQueueService queueService = null;
-	private boolean registered = false;
-
-	private volatile List<Filter> cachedServiceFilter = null;
+	public ServiceContainer
+	(
+		EventDispatcherImpl dispatcher, 
+		List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList, 
+		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList,
+		List<QueueComponentConfiguration.QueueServiceConfiguration> serviceConfigurationList
+	)
+	{
+		super();
+		this.dispatcher = dispatcher;
+		this.boundByIdList = boundByIdList;
+		this.boundedByQueueConfigurationList = boundedByQueueConfigurationList;
+		if((serviceConfigurationList != null) && (! serviceConfigurationList.isEmpty()))
+		{
+			this.serviceConfiguration = serviceConfigurationList.get(0);
+		}
+		else
+		{
+			this.serviceConfiguration = new QueueComponentConfiguration.QueueServiceConfiguration(UUID.randomUUID().toString());
+		}
+		this.createFilterObjectList();
+	}
+	
+	private EventDispatcherImpl dispatcher;
+	private List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList = null;
+	private List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
+	private QueueComponentConfiguration.QueueServiceConfiguration serviceConfiguration = null;
+	
+	private volatile Map<String, ?> properties = null;
+	private volatile IQueueService queueService = null;
+	
+	private volatile boolean registered = false;
+	
+	private volatile List<ServiceFilterObjects> filterObjectList;
+	private volatile Set<String> filterAttributes;
+	
+	private void createFilterObjectList()
+	{
+		List<ServiceFilterObjects> list = new ArrayList<ServiceFilterObjects>();
+		if(this.boundedByQueueConfigurationList != null)
+		{
+			for(QueueComponentConfiguration.BoundedByQueueConfiguration boundedByQueueConfiguration : boundedByQueueConfigurationList)
+			{
+				if(boundedByQueueConfiguration.getLdapFilter() == null)
+				{
+					continue;
+				}
+				if(boundedByQueueConfiguration.getLdapFilter().isEmpty())
+				{
+					continue;
+				}
+				ServiceFilterObjects controllerFilterObjects = new ServiceFilterObjects();
+				controllerFilterObjects.bound = boundedByQueueConfiguration;
+				controllerFilterObjects.filterExpression = boundedByQueueConfiguration.getLdapFilter();
+				
+				try
+				{
+					controllerFilterObjects.filter = FrameworkUtil.createFilter(controllerFilterObjects.filterExpression);
+					
+					LinkedList<IFilterItem> discoverLDAPItem = new LinkedList<IFilterItem>();
+					IFilterItem filter = LDAPFilterDecodingHandler.getInstance().decodeFromString(controllerFilterObjects.filterExpression);
+					
+					discoverLDAPItem.addLast(filter);
+					
+					while(! discoverLDAPItem.isEmpty())
+					{
+						filter = discoverLDAPItem.removeFirst();
+						
+						if(filter instanceof Attribute) 
+						{
+							controllerFilterObjects.attributes.add(((Attribute)filter).getName());
+						}
+						else if(filter instanceof AttributeLinker)
+						{
+							discoverLDAPItem.addAll(((AttributeLinker)filter).getLinkedItemList());
+						}
+					}
+					
+					list.add(controllerFilterObjects);
+				}
+				catch (Exception e) 
+				{
+					dispatcher.log(LogService.LOG_ERROR,"parse bounded queue configuration " + boundedByQueueConfiguration.getLdapFilter(),e);
+				}
+			}
+		}
+		this.filterObjectList = list;
+		this.filterAttributes = new HashSet<String>();
+		for(ServiceFilterObjects controllerFilterObjects : this.filterObjectList)
+		{
+			if(controllerFilterObjects.attributes != null)
+			{
+				for(String attribute : controllerFilterObjects.attributes)
+				{
+					this.filterAttributes.add(attribute);
+				}
+			}
+		}
+	}
+	
 	
 	public Map<String, ?> getProperties()
 	{
@@ -77,50 +179,100 @@ public class ServiceContainer
 		return stringValue;
 	}
 	
-	public void clearCache()
+	public void clean()
 	{
-		this.cachedServiceFilter = null;
+		this.dispatcher = null;
+		this.properties = null;
+		this.queueService = null;
+		this.boundByIdList = null;
+		this.boundedByQueueConfigurationList = null;
+		this.serviceConfiguration = null;
+		this.filterObjectList = null;
+		this.filterAttributes = null;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public synchronized List<Filter> getGetQueueMatchFilter() throws InvalidSyntaxException
+	public boolean isDisableQueueMetrics()
 	{
-		List<Filter> serviceFilter = this.cachedServiceFilter;
-		if(serviceFilter != null)
+		int countPreferMetrics = 0;
+		int countPreferNoMetrics = 0;
+		if(this.boundByIdList != null)
 		{
-			return serviceFilter;
+			for(QueueComponentConfiguration.BoundedByQueueId boundedById : this.boundByIdList)
+			{
+				if(boundedById.getQueueMetricsRequirement() == MetricsRequirement.RequireMetrics)
+				{
+					return false;
+				}
+				if(boundedById.getQueueMetricsRequirement() == MetricsRequirement.PreferMetrics)
+				{
+					countPreferMetrics++;
+				}
+				else if(boundedById.getQueueMetricsRequirement() == MetricsRequirement.PreferNoMetrics)
+				{
+					countPreferNoMetrics++;
+				}
+			}
 		}
-		serviceFilter = new ArrayList<Filter>();
-		List<String> queueConfigurationFilterList = null;
-		if(this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String)
+		if(this.boundedByQueueConfigurationList != null)
 		{
-			queueConfigurationFilterList = new ArrayList<String>();
-			queueConfigurationFilterList.add((String)this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
+			for(QueueComponentConfiguration.BoundedByQueueConfiguration boundedByConfiguration : this.boundedByQueueConfigurationList)
+			{
+				if(boundedByConfiguration.getQueueMetricsRequirement() == MetricsRequirement.RequireMetrics)
+				{
+					return false;
+				}
+				if(boundedByConfiguration.getQueueMetricsRequirement() == MetricsRequirement.PreferMetrics)
+				{
+					countPreferMetrics++;
+				}
+				else if(boundedByConfiguration.getQueueMetricsRequirement() == MetricsRequirement.PreferNoMetrics)
+				{
+					countPreferNoMetrics++;
+				}
+			}
 		}
-		else if(this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String[])
-		{
-			queueConfigurationFilterList = new ArrayList<String>(Arrays.asList((String[])this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER)));
-		}
-		else if(this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof Collection<?>)
-		{
-			queueConfigurationFilterList = new ArrayList<String>((Collection<String>)this.properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
-		}
-		else
-		{
-			queueConfigurationFilterList = new ArrayList<String>();
-		}
-		
-		if(queueConfigurationFilterList.isEmpty() )
-		{
-			this.cachedServiceFilter = serviceFilter;
-			return null;
-		}
-		
-		for(String queueConfigurationFilter : queueConfigurationFilterList)
-		{
-			serviceFilter.add(FrameworkUtil.createFilter(queueConfigurationFilter));
-		}
-		this.cachedServiceFilter = serviceFilter;
-		return serviceFilter;
+		return countPreferNoMetrics > countPreferMetrics;
+	}
+	
+	public boolean isDisableJobMetrics()
+	{
+		return serviceConfiguration.getJobMetricsRequirement() == MetricsRequirement.PreferNoMetrics;
+	}
+	
+	public List<ServiceFilterObjects> getFilterObjectList()
+	{
+		return filterObjectList;
+	}
+
+	public List<QueueComponentConfiguration.BoundedByQueueId> getBoundByIdList()
+	{
+		return boundByIdList;
+	}
+
+
+	public List<QueueComponentConfiguration.BoundedByQueueConfiguration> getBoundedByQueueConfigurationList()
+	{
+		return boundedByQueueConfigurationList;
+	}
+
+
+	public QueueComponentConfiguration.QueueServiceConfiguration getServiceConfiguration()
+	{
+		return serviceConfiguration;
+	}
+
+	public Set<String> getFilterAttributeSet()
+	{
+		return filterAttributes;
+	}
+	
+	
+	
+	public class ServiceFilterObjects
+	{
+		QueueComponentConfiguration.BoundedByQueueConfiguration bound = null;
+		String filterExpression = null;
+		Filter filter = null;
+		Set<String> attributes = new HashSet<String>();
 	}
 }

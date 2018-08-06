@@ -102,26 +102,4 @@ public class Capability
 	{
 		return new ImmutableCapability(this);
 	}
-	
-	public static List<Capability> toList(Capability[] capabilities)
-	{
-		List<Capability> list = new ArrayList<Capability>();
-		if(capabilities == null)
-		{
-			return list;
-		}
-		for(Capability capability : capabilities)
-		{
-			if(capability == null)
-			{
-				continue;
-			}
-			if(list.contains(capability))
-			{
-				continue;
-			}
-			list.add(capability);
-		}
-		return list;
-	}
 }

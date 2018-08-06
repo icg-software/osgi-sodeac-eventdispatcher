@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2018 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -11,10 +11,12 @@
 package org.sodeac.eventdispatcher.api;
 
 /**
- * 
- * An extension interface for {@link IEventController} to disable metrics for observed {@link IQueue} and managed {@link IQueueJob}
+ * Queue components are services bounded to any number of {@link IQueue}.
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IDisableMetricsOnQueueObserve extends IEventController{}
+public interface IQueueComponent
+{
+
+}

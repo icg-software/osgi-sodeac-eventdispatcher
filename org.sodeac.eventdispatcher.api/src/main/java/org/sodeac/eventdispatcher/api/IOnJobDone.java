@@ -12,12 +12,12 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} to consume notifications of finishing a job
+ * An extension interface for {@link IQueueController} to consume notifications of finishing a job
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnJobDone extends IEventController
+public interface IOnJobDone extends IQueueController
 {
 	/**
 	 * This is fired, if {@link IQueueJob} remove a scheduled {@link IQueuedEvent}

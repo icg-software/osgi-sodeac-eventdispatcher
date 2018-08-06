@@ -41,7 +41,7 @@ import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.AttributeType;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.sodeac.eventdispatcher.api.IDescriptionProvider;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
 import org.sodeac.eventdispatcher.api.IOnJobError;
@@ -57,11 +57,11 @@ import org.sodeac.eventdispatcher.common.job.FireAsyncEvent;
 @Component
 (
 	name				= "DirectoryWatcherController"				,
-	service				= IEventController.class					,
+	service				= IQueueController.class					,
 	configurationPid	= DirectoryWatcherController.SERVICE_PID	, 
 	configurationPolicy	= ConfigurationPolicy.REQUIRE
 )
-public class DirectoryWatcherController implements IEventController, IOnScheduleEvent, IOnJobError, IOnQueueObserve, IOnQueueReverse,IDescriptionProvider,IStateInfoProvider
+public class DirectoryWatcherController implements IQueueController, IOnScheduleEvent, IOnJobError, IOnQueueObserve, IOnQueueReverse,IDescriptionProvider,IStateInfoProvider
 {
 	public static final String SERVICE_PID = "org.sodeac.eventdispatcher.common.controller.directorywatcher";
 	

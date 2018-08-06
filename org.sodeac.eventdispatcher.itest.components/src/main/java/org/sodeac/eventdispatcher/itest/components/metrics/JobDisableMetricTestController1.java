@@ -17,18 +17,18 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 
 @Component
 (
 	immediate=true,
-	service={IEventController.class,EventHandler.class},
+	service={IQueueController.class,EventHandler.class},
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID+"="+JobDisableMetricTestController1.QUEUE_ID,
 		EventConstants.EVENT_TOPIC+"=" + JobDisableMetricTestController1.RUN_EVENT,
-		IEventController.PROPERTY_DISABLE_METRICS+"=true"
+		IQueueController.PROPERTY_DISABLE_METRICS+"=true"
 	}
 )
 public class JobDisableMetricTestController1 extends JobMetricTestController

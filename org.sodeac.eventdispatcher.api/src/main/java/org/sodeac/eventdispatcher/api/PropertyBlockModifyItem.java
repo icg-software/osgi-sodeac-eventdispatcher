@@ -8,9 +8,9 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.extension.api;
+package org.sodeac.eventdispatcher.api;
 
-import org.sodeac.eventdispatcher.extension.api.IPropertyBlockModifyListener.ModifyType;
+import org.sodeac.eventdispatcher.api.IPropertyBlockModifyListener.ModifyType;
 
 public class PropertyBlockModifyItem
 {

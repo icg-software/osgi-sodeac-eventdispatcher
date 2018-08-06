@@ -20,12 +20,14 @@ public class ConsumeEventHandler implements EventHandler
 	private IEventDispatcher dispatcher = null;
 	private String queueId = null;
 	private ServiceRegistration<EventHandler> registration = null;
+	private String key = null;
 	
-	public ConsumeEventHandler(IEventDispatcher dispatcher,String queueId)
+	public ConsumeEventHandler(IEventDispatcher dispatcher,String queueId, String key)
 	{
 		super();
 		this.dispatcher = dispatcher;
 		this.queueId = queueId;
+		this.key = key;
 	}
 
 	@Override
@@ -47,6 +49,11 @@ public class ConsumeEventHandler implements EventHandler
 	public void setRegistration(ServiceRegistration<EventHandler> registration)
 	{
 		this.registration = registration;
+	}
+
+	public String getKey()
+	{
+		return key;
 	}
 	
 }

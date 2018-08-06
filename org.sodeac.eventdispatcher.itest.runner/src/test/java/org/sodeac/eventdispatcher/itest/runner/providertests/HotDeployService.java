@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.itest.runner.providertests;
 
 import java.util.List;
 
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
@@ -20,7 +20,7 @@ import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
 
-public class HotDeployService implements IEventController, IQueueService
+public class HotDeployService implements IQueueController, IQueueService
 {
 
 	private int count = 0;

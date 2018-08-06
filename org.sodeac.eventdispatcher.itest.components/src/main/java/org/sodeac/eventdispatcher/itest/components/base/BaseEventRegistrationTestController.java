@@ -14,7 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 import org.osgi.service.component.annotations.Component;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IOnJobError;
@@ -32,14 +32,14 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 @Component
 (
 	immediate=true,
-	service={IEventController.class},
+	service={IQueueController.class},
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID+"="+BaseEventRegistrationTestController.QUEUE_ID,
-		IEventController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + BaseEventRegistrationTestController.EVENT
+		IQueueController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + BaseEventRegistrationTestController.EVENT
 	}
 )
-public class BaseEventRegistrationTestController extends AbstractBaseTestController implements IEventController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseEventRegistrationTestController extends AbstractBaseTestController implements IQueueController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final String 	QUEUE_ID 		= "baseeventregistrationtestqueue";
 	public static final String 	EVENT 			= "org/sodeac/eventdispatcher/itest/baseeventregistrationtest/jobevent";

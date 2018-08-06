@@ -13,13 +13,21 @@ package org.sodeac.eventdispatcher.annotation;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.sodeac.eventdispatcher.api.EventType;
+
+@Documented
 @Retention(RUNTIME)
 @Target(TYPE)
-@EventDispatcherAnnotation
-public @interface EventQueueConfigurationFilters
+@EventDispatcherAnnotation(tag="org.sodeac.eventdispatcher.api.IEventDispatcher")
+@Repeatable(SubscribeEvents.class)
+public @interface SubscribeEvent
 {
-	public EventQueueConfigurationFilter[] value();
+	String topic();
+	String filter() default "";
+	EventType eventType() default EventType.PublishedByEventAdmin;
 }

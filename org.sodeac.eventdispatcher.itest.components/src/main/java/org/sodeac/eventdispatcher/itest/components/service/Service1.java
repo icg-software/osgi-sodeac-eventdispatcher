@@ -1,5 +1,6 @@
 package org.sodeac.eventdispatcher.itest.components.service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -7,7 +8,7 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveService;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.wiring.Capability;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.wiring.capability.DomainCapability;
@@ -15,13 +16,13 @@ import org.sodeac.eventdispatcher.common.reactiveservice.api.wiring.capability.S
 
 @Component
 (
-	service={IEventController.class,IReactiveService.class},
+	service={IQueueController.class,IReactiveService.class},
 	property=
 	{
 		IReactiveService.PROPERTY_SERVICE_QUEUE_ID+"="+Service1.DOMAIN + ".queue"
 	}
 )
-public class Service1 implements IEventController, IReactiveService
+public class Service1 implements IQueueController, IReactiveService
 {
 	public static final String DOMAIN = "org.sodeac.eventdispatcher.itest";
 	public static final String SERVICE = "org.sodeac.eventdispatcher.itest.service1";
@@ -29,7 +30,7 @@ public class Service1 implements IEventController, IReactiveService
 	@Override
 	public List<Capability> getCapabilityList()
 	{
-		return Capability.toList(new Capability[]
+		return Arrays.asList(new Capability[]
 		{
 			new DomainCapability(Service1.DOMAIN),
 			new ServiceCapability(Service1.SERVICE)

@@ -11,43 +11,111 @@
 package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.Set;
 
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.InvalidSyntaxException;
-import org.sodeac.eventdispatcher.api.IDisableMetricsOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IEnableMetricsOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IEventController;
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
-
+import org.osgi.service.log.LogService;
+import org.sodeac.eventdispatcher.api.IQueueController;
+import org.sodeac.eventdispatcher.api.MetricsRequirement;
+import org.sodeac.eventdispatcher.api.QueueComponentConfiguration;
+import org.sodeac.xuri.ldapfilter.Attribute;
+import org.sodeac.xuri.ldapfilter.AttributeLinker;
+import org.sodeac.xuri.ldapfilter.IFilterItem;
+import org.sodeac.xuri.ldapfilter.LDAPFilterDecodingHandler;
 public class ControllerContainer
 {
-	public ControllerContainer()
+	public ControllerContainer(EventDispatcherImpl dispatcher,List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList, List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList, List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList)
 	{
 		super();
-		this.consumeEventHandlerListLock = new ReentrantReadWriteLock();
-		this.consumeEventHandlerListWriteLock = consumeEventHandlerListLock.writeLock();
-		this.consumeEventHandlerListReadLock = consumeEventHandlerListLock.readLock();
+		this.boundedByQueueConfigurationList = boundedByQueueConfigurationList;
+		this.boundByIdList = boundByIdList;
+		this.subscribeEventList = subscribeEventList;
+		this.dispatcher = dispatcher;
+		this.createFilterObjectList();
 	}
 	
-	private ReentrantReadWriteLock consumeEventHandlerListLock;
-	private ReadLock consumeEventHandlerListReadLock;
-	private WriteLock consumeEventHandlerListWriteLock;
+	private EventDispatcherImpl dispatcher = null;
+	private volatile Map<String, ?> properties = null;
+	private volatile IQueueController queueController = null;
+	private List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList = null;
+	private List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
+	private List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList = null;
 	
-	private Map<String, ?> properties = null;
-	private IEventController eventController = null;
-	private volatile List<ConsumeEventHandler> consumeEventHandlerList = null;
-	private volatile List<ConsumeEventHandler> consumeEventHandlerCopyeList = null;
-	private boolean registered = false;
+	private volatile boolean registered = false;
 	
-	private String cachedControllerQueueConfigurationFilter = null;
-	private Filter cachedControllerFilter = null;
+	private volatile List<ControllerFilterObjects> filterObjectList;
+	private volatile Set<String> filterAttributes;
+	
+	private void createFilterObjectList()
+	{
+		List<ControllerFilterObjects> list = new ArrayList<ControllerFilterObjects>();
+		if(this.boundedByQueueConfigurationList != null)
+		{
+			for(QueueComponentConfiguration.BoundedByQueueConfiguration boundedByQueueConfiguration : boundedByQueueConfigurationList)
+			{
+				if(boundedByQueueConfiguration.getLdapFilter() == null)
+				{
+					continue;
+				}
+				if(boundedByQueueConfiguration.getLdapFilter().isEmpty())
+				{
+					continue;
+				}
+				ControllerFilterObjects controllerFilterObjects = new ControllerFilterObjects();
+				controllerFilterObjects.bound = boundedByQueueConfiguration;
+				controllerFilterObjects.filterExpression = boundedByQueueConfiguration.getLdapFilter();
+				
+				try
+				{
+					controllerFilterObjects.filter = FrameworkUtil.createFilter(controllerFilterObjects.filterExpression);
+					
+					LinkedList<IFilterItem> discoverLDAPItem = new LinkedList<IFilterItem>();
+					IFilterItem filter = LDAPFilterDecodingHandler.getInstance().decodeFromString(controllerFilterObjects.filterExpression);
+					
+					discoverLDAPItem.addLast(filter);
+					
+					while(! discoverLDAPItem.isEmpty())
+					{
+						filter = discoverLDAPItem.removeFirst();
+						
+						if(filter instanceof Attribute) 
+						{
+							controllerFilterObjects.attributes.add(((Attribute)filter).getName());
+						}
+						else if(filter instanceof AttributeLinker)
+						{
+							discoverLDAPItem.addAll(((AttributeLinker)filter).getLinkedItemList());
+						}
+					}
+					
+					list.add(controllerFilterObjects);
+				}
+				catch (Exception e) 
+				{
+					dispatcher.log(LogService.LOG_ERROR,"parse bounded queue configuration " + boundedByQueueConfiguration.getLdapFilter(),e);
+				}
+			}
+		}
+		this.filterObjectList = list;
+		this.filterAttributes = new HashSet<String>();
+		for(ControllerFilterObjects controllerFilterObjects : this.filterObjectList)
+		{
+			if(controllerFilterObjects.attributes != null)
+			{
+				for(String attribute : controllerFilterObjects.attributes)
+				{
+					this.filterAttributes.add(attribute);
+				}
+			}
+		}
+	}
+	
+	
 	
 	public Map<String, ?> getProperties()
 	{
@@ -57,13 +125,13 @@ public class ControllerContainer
 	{
 		this.properties = properties;
 	}
-	public IEventController getEventController()
+	public IQueueController getQueueController()
 	{
-		return eventController;
+		return queueController;
 	}
-	public void setEventController(IEventController eventController)
+	public void setQueueController(IQueueController queueController)
 	{
-		this.eventController = eventController;
+		this.queueController = queueController;
 	}
 	public boolean isRegistered()
 	{
@@ -73,141 +141,89 @@ public class ControllerContainer
 	{
 		this.registered = registered;
 	}
-	public ConsumeEventHandler addConsumeEventHandler(ConsumeEventHandler consumeEventHandler)
+	public List<QueueComponentConfiguration.BoundedByQueueConfiguration> getBoundedByQueueConfigurationList()
 	{
-		consumeEventHandlerListWriteLock.lock();
-		try
-		{
-			if(this.consumeEventHandlerList == null)
-			{
-				this.consumeEventHandlerList = new ArrayList<ConsumeEventHandler>();
-			}
-			this.consumeEventHandlerList.add(consumeEventHandler);
-			consumeEventHandlerCopyeList = null;
-			return consumeEventHandler;
-		}
-		finally
-		{
-			consumeEventHandlerListWriteLock.unlock();
-		}
+		return boundedByQueueConfigurationList;
+	}
+	public List<QueueComponentConfiguration.BoundedByQueueId> getBoundByIdList()
+	{
+		return boundByIdList;
+	}
+	public List<QueueComponentConfiguration.SubscribeEvent> getSubscribeEventList()
+	{
+		return subscribeEventList;
 	}
 	
-	public void removeConsumeEventHandler(ConsumeEventHandler consumeEventHandler)
+	public List<ControllerFilterObjects> getFilterObjectList()
 	{
-		consumeEventHandlerListWriteLock.lock();
-		try
-		{
-			consumeEventHandlerCopyeList = null;
-			
-			if(this.consumeEventHandlerList == null)
-			{
-				return ;
-			}
-			
-			while(this.consumeEventHandlerList.remove(consumeEventHandler)) {};
-		}
-		finally
-		{
-			consumeEventHandlerListWriteLock.unlock();
-		}
+		return filterObjectList;
 	}
-	
-	public List<ConsumeEventHandler> getConsumeEventHandlerList()
+
+	public Set<String> getFilterAttributeSet()
 	{
-		if(this.consumeEventHandlerList == null)
-		{
-			return null;
-		}
-		consumeEventHandlerListReadLock.lock();
-		try
-		{
-			if(consumeEventHandlerCopyeList == null)
-			{
-				consumeEventHandlerCopyeList = Collections.unmodifiableList(new ArrayList<ConsumeEventHandler>(consumeEventHandlerList));
-			}
-			return consumeEventHandlerCopyeList;
-		}
-		finally 
-		{
-			consumeEventHandlerListReadLock.unlock();
-		}
-		
+		return filterAttributes;
 	}
-	
-	public String getNonEmptyStringProperty(String key, String defaultValue)
+
+	public boolean isDisableQueueMetrics()
 	{
-		String stringValue = defaultValue;
-		Object current = this.properties.get(key);
-		if(current != null)
+		int countPreferMetrics = 0;
+		int countPreferNoMetrics = 0;
+		if(this.boundByIdList != null)
 		{
-			if(! (current instanceof String))
+			for(QueueComponentConfiguration.BoundedByQueueId boundedById : this.boundByIdList)
 			{
-				current = current.toString();
-			}
-		}
-		if((current != null) && (! ((String)current).isEmpty()))
-		{
-			stringValue = (String)current;
-		}
-		else
-		{
-			stringValue = defaultValue;
-		}
-		return stringValue;
-	}
-	
-	public boolean isEnableMetrics()
-	{
-		boolean enableMetrics = eventController instanceof IEnableMetricsOnQueueObserve;
-		boolean disableMetrics = isDisableMetrics();
-		if(disableMetrics)
-		{
-			enableMetrics = false;
-		}
-		return enableMetrics;
-	}
-	
-	public boolean isDisableMetrics()
-	{
-		boolean disableMetrics = eventController instanceof IDisableMetricsOnQueueObserve;
-		if(! disableMetrics)
-		{
-			Object disableMetricsProperty = properties.get(IEventController.PROPERTY_DISABLE_METRICS);
-			if(disableMetricsProperty != null)
-			{
-				if(disableMetricsProperty instanceof Boolean)
+				if(boundedById.getQueueMetricsRequirement() == MetricsRequirement.RequireMetrics)
 				{
-					disableMetrics = (Boolean)disableMetricsProperty;
+					return false;
 				}
-				else if (disableMetricsProperty instanceof String)
+				if(boundedById.getQueueMetricsRequirement() == MetricsRequirement.PreferMetrics)
 				{
-					disableMetrics = ((String)disableMetricsProperty).equalsIgnoreCase("true");
+					countPreferMetrics++;
 				}
-				else
+				else if(boundedById.getQueueMetricsRequirement() == MetricsRequirement.PreferNoMetrics)
 				{
-					disableMetrics = disableMetricsProperty.toString().equalsIgnoreCase("true");
+					countPreferNoMetrics++;
 				}
 			}
 		}
-		return disableMetrics;
+		if(this.boundedByQueueConfigurationList != null)
+		{
+			for(QueueComponentConfiguration.BoundedByQueueConfiguration boundedByConfiguration : this.boundedByQueueConfigurationList)
+			{
+				if(boundedByConfiguration.getQueueMetricsRequirement() == MetricsRequirement.RequireMetrics)
+				{
+					return false;
+				}
+				if(boundedByConfiguration.getQueueMetricsRequirement() == MetricsRequirement.PreferMetrics)
+				{
+					countPreferMetrics++;
+				}
+				else if(boundedByConfiguration.getQueueMetricsRequirement() == MetricsRequirement.PreferNoMetrics)
+				{
+					countPreferNoMetrics++;
+				}
+			}
+		}
+		return countPreferNoMetrics > countPreferMetrics;
 	}
 	
-	public synchronized Filter getGetQueueMatchFilter() throws InvalidSyntaxException
+	public void clean()
 	{
+		this.dispatcher = null;
+		this.properties = null;
+		this.queueController = null;
+		this.boundByIdList = null;
+		this.boundedByQueueConfigurationList = null;
+		this.subscribeEventList = null;
+		this.filterObjectList = null;
+		this.filterAttributes = null;
+	}
+	
+	public class ControllerFilterObjects
+	{
+		QueueComponentConfiguration.BoundedByQueueConfiguration bound = null;
+		String filterExpression = null;
 		Filter filter = null;
-		String queueConfigurationFilter = getNonEmptyStringProperty(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER,"");
-		if(queueConfigurationFilter.isEmpty())
-		{
-			return filter;
-		}
-		
-		if((cachedControllerQueueConfigurationFilter == null) || (!cachedControllerQueueConfigurationFilter.equals(queueConfigurationFilter)))
-		{
-			cachedControllerFilter = FrameworkUtil.createFilter(queueConfigurationFilter);
-			cachedControllerQueueConfigurationFilter = queueConfigurationFilter;
-		}
-			
-		filter = cachedControllerFilter;
-		return filter;
+		Set<String> attributes = new HashSet<String>();
 	}
 }

@@ -27,10 +27,13 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IPropertyBlock;
+import org.sodeac.eventdispatcher.api.IPropertyBlockOperationHandler;
+import org.sodeac.eventdispatcher.api.IPropertyBlockOperationResult;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveService;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveServiceRegistrationAdapter;
@@ -138,7 +141,7 @@ public class ServiceManagementControllerRegistration
 			
 			Dictionary<String, Object> properties = new Hashtable<String, Object>();
 			properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, registration.serviceQueueId);
-			registration.controllerServiceRegistration = this.context.getBundleContext().registerService(IEventController.class, registration.registrationController, properties);
+			registration.controllerServiceRegistration = this.context.getBundleContext().registerService(IQueueController.class, registration.registrationController, properties);
 			
 			this.services.add(registration);
 			
@@ -185,7 +188,7 @@ public class ServiceManagementControllerRegistration
 	
 	private class EventDrivenServiceRegistration
 	{
-		private ServiceRegistration<IEventController> controllerServiceRegistration;
+		private ServiceRegistration<IQueueController> controllerServiceRegistration;
 		private RegistrationController registrationController ;
 		private ServiceReference<IReactiveService> serviceServiceReference;
 		private IReactiveService service;
@@ -193,7 +196,7 @@ public class ServiceManagementControllerRegistration
 		private Dictionary<String, Object> serviceProperties;
 	}
 	
-	private class RegistrationController implements IEventController, IOnQueueObserve, IOnQueueReverse
+	private class RegistrationController implements IQueueController, IOnQueueObserve, IOnQueueReverse
 	{
 		private EventDrivenServiceRegistration eventDrivenServiceRegistration;
 		private RegistrationController (EventDrivenServiceRegistration eventDrivenServiceRegistration)
@@ -220,12 +223,19 @@ public class ServiceManagementControllerRegistration
 		@Override
 		public void onQueueObserve(IQueue queue)
 		{
-			IReactiveServiceRegistrationAdapter serviceRegistrationAdapter = queue.getConfigurationPropertyBlock().getAdapter(IReactiveServiceRegistrationAdapter.class);
-			if(serviceRegistrationAdapter == null)
+			queue.getConfigurationPropertyBlock().operate(new IPropertyBlockOperationHandler()
 			{
-				serviceRegistrationAdapter = new ReactiveServiceRegistrationAdapter(queue);
-				queue.getConfigurationPropertyBlock().setAdapter(IReactiveServiceRegistrationAdapter.class,serviceRegistrationAdapter);
-			}
+				
+				@Override
+				public void handle(IPropertyBlock propertyBlock)
+				{
+					if(propertyBlock.getAdapter(IReactiveServiceRegistrationAdapter.class) == null)
+					{
+						propertyBlock.setAdapter(IReactiveServiceRegistrationAdapter.class,new ReactiveServiceRegistrationAdapter(queue));
+					}
+				}
+			});
+			IReactiveServiceRegistrationAdapter serviceRegistrationAdapter = queue.getConfigurationPropertyBlock().getAdapter(IReactiveServiceRegistrationAdapter.class);
 			Dictionary<String, Object> properties = new Hashtable<String, Object>();
 			for(String propertyKey : this.eventDrivenServiceRegistration.serviceServiceReference.getPropertyKeys())
 			{

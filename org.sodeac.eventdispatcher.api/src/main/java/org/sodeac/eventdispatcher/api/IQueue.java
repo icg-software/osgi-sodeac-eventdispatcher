@@ -19,7 +19,7 @@ import org.osgi.framework.Filter;
 import org.osgi.service.event.Event;
 
 /**
- * API for event-queues. {@link IQueue}s are configured by one or more {@link IEventController}s. 
+ * API for event-queues. {@link IQueue}s are configured by one or more {@link IQueueController}s. 
  * All collected osgi-{@link org.osgi.service.event.Event}s are wrapped by {@link IQueuedEvent}. 
  * {@link IQueuedEvent}s can be processed by {@link IQueueJob}s.
  * 
@@ -222,7 +222,7 @@ public interface IQueue
 	public IPropertyBlock getJobPropertyBlock(String id);
 	
 	/**
-	 * Sends a signal. All {@link IEventController} manage this {@link IQueue} and implements {@link IOnQueueSignal} will notify asynchronously by queueworker.
+	 * Sends a signal. All {@link IQueueController} manage this {@link IQueue} and implements {@link IOnQueueSignal} will notify asynchronously by queueworker.
 	 * 
 	 * @param signal
 	 */
@@ -230,7 +230,7 @@ public interface IQueue
 	
 	/**
 	 * Sends an osgi-{@link org.osgi.service.event.Event} synchronously. 
-	 * Following this all {@link IEventController} manage this {@link IQueue} and implements {@link IOnFireEvent} will notify asynchronously by queueworker.
+	 * Following this all {@link IQueueController} manage this {@link IQueue} and implements {@link IOnFireEvent} will notify asynchronously by queueworker.
 	 * 
 	 * @param topic event topic
 	 * @param properties event properties
@@ -239,7 +239,7 @@ public interface IQueue
 	
 	/**
 	 * Post an osgi-{@link org.osgi.service.event.Event} asynchronously. 
-	 * Following this all {@link IEventController} manage this {@link IQueue} and implements {@link IOnFireEvent} will notify asynchronously by queueworker.
+	 * Following this all {@link IQueueController} manage this {@link IQueue} and implements {@link IOnFireEvent} will notify asynchronously by queueworker.
 	 * 
 	 * @param topic event topic
 	 * @param properties event properties
@@ -251,7 +251,7 @@ public interface IQueue
 	 * 
 	 * @param enabled enable metrics capabilities if true, otherwise disable metrics capabilities
 	 */
-	public void  setMetricsEnabled(boolean enabled);
+	public void  setQueueMetricsEnabled(boolean enabled);
 	
 	/**
 	 * 

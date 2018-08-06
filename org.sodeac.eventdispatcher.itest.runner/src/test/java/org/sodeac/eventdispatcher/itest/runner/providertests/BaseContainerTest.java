@@ -1466,7 +1466,7 @@ public class BaseContainerTest extends AbstractTest
 		
 	}
 	
-	@Test(timeout=12000)
+	@Test(timeout=25000)
 	public void test16GetJobDispatcherWorkflow() throws InterruptedException 
 	{
 		IQueue queue = this.eventDispatcher.getQueue(BaseServiceTestController.QUEUE_ID);
@@ -1553,10 +1553,10 @@ public class BaseContainerTest extends AbstractTest
 		}
 	}
 	
-	@Test(timeout=5000 )
+	@Test(timeout=7000 )
 	public void test17SimpleRegistrationForEventDispatcherWorkflow() 
 	{
-		IQueue queue = this.eventDispatcher.getQueue(BaseDelayedTestController.QUEUE_ID);
+		IQueue queue = this.eventDispatcher.getQueue(BaseEventRegistrationTestController.QUEUE_ID);
 		assertNotNull("queue should not be null" ,queue);
 		
 		TracingObject tracingObject = (TracingObject) queue.getStatePropertyBlock().getProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT);

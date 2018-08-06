@@ -25,7 +25,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.LogService;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleCounter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
@@ -134,7 +134,7 @@ public class EventDispatcherJavaManagementExtension implements IEventDispatcherE
 	}
 
 	@Override
-	public void registerEventController(IExtensibleEventDispatcher dispatcher, IEventController eventController,Map<String, ?> properties)
+	public void registerEventController(IExtensibleEventDispatcher dispatcher, IQueueController eventController,Map<String, ?> properties)
 	{
 		readLock.lock();
 		try
@@ -161,7 +161,7 @@ public class EventDispatcherJavaManagementExtension implements IEventDispatcherE
 	}
 
 	@Override
-	public void unregisterEventController(IExtensibleEventDispatcher dispatcher, IEventController eventController)
+	public void unregisterEventController(IExtensibleEventDispatcher dispatcher, IQueueController eventController)
 	{
 		readLock.lock();
 		try

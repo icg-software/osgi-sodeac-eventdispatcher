@@ -11,7 +11,7 @@
 package org.sodeac.eventdispatcher.api;
 
 /**
- * An extension-interface for {@link IEventController} to declare relations or responsibilities to events.
+ * An extension-interface for {@link IQueueController} to declare relations or responsibilities to events.
  * 
  * @author Sebastian Palarus
  *

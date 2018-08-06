@@ -12,12 +12,12 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} to consume notifications if a job runs in a timeout
+ * An extension interface for {@link IQueueController} to consume notifications if a job runs in a timeout
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnJobTimeout extends IEventController
+public interface IOnJobTimeout extends IQueueController
 {
 	/**
 	 * This is fired, if {@link IQueueJob} runs in timeout.

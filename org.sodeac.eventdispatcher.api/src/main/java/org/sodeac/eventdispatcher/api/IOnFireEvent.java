@@ -14,12 +14,12 @@ import org.osgi.service.event.Event;
 
 /**
  * 
- * An extension interface for {@link IEventController} to consume a notification if jobs (re)fire an event by invoke {@link IQueue}.send/postEvent 
+ * An extension interface for {@link IQueueController} to consume a notification if jobs (re)fire an event by invoke {@link IQueue}.send/postEvent 
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnFireEvent extends IEventController
+public interface IOnFireEvent extends IQueueController
 {
 	/**
 	 * This is fired, if {@link IQueue} sends / posts  a new {@link org.osgi.service.event.Event}

@@ -12,8 +12,8 @@ package org.sodeac.eventdispatcher.impl;
 
 import java.util.List;
 
-import org.sodeac.eventdispatcher.extension.api.IPropertyBlockModifyListener;
-import org.sodeac.eventdispatcher.extension.api.PropertyBlockModifyItem;
+import org.sodeac.eventdispatcher.api.IPropertyBlockModifyListener;
+import org.sodeac.eventdispatcher.api.PropertyBlockModifyItem;
 
 public class QueueConfigurationModifyListener implements IPropertyBlockModifyListener
 {

@@ -12,12 +12,12 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} to consume notifications if a job throws an exception or an error
+ * An extension interface for {@link IQueueController} to consume notifications if a job throws an exception or an error
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnJobError extends IEventController
+public interface IOnJobError extends IQueueController
 {
 	/**
 	 * This methode is fired, if {@link IQueueJob} throws an exception

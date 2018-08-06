@@ -14,15 +14,15 @@ import java.util.List;
 
 /**
  * 
- * An extension interface for {@link IEventController} to consume a notification if {@link IQueue} has to schedule one or more {@link IQueuedEvent}s
+ * An extension interface for {@link IQueueController} to consume a notification if {@link IQueue} has to schedule one or more {@link IQueuedEvent}s
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnScheduleEventList extends IEventController
+public interface IOnScheduleEventList extends IQueueController
 {
 	/**
-	 * This is fired, if {@link IEventController} has to schedule one or more {@link org.osgi.service.event.Event}s.
+	 * This is fired, if {@link IQueueController} has to schedule one or more {@link org.osgi.service.event.Event}s.
 	 * <br>
 	 * invoked and synchronized by queue worker
 	 * 

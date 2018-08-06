@@ -10,14 +10,14 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.common.reactiveservice.api;
 
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 
 public interface IReactiveServiceDiscovery
 {
 	public static final String EVENT_TOPIC_ALL = "org/sodeac/eventdispatcher/reactiveservice/discovery/*";
 	public static final String EVENT_TOPIC_REQUEST = "org/sodeac/eventdispatcher/reactiveservice/discovery/request";
 	public static final String EVENT_TOPIC_RESPONSE = "org/sodeac/eventdispatcher/reactiveservice/discovery/response";
-	public static final String SERVICE_PROPERTY__CONSUME_EVENTS_DISCOVER_SERVICE = IEventController.PROPERTY_CONSUME_EVENT_TOPIC+"=" + IReactiveServiceDiscovery.EVENT_TOPIC_REQUEST;
+	public static final String SERVICE_PROPERTY__CONSUME_EVENTS_DISCOVER_SERVICE = IQueueController.PROPERTY_CONSUME_EVENT_TOPIC+"=" + IReactiveServiceDiscovery.EVENT_TOPIC_REQUEST;
 	
 	public static String EVENT_PROPERTY_REQUEST_ID = "reactiveservice.discovery.request.id";
 	public static String EVENT_PROPERTY_REQUEST_OBJ = "reactiveservice.discovery.request.object";

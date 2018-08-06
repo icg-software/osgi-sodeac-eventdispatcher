@@ -19,7 +19,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IOnJobError;
@@ -39,14 +39,14 @@ import org.sodeac.eventdispatcher.itest.components.TracingObject;
 @Component
 (
 	immediate=true,
-	service={IEventController.class,EventHandler.class},
+	service={IQueueController.class,EventHandler.class},
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID+"="+BaseReCreateWorkerTestController.QUEUE_ID,
 		EventConstants.EVENT_TOPIC+"=" + BaseReCreateWorkerTestController.SCHEDULE_EVENT
 	}
 )
-public class BaseReCreateWorkerTestController extends AbstractBaseTestController implements EventHandler,IEventController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseReCreateWorkerTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final long 	SLEEP_VALUE				= 10800;
 	public static final long 	TIMEOUT_VALUE			= SLEEP_VALUE / 2;

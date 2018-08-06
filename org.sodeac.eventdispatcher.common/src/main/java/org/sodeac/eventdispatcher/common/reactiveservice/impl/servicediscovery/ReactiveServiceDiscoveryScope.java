@@ -14,8 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.osgi.service.component.annotations.Component;
-import org.sodeac.eventdispatcher.annotation.EventQueueConfigurationFilter;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
@@ -35,14 +34,14 @@ import com.google.common.collect.ImmutableMap;
 
 @Component
 (
-	service=IEventController.class,
+	service=IQueueController.class,
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER+"="+"(org.sodeac.eventdispatcher.common.reactiveservice.impl.servicediscovery.ReactiveServiceDiscoveryScope=true)"
 	}
 )
-@EventQueueConfigurationFilter("(org.sodeac.eventdispatcher.common.reactiveservice.impl.servicediscovery.ReactiveServiceDiscoveryScope=true)")
-public class ReactiveServiceDiscoveryScope implements IEventController,IOnQueueObserve, IOnScheduleEvent
+
+public class ReactiveServiceDiscoveryScope implements IQueueController,IOnQueueObserve, IOnScheduleEvent
 {
 
 	@Override

@@ -8,14 +8,20 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.extension.api;
+package org.sodeac.eventdispatcher.annotation;
 
-import java.util.List;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-public interface IPropertyBlockModifyListener
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Documented
+@Retention(RUNTIME)
+@Target(TYPE)
+@EventDispatcherAnnotation(tag="org.sodeac.eventdispatcher.api.IEventDispatcher")
+public @interface ServiceConfigurations
 {
-	public static enum ModifyType {INSERT,UPDATE,REMOVE}
-	
-	public void onModify(ModifyType type,String key, Object valueOld, Object valueNew);
-	public void onModifySet(List<PropertyBlockModifyItem> modifySet);
+	ServiceConfiguration[] value();
 }

@@ -56,27 +56,5 @@ public class Requirement
 	public String getFilterExpression()
 	{
 		return filterExpression;
-	}	
-
-	public static List<Requirement> toList(Requirement[] requirements)
-	{
-		List<Requirement> list = new ArrayList<Requirement>();
-		if(requirements == null)
-		{
-			return list;
-		}
-		for(Requirement requirement : requirements)
-		{
-			if(requirement == null)
-			{
-				continue;
-			}
-			if(list.contains(requirement))
-			{
-				continue;
-			}
-			list.add(requirement);
-		}
-		return list;
 	}
 }

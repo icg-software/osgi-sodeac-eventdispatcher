@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2018 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -10,11 +10,12 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
-/**
- * 
- * An extension interface for {@link IEventController} to enable metrics for observed {@link IQueue} and managed {@link IQueueJob}
- * 
- * @author Sebastian Palarus
- *
- */
-public interface IEnableMetricsOnQueueObserve extends IEventController{}
+import java.util.List;
+
+public interface IPropertyBlockModifyListener
+{
+	public static enum ModifyType {INSERT,UPDATE,REMOVE}
+	
+	public void onModify(ModifyType type,String key, Object valueOld, Object valueNew);
+	public void onModifySet(List<PropertyBlockModifyItem> modifySet);
+}

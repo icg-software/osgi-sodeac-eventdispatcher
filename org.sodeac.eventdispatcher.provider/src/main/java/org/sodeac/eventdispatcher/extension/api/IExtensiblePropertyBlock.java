@@ -11,6 +11,7 @@
 package org.sodeac.eventdispatcher.extension.api;
 
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
+import org.sodeac.eventdispatcher.api.IPropertyBlockModifyListener;
 
 public interface IExtensiblePropertyBlock extends IPropertyBlock
 {

@@ -18,11 +18,30 @@
     <bundle.api.version>0.9.3</bundle.api.version>
   </properties>
   
+   <repositories>
+  	 <repository>
+	    <id>oss.sonatype.org-snapshot</id>
+	    <name>OSS Sonatype Snapshot Repository</name>
+	    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+	 </repository>
+  </repositories>
+  
   <dependencies>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.api</artifactId>
       <version>0.9.3-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.sodeac</groupId>
+      <artifactId>org.sodeac.xuri</artifactId>
+      <version>0.9.0-SNAPSHOT</version>
     </dependency>
     <dependency>
 	    <groupId>io.dropwizard.metrics</groupId>

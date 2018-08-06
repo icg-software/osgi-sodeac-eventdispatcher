@@ -175,11 +175,11 @@ public class QueueWorker extends Thread
 						
 						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
-							if(conf.getEventController() instanceof IOnScheduleEvent)
+							if(conf.getQueueController() instanceof IOnScheduleEvent)
 							{
 								singleProcess = true;
 							}
-							if(conf.getEventController() instanceof IOnScheduleEventList)
+							if(conf.getQueueController() instanceof IOnScheduleEventList)
 							{
 								listProcess = true;
 							}
@@ -194,9 +194,9 @@ public class QueueWorker extends Thread
 								{
 									if(go)
 									{
-										if(conf.getEventController() instanceof IOnScheduleEventList)
+										if(conf.getQueueController() instanceof IOnScheduleEventList)
 										{
-											((IOnScheduleEventList)conf.getEventController()).onScheduleEventList(this.eventQueue, processScheduleList);
+											((IOnScheduleEventList)conf.getQueueController()).onScheduleEventList(this.eventQueue, processScheduleList);
 										}
 									}
 								}
@@ -225,9 +225,9 @@ public class QueueWorker extends Thread
 									{
 										if(go)
 										{
-											if(conf.getEventController() instanceof IOnScheduleEvent)
+											if(conf.getQueueController() instanceof IOnScheduleEvent)
 											{
-												((IOnScheduleEvent)conf.getEventController()).onScheduleEvent(event);
+												((IOnScheduleEvent)conf.getQueueController()).onScheduleEvent(event);
 											}
 										}
 									}
@@ -295,9 +295,9 @@ public class QueueWorker extends Thread
 							{
 								if(go)
 								{
-									if(conf.getEventController() instanceof IOnFireEvent)
+									if(conf.getQueueController() instanceof IOnFireEvent)
 									{
-										((IOnFireEvent)conf.getEventController()).onFireEvent(event,this.eventQueue);
+										((IOnFireEvent)conf.getQueueController()).onFireEvent(event,this.eventQueue);
 									}
 								}
 							}
@@ -339,9 +339,9 @@ public class QueueWorker extends Thread
 							{
 								if(go)
 								{
-									if(conf.getEventController() instanceof IOnRemoveEvent)
+									if(conf.getQueueController() instanceof IOnRemoveEvent)
 									{
-										((IOnRemoveEvent)conf.getEventController()).onRemoveEvent(event);
+										((IOnRemoveEvent)conf.getQueueController()).onRemoveEvent(event);
 									}
 								}
 							}
@@ -383,8 +383,8 @@ public class QueueWorker extends Thread
 							{
 								if(go)
 								{
-									if(conf.getEventController() instanceof IOnQueueSignal)
-									((IOnQueueSignal)conf.getEventController()).onQueueSignal(eventQueue, signal);
+									if(conf.getQueueController() instanceof IOnQueueSignal)
+									((IOnQueueSignal)conf.getQueueController()).onQueueSignal(eventQueue, signal);
 								}
 							}
 							catch (Exception e) {}
@@ -473,7 +473,7 @@ public class QueueWorker extends Thread
 											Object pri = dueJob.getPropertyBlock().getProperty(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL);
 											if(pri instanceof String)
 											{
-												periodicRepetitionInterval = Long.parseLong((String)pri);
+												periodicRepetitionInterval = Long.parseLong(((String)pri).trim());
 											}
 											else if(pri instanceof Integer)
 											{
@@ -594,11 +594,11 @@ public class QueueWorker extends Thread
 								{
 									for(ControllerContainer conf : eventQueue.getConfigurationList())
 									{
-										if(conf.getEventController() instanceof IOnJobError)
+										if(conf.getQueueController() instanceof IOnJobError)
 										{
 											try
 											{
-												((IOnJobError)conf.getEventController()).onJobError(dueJob.getJob(),  e);
+												((IOnJobError)conf.getQueueController()).onJobError(dueJob.getJob(),  e);
 											}
 											catch (Exception ie) 
 											{
@@ -674,11 +674,11 @@ public class QueueWorker extends Thread
 								{
 									for(ControllerContainer conf : eventQueue.getConfigurationList())
 									{
-										if(conf.getEventController() instanceof IOnJobError)
+										if(conf.getQueueController() instanceof IOnJobError)
 										{
 											try
 											{
-												((IOnJobError)conf.getEventController()).onJobError(dueJob.getJob(),  new Exception(exc));
+												((IOnJobError)conf.getQueueController()).onJobError(dueJob.getJob(),  new Exception(exc));
 											}
 											catch (Exception ie) 
 											{
@@ -715,9 +715,9 @@ public class QueueWorker extends Thread
 										{
 											if(go)
 											{
-												if(conf.getEventController() instanceof IOnFireEvent)
+												if(conf.getQueueController() instanceof IOnFireEvent)
 												{
-													((IOnFireEvent)conf.getEventController()).onFireEvent(event,this.eventQueue);
+													((IOnFireEvent)conf.getQueueController()).onFireEvent(event,this.eventQueue);
 												}
 											}
 										}
@@ -758,9 +758,9 @@ public class QueueWorker extends Thread
 											{
 												if(go)
 												{
-													if(conf.getEventController() instanceof IOnRemoveEvent)
+													if(conf.getQueueController() instanceof IOnRemoveEvent)
 													{
-														((IOnRemoveEvent)conf.getEventController()).onRemoveEvent(event);
+														((IOnRemoveEvent)conf.getQueueController()).onRemoveEvent(event);
 													}
 												}
 											}
@@ -802,8 +802,8 @@ public class QueueWorker extends Thread
 											{
 												if(go)
 												{
-													if(conf.getEventController() instanceof IOnQueueSignal)
-													((IOnQueueSignal)conf.getEventController()).onQueueSignal(eventQueue, signal);
+													if(conf.getQueueController() instanceof IOnQueueSignal)
+													((IOnQueueSignal)conf.getQueueController()).onQueueSignal(eventQueue, signal);
 												}
 											}
 											catch (Exception e) {}
@@ -829,9 +829,9 @@ public class QueueWorker extends Thread
 									{
 										if(go)
 										{
-											if(conf.getEventController() instanceof IOnJobDone)
+											if(conf.getQueueController() instanceof IOnJobDone)
 											{
-												((IOnJobDone)conf.getEventController()).onJobDone(dueJob.getJob());
+												((IOnJobDone)conf.getQueueController()).onJobDone(dueJob.getJob());
 											}
 										}
 									}
@@ -1068,9 +1068,9 @@ public class QueueWorker extends Thread
 		{
 			try
 			{
-				if(conf.getEventController() instanceof IOnJobTimeout)
+				if(conf.getQueueController() instanceof IOnJobTimeout)
 				{
-					((EventDispatcherImpl)eventQueue.getDispatcher()).executeOnJobTimeOut((IOnJobTimeout)conf.getEventController(), timeOutJob.getJob());
+					((EventDispatcherImpl)eventQueue.getDispatcher()).executeOnJobTimeOut((IOnJobTimeout)conf.getQueueController(), timeOutJob.getJob());
 				}
 			}
 			catch (Exception e) {}

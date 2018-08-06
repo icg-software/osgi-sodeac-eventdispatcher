@@ -18,7 +18,8 @@ import java.lang.annotation.Target;
 
 @Retention(RUNTIME)
 @Target(ANNOTATION_TYPE)
+@EventDispatcherAnnotation(tag="core")
 public @interface EventDispatcherAnnotation
 {
-
+	String[] tag() default{};
 }

@@ -13,13 +13,15 @@ package org.sodeac.eventdispatcher.annotation;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+@Documented
 @Retention(RUNTIME)
 @Target(TYPE)
-@EventDispatcherAnnotation
-public @interface EventDispatchers
+@EventDispatcherAnnotation(tag="org.sodeac.eventdispatcher.api.IEventDispatcher")
+public @interface SubscribeEvents
 {
-	EventDispatcher[] value();
+	SubscribeEvent[] value();
 }

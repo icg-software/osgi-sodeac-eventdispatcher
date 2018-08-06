@@ -16,7 +16,7 @@ package org.sodeac.eventdispatcher.api;
  * @author Sebastian Palarus
  *
  */
-public interface IQueueService extends IQueueJob
+public interface IQueueService extends IQueueJob, IQueueComponent
 {
 	public static final String PROPERTY_QUEUE_ID 						= IEventDispatcher.PROPERTY_QUEUE_ID;
 	

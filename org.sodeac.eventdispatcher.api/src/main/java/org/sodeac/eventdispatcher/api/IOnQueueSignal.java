@@ -12,12 +12,12 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} to consume notifications if signal is fired
+ * An extension interface for {@link IQueueController} to consume notifications if signal is fired
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnQueueSignal extends IEventController
+public interface IOnQueueSignal extends IQueueController
 {
 	/**
 	 * This is fired, if a signal is fired for on a queue

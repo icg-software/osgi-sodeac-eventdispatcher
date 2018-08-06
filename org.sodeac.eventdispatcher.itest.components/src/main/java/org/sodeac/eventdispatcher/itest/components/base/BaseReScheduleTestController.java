@@ -19,7 +19,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IOnJobError;
@@ -38,7 +38,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 @Component
 (
 	immediate=true,
-	service={IEventController.class,EventHandler.class},
+	service={IQueueController.class,EventHandler.class},
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID+"="+BaseReScheduleTestController.QUEUE_ID,
@@ -47,7 +47,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 		EventConstants.EVENT_TOPIC+"=" + BaseReScheduleTestController.RESCHEDULE_EVENT2
 	}
 )
-public class BaseReScheduleTestController extends AbstractBaseTestController implements EventHandler,IEventController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseReScheduleTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final String	JOB_ID				= BaseReScheduleTestController.class.getCanonicalName() + "Job";
 	public static final int		DELAY				= 5000;

@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.osgi.service.component.annotations.Component;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
@@ -41,15 +41,15 @@ import com.google.common.collect.ImmutableMap;
 
 @Component
 (
-	service= {IReactiveServiceDiscovery.class,IEventController.class},
+	service= {IReactiveServiceDiscovery.class,IQueueController.class},
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID+"="+IReactiveServiceDiscovery.QUEUE_ID,
 		IEventDispatcher.PROPERTY_DISPATCHER_ID+"=" +IEventDispatcher.DEFAULT_DISPATCHER_ID,
-		IEventController.PROPERTY_CONSUME_EVENT_TOPIC+"=" + IReactiveServiceDiscovery.EVENT_TOPIC_RESPONSE,
+		IQueueController.PROPERTY_CONSUME_EVENT_TOPIC+"=" + IReactiveServiceDiscovery.EVENT_TOPIC_RESPONSE,
 	}
 )
-public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IEventController,IOnScheduleEvent,IOnQueueObserve, IOnQueueReverse
+public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueueController,IOnScheduleEvent,IOnQueueObserve, IOnQueueReverse
 {
 	
 	private IQueue managementQueue = null;

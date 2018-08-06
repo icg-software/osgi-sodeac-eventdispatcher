@@ -12,14 +12,14 @@ package org.sodeac.eventdispatcher.extension.api;
 
 import java.util.Map;
 
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 
 public interface IEventDispatcherExtension
 {
 	public void registerEventDispatcher(IExtensibleEventDispatcher dispatcher);
 	public void unregisterEventDispatcher(IExtensibleEventDispatcher dispatcher);
-	public void registerEventController(IExtensibleEventDispatcher dispatcher, IEventController eventController,Map<String, ?> properties);
-	public void unregisterEventController(IExtensibleEventDispatcher dispatcher, IEventController eventController);
+	public void registerEventController(IExtensibleEventDispatcher dispatcher, IQueueController eventController,Map<String, ?> properties);
+	public void unregisterEventController(IExtensibleEventDispatcher dispatcher, IQueueController eventController);
 	public void registerEventQueue(IExtensibleEventDispatcher dispatcher, IExtensibleQueue extensibleQueue);
 	public void unregisterEventQueue(IExtensibleEventDispatcher dispatcher, IExtensibleQueue extensibleQueue);
 	

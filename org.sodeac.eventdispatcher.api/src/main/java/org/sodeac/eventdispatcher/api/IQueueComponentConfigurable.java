@@ -1,4 +1,5 @@
-/*******************************************************************************
+/******
+ * *************************************************************************
  * Copyright (c) 2018 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
@@ -13,12 +14,22 @@ package org.sodeac.eventdispatcher.api;
 import java.util.List;
 
 /**
- * audit trail for {@link IPropertyBlockOperationHandler}
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IPropertyBlockOperationResult
+public interface IQueueComponentConfigurable extends IQueueComponent
 {
-	public List<PropertyBlockModifyItem> getModifyList();
+	/**
+	 * 
+	 * 
+	 * @return list of configuration to configure queue controller
+	 */
+	public List<QueueComponentConfiguration> configureQueueController();
+	
+	/**
+	 * 
+	 * @return list of configuration to configure queue service
+	 */
+	public List<QueueComponentConfiguration> configureQueueService();
 }

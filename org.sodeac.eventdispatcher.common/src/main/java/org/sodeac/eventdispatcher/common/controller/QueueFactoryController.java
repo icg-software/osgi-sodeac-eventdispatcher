@@ -25,7 +25,7 @@ import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.AttributeType;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
@@ -34,12 +34,12 @@ import org.sodeac.eventdispatcher.api.IQueue;
 @Component
 (
 	name				= "QueueFactoryController"				,
-	service				= IEventController.class					,
+	service				= IQueueController.class					,
 	configurationPid	= QueueFactoryController.SERVICE_PID	, 
 	configurationPolicy	= ConfigurationPolicy.REQUIRE
 )
 
-public class QueueFactoryController implements IEventController,IOnQueueObserve, IOnQueueReverse
+public class QueueFactoryController implements IQueueController,IOnQueueObserve, IOnQueueReverse
 {
 	public static final String SERVICE_PID = "org.sodeac.eventdispatcher.common.controller.queuefactory";
 	

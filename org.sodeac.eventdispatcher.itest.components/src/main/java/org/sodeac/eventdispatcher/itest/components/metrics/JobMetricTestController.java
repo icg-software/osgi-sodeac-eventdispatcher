@@ -21,7 +21,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
@@ -35,14 +35,14 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 @Component
 (
 	immediate=true,
-	service={IEventController.class,EventHandler.class},
+	service={IQueueController.class,EventHandler.class},
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID+"="+JobMetricTestController.QUEUE_ID,
 		EventConstants.EVENT_TOPIC+"=" + JobMetricTestController.RUN_EVENT
 	}
 )
-public class JobMetricTestController implements IEventController,IOnScheduleEvent, EventHandler, IOnJobDone
+public class JobMetricTestController implements IQueueController,IOnScheduleEvent, EventHandler, IOnJobDone
 {
 	public static final String EVENT_PROPERTY_LATCH 		= "LATCH"		;
 	public static final String EVENT_PROPERTY_REPEAT 		= "REPEAT"		;

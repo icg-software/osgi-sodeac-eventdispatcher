@@ -15,7 +15,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.EventAdmin;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
@@ -99,7 +99,7 @@ public class HotDeployTest extends AbstractTest
 		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "hotdeployservicetest");
 		properties.put(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
 		properties.put(IQueueService.PROPERTY_SERVICE_ID, "hotdeployservice");
-		ServiceRegistration<IEventController> regController = bundleContext.registerService(IEventController.class, service, properties);
+		ServiceRegistration<IQueueController> regController = bundleContext.registerService(IQueueController.class, service, properties);
 		ServiceRegistration<IQueueService> regService = bundleContext.registerService(IQueueService.class, service, properties);
 		
 		try
@@ -127,7 +127,7 @@ public class HotDeployTest extends AbstractTest
 		
 		service.reset();
 		
-		regController = bundleContext.registerService(IEventController.class, service, properties);
+		regController = bundleContext.registerService(IQueueController.class, service, properties);
 		regService = bundleContext.registerService(IQueueService.class, service, properties);
 		
 		try
@@ -164,7 +164,7 @@ public class HotDeployTest extends AbstractTest
 		properties.put(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
 		properties.put(IQueueService.PROPERTY_SERVICE_ID, "hotdeployservice");
 		ServiceRegistration<IQueueService> regService = bundleContext.registerService(IQueueService.class, service, properties);
-		ServiceRegistration<IEventController> regController = bundleContext.registerService(IEventController.class, service, properties);
+		ServiceRegistration<IQueueController> regController = bundleContext.registerService(IQueueController.class, service, properties);
 		try
 		{
 			Thread.sleep(13500);
@@ -191,7 +191,7 @@ public class HotDeployTest extends AbstractTest
 		service.reset();
 		
 		regService = bundleContext.registerService(IQueueService.class, service, properties);
-		regController = bundleContext.registerService(IEventController.class, service, properties);
+		regController = bundleContext.registerService(IQueueController.class, service, properties);
 		
 		try
 		{
@@ -226,7 +226,7 @@ public class HotDeployTest extends AbstractTest
 		properties.put(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
 		properties.put(IQueueService.PROPERTY_SERVICE_ID, "hotdeployservice");
 		ServiceRegistration<IQueueService> regService = bundleContext.registerService(IQueueService.class, service, properties);
-		ServiceRegistration<IEventController> regController = bundleContext.registerService(IEventController.class, service, properties);
+		ServiceRegistration<IQueueController> regController = bundleContext.registerService(IQueueController.class, service, properties);
 		try
 		{
 			Thread.sleep(13500);
@@ -253,7 +253,7 @@ public class HotDeployTest extends AbstractTest
 		service.reset();
 		
 		regService = bundleContext.registerService(IQueueService.class, service, properties);
-		regController = bundleContext.registerService(IEventController.class, service, properties);
+		regController = bundleContext.registerService(IQueueController.class, service, properties);
 		
 		try
 		{
@@ -288,7 +288,7 @@ public class HotDeployTest extends AbstractTest
 		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "hotdeployservicetest");
 		properties.put(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
 		properties.put(IQueueService.PROPERTY_SERVICE_ID, "hotdeployservice");
-		ServiceRegistration<IEventController> regController = bundleContext.registerService(IEventController.class, service, properties);
+		ServiceRegistration<IQueueController> regController = bundleContext.registerService(IQueueController.class, service, properties);
 		ServiceRegistration<IQueueService> regService = bundleContext.registerService(IQueueService.class, service, properties);
 		
 		try
@@ -316,7 +316,7 @@ public class HotDeployTest extends AbstractTest
 		
 		service.reset();
 		
-		regController = bundleContext.registerService(IEventController.class, service, properties);
+		regController = bundleContext.registerService(IQueueController.class, service, properties);
 		regService = bundleContext.registerService(IQueueService.class, service, properties);
 		
 		try

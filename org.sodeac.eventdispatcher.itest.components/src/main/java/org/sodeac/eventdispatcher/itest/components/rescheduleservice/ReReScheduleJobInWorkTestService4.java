@@ -20,7 +20,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
@@ -34,7 +34,7 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 @Component
 (
 	immediate=true,
-	service={IEventController.class,EventHandler.class,IQueueService.class},
+	service={IQueueController.class,EventHandler.class,IQueueService.class},
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID+"="+ ReReScheduleJobInWorkTestService4.QUEUE_ID,
@@ -44,7 +44,7 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 		EventConstants.EVENT_TOPIC+"=" + ReReScheduleJobInWorkTestService4.DATA_VALUE_EVENT
 	}
 )
-public class ReReScheduleJobInWorkTestService4 implements EventHandler,IEventController,IOnScheduleEvent,IQueueService
+public class ReReScheduleJobInWorkTestService4 implements EventHandler,IQueueController,IOnScheduleEvent,IQueueService
 {
 	public static final String QUEUE_ID = "reschedulejobbyoneventscheduledtestservicequeue4";
 	public static final String SERVICE_ID = "reschedulejobbyoneventscheduledtestservice4";

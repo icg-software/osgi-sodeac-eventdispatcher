@@ -22,7 +22,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IOnJobError;
@@ -39,7 +39,7 @@ import org.sodeac.eventdispatcher.itest.components.base.AbstractBaseTestControll
 @Component
 (
 	immediate=true,
-	service={IEventController.class,EventHandler.class},
+	service={IQueueController.class,EventHandler.class},
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID+"="+ScopeTestSimpleManagementController.QUEUE_ID,
@@ -49,7 +49,7 @@ import org.sodeac.eventdispatcher.itest.components.base.AbstractBaseTestControll
 		EventConstants.EVENT_TOPIC+"=" + ScopeTestSimpleManagementController.REQUEST_EVENT_SCOPE_SIZE
 	}
 )
-public class ScopeTestSimpleManagementController extends AbstractBaseTestController implements EventHandler,IEventController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class ScopeTestSimpleManagementController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final String QUEUE_ID 					= "scopetestsimplequeue";
 	public static final String REQUEST_EVENT_SCOPE_CREATE	= "org/sodeac/eventdispatcher/itest/scopetestsimple/request/scopecreate";

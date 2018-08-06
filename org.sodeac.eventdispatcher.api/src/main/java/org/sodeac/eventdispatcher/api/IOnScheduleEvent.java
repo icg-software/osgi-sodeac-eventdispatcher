@@ -12,15 +12,15 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} to consume a notification if {@link IQueue} has to schedule a {@link IQueuedEvent}
+ * An extension interface for {@link IQueueController} to consume a notification if {@link IQueue} has to schedule a {@link IQueuedEvent}
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnScheduleEvent extends IEventController
+public interface IOnScheduleEvent extends IQueueController
 {
 	/**
-	 * This is fired, if {@link IEventController} has to schedule a new {@link org.osgi.service.event.Event}.
+	 * This is fired, if {@link IQueueController} has to schedule a new {@link org.osgi.service.event.Event}.
 	 * <br>
 	 * invoked and synchronized by queue worker
 	 * 

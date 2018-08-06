@@ -12,15 +12,15 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IEventController} to consume notifications if a {@link IQueuedEvent} is removed on {@link IQueue}
+ * An extension interface for {@link IQueueController} to consume notifications if a {@link IQueuedEvent} is removed on {@link IQueue}
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnRemoveEvent extends IEventController
+public interface IOnRemoveEvent extends IQueueController
 {
 	/**
-	 * This methode is fired, if {@link IEventController} remove a scheduled {@link IQueuedEvent}
+	 * This methode is fired, if {@link IQueueController} remove a scheduled {@link IQueuedEvent}
 	 * <br>
 	 * invoked and synchronized by queue worker
 	 *  

@@ -28,7 +28,7 @@ public interface IQueueJob
 	public static final String PROPERTY_KEY_THROWED_EXCEPTION		= "THROWED_EXCEPTION"	;
 	
 	
-	public static final long DEFAULT_TIMEOUT = 1080 * 108;
+	public static final long DEFAULT_TIMEOUT = 1080 * 1080;
 	
 	/**
 	 * invoked onetime at initialization of this job
@@ -38,7 +38,7 @@ public interface IQueueJob
 	 * @param propertyBlock properties for this job
 	 * @param jobControl state-handler for this job
 	 */
-	public void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl);
+	public default void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl) {};
 	
 	/**
 	 * run this job, invoked by queue-worker.

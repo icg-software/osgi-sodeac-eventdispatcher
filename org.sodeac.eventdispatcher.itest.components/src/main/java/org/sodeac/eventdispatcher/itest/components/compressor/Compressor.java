@@ -17,7 +17,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.sodeac.eventdispatcher.api.IEventController;
+import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
@@ -31,18 +31,18 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 @Component
 (
 	immediate=true,
-	service={IEventController.class,IQueueService.class},
+	service={IQueueController.class,IQueueService.class},
 	property=
 	{
 		IEventDispatcher.PROPERTY_QUEUE_ID + "=" + CompressorStatics.QUEUE_ID,
 		IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL+"="+ CompressorStatics.SERVICE_REPETITION_INTERVAL,
 		IQueueService.PROPERTY_SERVICE_ID+"=" + CompressorStatics.COMPRESSOR_SERVICE_ID,
-		IEventController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_START_COMPRESSOR,
-		IEventController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_STOP_COMPRESSOR,
-		IEventController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_RAW_EVENT
+		IQueueController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_START_COMPRESSOR,
+		IQueueController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_STOP_COMPRESSOR,
+		IQueueController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_RAW_EVENT
 	}
 )
-public class Compressor implements IQueueService,IEventController,IOnScheduleEvent
+public class Compressor implements IQueueService,IQueueController,IOnScheduleEvent
 {
 	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
 	protected volatile IEventDispatcher dispatcher;
