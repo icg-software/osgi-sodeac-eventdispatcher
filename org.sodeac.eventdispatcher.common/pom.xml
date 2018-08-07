@@ -50,7 +50,8 @@
 	<dependency>
 	    <groupId>com.google.guava</groupId>
 	    <artifactId>guava</artifactId>
-	    <version>25.1-jre</version>
+	    <version>14.0</version>
+	    <!-- version>25.1-jre</version-->
 	</dependency>
   </dependencies>
   
@@ -69,7 +70,7 @@
             <Bundle-ActivationPolicy>lazy</Bundle-ActivationPolicy>
           	<Import-Package>
             	org.sodeac.eventdispatcher.api;version="0.9.3",
-            	com.google.common.collect;version="${guava.version}",
+            	com.google.common.*;version="${guava.version}",
             	*
             </Import-Package>
             <Export-Package>
