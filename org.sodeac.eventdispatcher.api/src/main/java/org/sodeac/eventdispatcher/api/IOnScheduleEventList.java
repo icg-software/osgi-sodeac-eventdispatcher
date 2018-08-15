@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
-import java.util.List;
+import org.sodeac.multichainlist.Snapshot;
 
 /**
  * 
@@ -29,5 +29,5 @@ public interface IOnScheduleEventList extends IQueueController
 	 * @param queue related {@link IQueue}
 	 * @param eventList new events, contains {@link org.osgi.service.event.Event}
 	 */
-	public void onScheduleEventList(IQueue queue, List<IQueuedEvent> eventList);
+	public void onScheduleEventList(IQueue queue, Snapshot<IQueuedEvent> newEvents);
 }

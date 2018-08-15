@@ -1049,9 +1049,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			if(controllerContainer == null)
 			{
-				controllerContainer = new ControllerContainer(this,boundByIdList, boundedByQueueConfigurationList, subscribeEventList);
-				controllerContainer.setQueueController(queueController);
-				controllerContainer.setProperties(properties);
+				controllerContainer = new ControllerContainer(this,queueController,properties,boundByIdList, boundedByQueueConfigurationList, subscribeEventList);
 				
 				this.controllerReverseIndex.put(queueController,controllerContainer);
 				this.controllerList.add(controllerContainer);

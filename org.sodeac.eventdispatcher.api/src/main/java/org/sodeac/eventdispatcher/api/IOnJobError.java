@@ -20,12 +20,12 @@ package org.sodeac.eventdispatcher.api;
 public interface IOnJobError extends IQueueController
 {
 	/**
-	 * This methode is fired, if {@link IQueueJob} throws an exception
+	 * This methode is fired, if {@link IQueueJob} throws an exception or an error
 	 * <br>
 	 * invoked and synchronized by queue worker
 	 * 
 	 * @param job job which throws the exception
-	 * @param exception throwed exception
+	 * @param throwable throwed exception or error
 	 */
-	public void onJobError(IQueueJob job, Exception exception);
+	public void onJobError(IQueueJob job, Throwable throwable);
 }

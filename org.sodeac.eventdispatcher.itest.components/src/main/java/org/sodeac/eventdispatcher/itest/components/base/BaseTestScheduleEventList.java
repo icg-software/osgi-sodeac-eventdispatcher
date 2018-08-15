@@ -40,6 +40,7 @@ import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
+import org.sodeac.multichainlist.Snapshot;
 
 @Component
 (
@@ -94,7 +95,7 @@ public class BaseTestScheduleEventList  extends AbstractBaseTestController imple
 	}
 
 	@Override
-	public void onScheduleEventList(IQueue queue, List<IQueuedEvent> eventList)
+	public void onScheduleEventList(IQueue queue, Snapshot<IQueuedEvent> eventList)
 	{
 		List<IQueuedEvent> list = new ArrayList<IQueuedEvent>();
 		for(IQueuedEvent event : eventList)

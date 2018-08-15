@@ -19,6 +19,7 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.osgi.service.event.Event;
+import org.sodeac.multichainlist.Node;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
@@ -37,6 +38,7 @@ public class QueuedEventImpl implements IQueuedEvent
 	private List<String> emptyKeyList = null;
 	private Map<String, Object>  emptyProperties = null;
 	private long createTimeStamp;
+	private Node<QueuedEventImpl> node = null;
 	
 	public QueuedEventImpl(Event event,QueueImpl queue)
 	{
@@ -46,6 +48,15 @@ public class QueuedEventImpl implements IQueuedEvent
 		this.lock = new ReentrantLock();
 		this.uuid = UUID.randomUUID().toString();
 		this.createTimeStamp = System.currentTimeMillis();
+	}
+
+	public Node<QueuedEventImpl> getNode()
+	{
+		return node;
+	}
+	public void setNode(Node<QueuedEventImpl> node)
+	{
+		this.node = node;
 	}
 
 	@Override

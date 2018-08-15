@@ -68,9 +68,9 @@ public class AbstractBaseTestController
 		}
 	}
 
-	public void onJobError(IQueueJob job, Exception exception)
+	public void onJobError(IQueueJob job, Throwable exception)
 	{
-		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_JOB_ERROR,job,exception));
+		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_JOB_ERROR,job,(Exception)exception));
 		if(this.latch != null)
 		{
 			latch.countDown();

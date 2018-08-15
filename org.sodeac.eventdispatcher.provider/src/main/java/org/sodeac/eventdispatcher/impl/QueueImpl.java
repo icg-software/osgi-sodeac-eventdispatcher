@@ -27,6 +27,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import org.osgi.framework.Filter;
 import org.osgi.service.event.Event;
 import org.osgi.service.log.LogService;
+import org.sodeac.multichainlist.MultiChainList;
+import org.sodeac.multichainlist.LinkageDefinition;
+import org.sodeac.multichainlist.Partition;
+import org.sodeac.multichainlist.Node;
+import org.sodeac.multichainlist.Link;
+
+import com.codahale.metrics.Snapshot;
+
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
@@ -75,7 +83,16 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.serviceListReadLock = this.serviceListLock.readLock();
 		this.serviceListWriteLock = this.serviceListLock.writeLock();
 		
-		this.eventList = new ArrayList<QueuedEventImpl>();
+		this.eventQueue = new MultiChainList<>();
+		this.mainPartitionEventQueue = this.eventQueue.getPartition(null);
+		
+		this.newEventQueue = new MultiChainList<>();
+		this.mainPartitionNewEventQueue = this.newEventQueue.getPartition(null);
+				
+		this.removedEventQueue = new MultiChainList<>();
+		this.mainPartitionRemovedEventQueue = this.removedEventQueue.getPartition(null);
+		
+		//this.eventList = new ArrayList<QueuedEventImpl>();
 		this.eventListLock = new ReentrantReadWriteLock(true);
 		this.eventListReadLock = this.eventListLock.readLock();
 		this.eventListWriteLock = this.eventListLock.writeLock();
@@ -92,8 +109,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.onQueueObserveList = new ArrayList<IOnQueueObserve>();
 		this.onQueueObserveListLock = new ReentrantLock(true);
 		
-		this.newScheduledList = new ArrayList<QueuedEventImpl>();
-		this.removedEventList = new ArrayList<QueuedEventImpl>();
+		//this.newScheduledList = new ArrayList<QueuedEventImpl>();
+		//this.removedEventList = new ArrayList<QueuedEventImpl>();
 		this.firedEventList = new ArrayList<Event>();
 		
 		this.lastWorkerAction = System.currentTimeMillis();
@@ -169,10 +186,18 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected ReadLock serviceListReadLock;
 	protected WriteLock serviceListWriteLock;
 	
-	protected List<QueuedEventImpl> eventList = null;
 	protected ReentrantReadWriteLock eventListLock;
 	protected ReadLock eventListReadLock;
 	protected WriteLock eventListWriteLock;
+	
+	protected MultiChainList<QueuedEventImpl> eventQueue = null;
+	protected Partition<QueuedEventImpl> mainPartitionEventQueue = null;
+	
+	protected MultiChainList<QueuedEventImpl> newEventQueue = null;
+	protected Partition<QueuedEventImpl> mainPartitionNewEventQueue = null;
+	
+	protected MultiChainList<QueuedEventImpl> removedEventQueue = null;
+	protected Partition<QueuedEventImpl> mainPartitionRemovedEventQueue = null;
 	
 	protected List<JobContainer> jobList = null;
 	protected Map<String,JobContainer> jobIndex = null;
@@ -195,9 +220,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected PropertyBlockImpl statePropertyBlock = null;
 	
 	protected volatile boolean newScheduledListUpdate = false;
-	protected List<QueuedEventImpl> newScheduledList = null;
+	//protected List<QueuedEventImpl> newScheduledList = null;
 	protected volatile boolean removedEventListUpdate = false;
-	protected List<QueuedEventImpl> removedEventList = null;
+	//protected List<QueuedEventImpl> removedEventList = null;
 	protected volatile boolean firedEventListUpdate = false;
 	protected List<Event> firedEventList = null;
 	
@@ -233,24 +258,25 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		eventListWriteLock.lock();
 		try
 		{
-			if(this.eventListLimit <= (this.eventList.size()))
+			if(this.eventListLimit <= (mainPartitionEventQueue.getSize(null))) 
 			{
 				throw new QueueIsFullException(this.queueId, this.eventListLimit);
 			}
 			queuedEvent = new QueuedEventImpl(event,this);
 			queuedEvent.setScheduleResultObject(resultImpl);
-			this.eventList.add(queuedEvent);
+			queuedEvent.setNode(this.eventQueue.append(queuedEvent, null));
 		}
 		finally 
 		{
 			eventListWriteLock.unlock();
 		}
 		
+		
 		this.genericQueueSpoolLock.lock();
 		try
 		{
-			newScheduledListUpdate = true;
-			this.newScheduledList.add(queuedEvent);
+			newScheduledListUpdate = true; 
+			this.newEventQueue.append(queuedEvent,null);
 		}
 		finally 
 		{
@@ -274,12 +300,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public Future<IScheduleResult> scheduleEventList(List<Event> eventList)
 	{
-		List<QueuedEventImpl> queuedEventList = new ArrayList<QueuedEventImpl>();
+		List<QueuedEventImpl> queuedEventList = new ArrayList<QueuedEventImpl>(eventList.size());
 		ScheduleResultImpl resultImpl = new ScheduleResultImpl();
 		eventListWriteLock.lock();
 		try
 		{
-			if(this.eventListLimit < (this.eventList.size() + eventList.size()))
+			if(this.eventListLimit < ((mainPartitionEventQueue.getSize(null)) + eventList.size()))
 			{
 				throw new QueueIsFullException(this.queueId, this.eventListLimit);
 			}
@@ -288,7 +314,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				QueuedEventImpl queuedEvent = new QueuedEventImpl(event,this);
 				queuedEvent.setScheduleResultObject(resultImpl);
 				queuedEventList.add(queuedEvent);
-				this.eventList.add(queuedEvent);
+				//this.eventList.add(queuedEvent);
+			}
+			Node[] nodes = eventQueue.append(queuedEventList, null);
+			for(int i = 0; i < nodes.length; i++) // TODO ISetNodeAdapater
+			{
+				queuedEventList.get(i).setNode(nodes[i]);
 			}
 		}
 		finally 
@@ -302,7 +333,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			newScheduledListUpdate = true;
 			for(QueuedEventImpl queuedEvent : queuedEventList)
 			{
-				this.newScheduledList.add(queuedEvent);
+				this.newEventQueue.append(queuedEvent,null);
 			}
 		}
 		finally 
@@ -475,7 +506,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			
 			// observeEvent
 			
-			if(controllerContainer.getQueueController() instanceof IOnQueueObserve)
+			if(controllerContainer.isImplementingIOnQueueObserve())
 			{
 				addOnQueueObserver((IOnQueueObserve)controllerContainer.getQueueController());
 			}
@@ -533,7 +564,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			
 			// IOnQueueReverse
 			
-			if(unlinkFromQueue.getQueueController() instanceof IOnQueueReverse)
+			if(unlinkFromQueue.isImplementingIOnQueueReverse())
 			{
 				this.eventDispatcher.executeOnQueueReverse((IOnQueueReverse)unlinkFromQueue.getQueueController(), this);
 			}
@@ -1447,7 +1478,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			return null;
 		}
 		
-		eventListReadLock.lock();
+		/*eventListReadLock.lock();
 		try
 		{
 			for(IQueuedEvent queuedEvent : this.eventList)
@@ -1461,6 +1492,30 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		finally 
 		{
 			eventListReadLock.unlock();
+		}*/
+		
+		org.sodeac.multichainlist.Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createSnapshot(null, null);
+		try
+		{
+			for(IQueuedEvent queuedEvent : snapshot)
+			{
+				if(uuid.equals(queuedEvent.getUUID()))
+				{
+					return queuedEvent;
+				}
+			}
+		}
+		finally 
+		{
+			try
+			{
+				snapshot.close();
+			}
+			catch (Exception e) 
+			{
+				e.printStackTrace();
+				// TODO: handle exception
+			}
 		}
 		
 		return null;
@@ -1471,10 +1526,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	{
 		boolean match = true;
 		List<IQueuedEvent> queryList = new ArrayList<>();
-		eventListReadLock.lock();
+		org.sodeac.multichainlist.Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createSnapshot(null, null);
 		try
 		{
-			for(IQueuedEvent queuedEvent : this.eventList)
+			for(IQueuedEvent queuedEvent : snapshot)
 			{
 				match = true;
 				if((topics != null) && (topics.length != 0))
@@ -1550,12 +1605,22 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				
 				queryList.add(queuedEvent);
 			}
+			return queryList;
 		}
 		finally 
 		{
-			eventListReadLock.unlock();
+			try
+			{
+				snapshot.close();
+			}
+			catch (Exception e) 
+			{
+				e.printStackTrace();
+				// TODO: handle exception
+			}
 		}
-		return queryList;
+		
+		
 	}
 
 	@Override
@@ -1565,59 +1630,51 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		{
 			return false;
 		}
-	
-		eventListWriteLock.lock();
 		
-		List<QueuedEventImpl> removeList = null;
+		QueuedEventImpl removed = null;
+		org.sodeac.multichainlist.Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createSnapshot(null, null);
+		
 		try
 		{
-			for(QueuedEventImpl event : this.eventList)
+			for(QueuedEventImpl event : snapshot)
 			{
 				if(uuid.equals(event.getUUID()))
 				{
-					if(removeList == null)
-					{
-						removeList = new ArrayList<QueuedEventImpl>();
-					}
-					removeList.add(event);
+					event.getNode().unlinkAllChains();
+					removed = event;
+					break;
 				}
 			}
-			if(removeList == null)
+			if(removed == null)
 			{
 				return false;
-			}
-			
-			if(removeList.isEmpty())
-			{
-				return false;
-			}
-			
-			for(IQueuedEvent event : removeList)
-			{
-				while(this.eventList.remove(event)){}
 			}
 		}
 		finally 
 		{
-			eventListWriteLock.unlock();
-		}
-		if((removeList != null) && (! removeList.isEmpty()))
-		{
-			this.genericQueueSpoolLock.lock();
 			try
 			{
-				removedEventListUpdate = true;
-				for(QueuedEventImpl event : removeList)
-				{
-					this.removedEventList.add(event);
-				}
+				snapshot.close();
 			}
-			finally 
+			catch (Exception e) 
 			{
-				this.genericQueueSpoolLock.unlock();
+				e.printStackTrace();
+				// TODO: handle exception
 			}
-			this.notifyOrCreateWorker(-1);
 		}
+		
+		this.genericQueueSpoolLock.lock();
+		try
+		{
+			removedEventListUpdate = true;
+			this.removedEventQueue.append(removed,null);
+		}
+		finally 
+		{
+			this.genericQueueSpoolLock.unlock();
+		}
+		this.notifyOrCreateWorker(-1);
+	
 		
 		return true;
 	}
@@ -1635,11 +1692,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			return false;
 		}
 	
-		List<QueuedEventImpl> removeList = null;
-		eventListWriteLock.lock();
+		boolean removed = false;
+		List<QueuedEventImpl> removeEventList = new ArrayList<QueuedEventImpl>(uuidList.size());
+		org.sodeac.multichainlist.Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createSnapshot(null, null);
 		try
 		{
-			for(QueuedEventImpl event : this.eventList)
+			for(QueuedEventImpl event : snapshot)
 			{
 				for(String uuid : uuidList)
 				{
@@ -1653,46 +1711,45 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					}
 					if(uuid.equals(event.getUUID()))
 					{
-						if(removeList == null)
-						{
-							removeList = new ArrayList<QueuedEventImpl>();
-						}
-						removeList.add(event);
+						removed = true;
+						event.getNode().unlinkAllChains();
+						removeEventList.add(event);
 					}
 				}
 			}
-			if(removeList == null)
+			if(! removed)
 			{
 				return false;
-			}
-			
-			for(QueuedEventImpl event : removeList)
-			{
-				while(this.eventList.remove(event)){}
 			}
 		}
 		finally 
 		{
-			eventListWriteLock.unlock();
-		}
-		
-		if((removeList != null) && (! removeList.isEmpty()))
-		{
-			this.genericQueueSpoolLock.lock();
 			try
 			{
-				removedEventListUpdate = true;
-				for(QueuedEventImpl event : removeList)
-				{
-					this.removedEventList.add(event);
-				}
+				snapshot.close();
 			}
-			finally 
+			catch (Exception e) 
 			{
-				this.genericQueueSpoolLock.unlock();
+				e.printStackTrace();
+				// TODO: handle exception
 			}
-			this.notifyOrCreateWorker(-1);
 		}
+		
+		this.genericQueueSpoolLock.lock();
+		try
+		{
+			removedEventListUpdate = true;
+			for(QueuedEventImpl event : removeEventList)
+			{
+				this.removedEventQueue.append(event,null);
+			}
+		}
+		finally 
+		{
+			this.genericQueueSpoolLock.unlock();
+		}
+		this.notifyOrCreateWorker(-1);
+		
 		
 		return true;
 	}
@@ -1835,7 +1892,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				for(ControllerContainer controllerContainer : this.controllerList)
 				{
-					if(controllerContainer.getQueueController() instanceof IOnQueueReverse)
+					if(controllerContainer.isImplementingIOnQueueReverse())
 					{
 						this.eventDispatcher.executeOnQueueReverse(((IOnQueueReverse)controllerContainer.getQueueController()), this);
 					}
@@ -1986,7 +2043,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 	}
 	
-	public void fetchNewScheduledList(List<QueuedEventImpl> fillList)
+	/*public void fetchNewScheduledList(List<QueuedEventImpl> fillList)
 	{
 		if(! newScheduledListUpdate)
 		{
@@ -2007,24 +2064,49 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		{
 			this.genericQueueSpoolLock.unlock();
 		}
+	}*/
+	
+	public org.sodeac.multichainlist.Snapshot<? extends IQueuedEvent> getNewScheduledEventsSnaphot()
+	{
+		if(! newScheduledListUpdate)
+		{
+			return null;
+		}
+		
+		this.genericQueueSpoolLock.lock();
+		try
+		{
+			newScheduledListUpdate = false;
+			org.sodeac.multichainlist.Snapshot<QueuedEventImpl> snapshot = this.newEventQueue.createSnapshotAndClearChain(null, null);
+			for(Link<QueuedEventImpl> link : snapshot.linkIterable())
+			{
+				link.unlink();
+			}
+			return snapshot;
+		}
+		finally 
+		{
+			this.genericQueueSpoolLock.unlock();
+		}
 	}
 
-	public void fetchRemovedEventList(List<QueuedEventImpl> fillList)
+	public org.sodeac.multichainlist.Snapshot<? extends IQueuedEvent> getRemovedEventsSnapshot()
 	{
 		if(! removedEventListUpdate)
 		{
-			return;
+			return null;
 		}
 		
 		this.genericQueueSpoolLock.lock();
 		try
 		{
 			removedEventListUpdate = false;
-			for(QueuedEventImpl event : this.removedEventList)
+			org.sodeac.multichainlist.Snapshot<QueuedEventImpl> snapshot = this.removedEventQueue.createSnapshotAndClearChain(null, null);
+			for(Link<QueuedEventImpl> link : snapshot.linkIterable())
 			{
-				fillList.add(event);
+				link.getNode().unlinkAllChains();
 			}
-			this.removedEventList.clear();
+			return snapshot;
 		}
 		finally 
 		{
@@ -2236,11 +2318,19 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				return false;
 			}
 			
-			if(! this.newScheduledList.isEmpty())
+			/*if(! this.newScheduledList.isEmpty())
 			{
 				return false;
 			}
 			if(! this.removedEventList.isEmpty())
+			{
+				return false;
+			}*/
+			if(this.mainPartitionNewEventQueue.getSize(null) > 0)
+			{
+				return false;
+			}
+			if(this.mainPartitionRemovedEventQueue.getSize(null) > 0)
 			{
 				return false;
 			}
@@ -2302,11 +2392,19 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				return false;
 			}
-			if(! this.newScheduledList.isEmpty())
+			/*if(! this.newScheduledList.isEmpty())
 			{
 				return false;
 			}
 			if(! this.removedEventList.isEmpty())
+			{
+				return false;
+			}*/
+			if(this.mainPartitionNewEventQueue.getSize(null) > 0)
+			{
+				return false;
+			}
+			if(this.mainPartitionRemovedEventQueue.getSize(null) > 0)
 			{
 				return false;
 			}

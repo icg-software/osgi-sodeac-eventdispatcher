@@ -54,8 +54,8 @@ public class QueueWorker extends Thread
 	private volatile Object waitMonitor = new Object();
 	
 	private List<JobContainer> dueJobList = null;
-	private List<QueuedEventImpl> newScheduledList = null;
-	private List<QueuedEventImpl> removedEventList = null;
+	//private List<QueuedEventImpl> newScheduledList = null;
+	//private List<QueuedEventImpl> removedEventList = null;
 	private List<Event> firedEventList = null;
 	private List<String> signalList = null;
 	private List<IOnQueueObserve> onQueueObserveList = null;
@@ -71,8 +71,8 @@ public class QueueWorker extends Thread
 		this.eventQueue = impl;
 		this.workerWrapper = new QueueWorkerWrapper(this);
 		this.dueJobList = new ArrayList<JobContainer>();
-		this.newScheduledList = new ArrayList<QueuedEventImpl>();
-		this.removedEventList = new ArrayList<QueuedEventImpl>();
+		//this.newScheduledList = new ArrayList<QueuedEventImpl>();
+		//this.removedEventList = new ArrayList<QueuedEventImpl>();
 		this.firedEventList = new ArrayList<Event>();
 		this.signalList = new ArrayList<String>();
 		this.onQueueObserveList = new ArrayList<IOnQueueObserve>();
@@ -126,8 +126,10 @@ public class QueueWorker extends Thread
 	@Override
 	public void run()
 	{
-		List<IQueuedEvent> processScheduleList = Collections.unmodifiableList(this.newScheduledList);
+		//List<IQueuedEvent> processScheduleList = Collections.unmodifiableList(this.newScheduledList);
 		Map<IScheduleResult,IScheduleResult> scheduledResultIndex = new HashMap<IScheduleResult,IScheduleResult>();
+		org.sodeac.multichainlist.Snapshot<? extends IQueuedEvent> newEventsSnapshot;
+		org.sodeac.multichainlist.Snapshot<? extends IQueuedEvent> removedEventsSnapshot;
 		while(go)
 		{
 			
@@ -146,25 +148,25 @@ public class QueueWorker extends Thread
 					this.isSoftUpdated = false;
 				}
 				
-				this.newScheduledList.clear();
-				eventQueue.fetchNewScheduledList(this.newScheduledList);
-				if(! this.newScheduledList.isEmpty())
+				//this.newScheduledList.clear();
+				//eventQueue.fetchNewScheduledList(this.newScheduledList);
+				newEventsSnapshot = eventQueue.getNewScheduledEventsSnaphot();
+				try
 				{
-
-					try
+					if((newEventsSnapshot != null) && (! newEventsSnapshot.isEmpty()))
 					{
-						checkQueueObserve();
-					}
-					catch(Exception ex) {}
-					catch(Error ex) {}
-					
-					if(! this.newScheduledList.isEmpty())
-					{
+						try
+						{
+							checkQueueObserve();
+						}
+						catch(Exception ex) {}
+						catch(Error ex) {}
+						
 						boolean singleProcess = false;
 						boolean listProcess = false;
-						
+							
 						scheduledResultIndex.clear();
-						for(IQueuedEvent event : processScheduleList)
+						for(IQueuedEvent event : newEventsSnapshot)
 						{
 							try
 							{
@@ -172,21 +174,21 @@ public class QueueWorker extends Thread
 							}
 							catch (Exception ie) {}
 						}
-						
+							
 						for(ControllerContainer conf : eventQueue.getConfigurationList())
 						{
-							if(conf.getQueueController() instanceof IOnScheduleEvent)
+							if(conf.isImplementingIOnScheduleEvent())
 							{
 								singleProcess = true;
 							}
-							if(conf.getQueueController() instanceof IOnScheduleEventList)
+							if(conf.isImplementingIOnScheduleEventList())
 							{
 								listProcess = true;
 							}
 						}
 						if(listProcess)
 						{
-							
+								
 							eventQueue.touchLastWorkerAction();
 							for(ControllerContainer conf : eventQueue.getConfigurationList())
 							{
@@ -194,9 +196,9 @@ public class QueueWorker extends Thread
 								{
 									if(go)
 									{
-										if(conf.getQueueController() instanceof IOnScheduleEventList)
+										if(conf.isImplementingIOnScheduleEventList())
 										{
-											((IOnScheduleEventList)conf.getQueueController()).onScheduleEventList(this.eventQueue, processScheduleList);
+											((IOnScheduleEventList)conf.getQueueController()).onScheduleEventList(this.eventQueue, (org.sodeac.multichainlist.Snapshot<IQueuedEvent>)newEventsSnapshot);
 										}
 									}
 								}
@@ -216,7 +218,7 @@ public class QueueWorker extends Thread
 						}
 						if(singleProcess)
 						{
-							for(QueuedEventImpl event : this.newScheduledList)
+							for(QueuedEventImpl event : (org.sodeac.multichainlist.Snapshot<QueuedEventImpl>)newEventsSnapshot)
 							{
 								eventQueue.touchLastWorkerAction();
 								for(ControllerContainer conf : eventQueue.getConfigurationList())
@@ -225,7 +227,7 @@ public class QueueWorker extends Thread
 									{
 										if(go)
 										{
-											if(conf.getQueueController() instanceof IOnScheduleEvent)
+											if(conf.isImplementingIOnScheduleEvent())
 											{
 												((IOnScheduleEvent)conf.getQueueController()).onScheduleEvent(event);
 											}
@@ -250,7 +252,7 @@ public class QueueWorker extends Thread
 							}
 							catch (Exception ie) {}										
 						}
-						for(QueuedEventImpl event : this.newScheduledList)
+						for(QueuedEventImpl event : (org.sodeac.multichainlist.Snapshot<QueuedEventImpl>)newEventsSnapshot)
 						{
 							try
 							{
@@ -260,8 +262,21 @@ public class QueueWorker extends Thread
 						}
 					}
 				}
-				this.newScheduledList.clear();
-				scheduledResultIndex.clear();
+				finally
+				{
+					if(newEventsSnapshot != null)
+					{
+						try
+						{
+							newEventsSnapshot.close();
+						}
+						finally 
+						{
+							newEventsSnapshot = null;
+						}
+						scheduledResultIndex.clear();
+					}
+				}
 			}
 			catch (Exception e) 
 			{
@@ -295,7 +310,7 @@ public class QueueWorker extends Thread
 							{
 								if(go)
 								{
-									if(conf.getQueueController() instanceof IOnFireEvent)
+									if(conf.isImplementingIOnFireEvent())
 									{
 										((IOnFireEvent)conf.getQueueController()).onFireEvent(event,this.eventQueue);
 									}
@@ -318,38 +333,56 @@ public class QueueWorker extends Thread
 			
 			try
 			{
-				this.removedEventList.clear();
-				eventQueue.fetchRemovedEventList(this.removedEventList);
-				if(! this.removedEventList.isEmpty())
+				//this.removedEventList.clear();
+				//eventQueue.fetchRemovedEventList(this.removedEventList);
+				removedEventsSnapshot = eventQueue.getRemovedEventsSnapshot();
+				try
 				{
-
-					try
+					if((removedEventsSnapshot != null) && (! removedEventsSnapshot.isEmpty()))
 					{
-						checkQueueObserve();
-					}
-					catch(Exception ex) {}
-					catch(Error ex) {}
-					
-					for(QueuedEventImpl event : this.removedEventList)
-					{
-						eventQueue.touchLastWorkerAction();
-						for(ControllerContainer conf : eventQueue.getConfigurationList())
+	
+						try
 						{
-							try
+							checkQueueObserve();
+						}
+						catch(Exception ex) {}
+						catch(Error ex) {}
+						
+						for(QueuedEventImpl event : (org.sodeac.multichainlist.Snapshot<QueuedEventImpl>)removedEventsSnapshot)
+						{
+							eventQueue.touchLastWorkerAction();
+							for(ControllerContainer conf : eventQueue.getConfigurationList())
 							{
-								if(go)
+								try
 								{
-									if(conf.getQueueController() instanceof IOnRemoveEvent)
+									if(go)
 									{
-										((IOnRemoveEvent)conf.getQueueController()).onRemoveEvent(event);
+										if(conf.isImplementingIOnRemoveEvent())
+										{
+											((IOnRemoveEvent)conf.getQueueController()).onRemoveEvent(event);
+										}
 									}
 								}
+								catch (Exception e) {}
 							}
-							catch (Exception e) {}
 						}
 					}
 				}
-				this.removedEventList.clear();
+				finally 
+				{
+					if(removedEventsSnapshot != null)
+					{
+						try
+						{
+							removedEventsSnapshot.close();
+						}
+						finally 
+						{
+							removedEventsSnapshot = null;
+						}
+					}
+				}
+				//this.removedEventList.clear();
 			}
 			catch (Exception e) 
 			{
@@ -383,7 +416,7 @@ public class QueueWorker extends Thread
 							{
 								if(go)
 								{
-									if(conf.getQueueController() instanceof IOnQueueSignal)
+									if(conf.isImplementingIOnQueueSignal())
 									((IOnQueueSignal)conf.getQueueController()).onQueueSignal(eventQueue, signal);
 								}
 							}
@@ -594,7 +627,7 @@ public class QueueWorker extends Thread
 								{
 									for(ControllerContainer conf : eventQueue.getConfigurationList())
 									{
-										if(conf.getQueueController() instanceof IOnJobError)
+										if(conf.isImplementingIOnJobError())
 										{
 											try
 											{
@@ -674,11 +707,11 @@ public class QueueWorker extends Thread
 								{
 									for(ControllerContainer conf : eventQueue.getConfigurationList())
 									{
-										if(conf.getQueueController() instanceof IOnJobError)
+										if(conf.isImplementingIOnJobError())
 										{
 											try
 											{
-												((IOnJobError)conf.getQueueController()).onJobError(dueJob.getJob(),  new Exception(exc));
+												((IOnJobError)conf.getQueueController()).onJobError(dueJob.getJob(), exc);
 											}
 											catch (Exception ie) 
 											{
@@ -715,7 +748,7 @@ public class QueueWorker extends Thread
 										{
 											if(go)
 											{
-												if(conf.getQueueController() instanceof IOnFireEvent)
+												if(conf.isImplementingIOnFireEvent())
 												{
 													((IOnFireEvent)conf.getQueueController()).onFireEvent(event,this.eventQueue);
 												}
@@ -737,38 +770,54 @@ public class QueueWorker extends Thread
 							
 							try
 							{
-								this.removedEventList.clear();
-								eventQueue.fetchRemovedEventList(this.removedEventList);
-								if(! this.removedEventList.isEmpty())
+								// TODO remove this ??
+								removedEventsSnapshot = eventQueue.getRemovedEventsSnapshot();
+								try
 								{
-
-									try
+									if((removedEventsSnapshot != null) && (! removedEventsSnapshot.isEmpty()))
 									{
-										checkQueueObserve();
-									}
-									catch(Exception ex) {}
-									catch(Error ex) {}
-									
-									for(QueuedEventImpl event : this.removedEventList)
-									{
-										eventQueue.touchLastWorkerAction();
-										for(ControllerContainer conf : eventQueue.getConfigurationList())
+					
+										try
 										{
-											try
+											checkQueueObserve();
+										}
+										catch(Exception ex) {}
+										catch(Error ex) {}
+										
+										for(QueuedEventImpl event : (org.sodeac.multichainlist.Snapshot<QueuedEventImpl>)removedEventsSnapshot)
+										{
+											eventQueue.touchLastWorkerAction();
+											for(ControllerContainer conf : eventQueue.getConfigurationList())
 											{
-												if(go)
+												try
 												{
-													if(conf.getQueueController() instanceof IOnRemoveEvent)
+													if(go)
 													{
-														((IOnRemoveEvent)conf.getQueueController()).onRemoveEvent(event);
+														if(conf.isImplementingIOnRemoveEvent())
+														{
+															((IOnRemoveEvent)conf.getQueueController()).onRemoveEvent(event);
+														}
 													}
 												}
+												catch (Exception e) {}
 											}
-											catch (Exception e) {}
 										}
 									}
 								}
-								this.removedEventList.clear();
+								finally 
+								{
+									if(removedEventsSnapshot != null)
+									{
+										try
+										{
+											removedEventsSnapshot.close();
+										}
+										finally 
+										{
+											removedEventsSnapshot = null;
+										}
+									}
+								}
 							}
 							catch (Exception e) 
 							{
@@ -802,8 +851,10 @@ public class QueueWorker extends Thread
 											{
 												if(go)
 												{
-													if(conf.getQueueController() instanceof IOnQueueSignal)
-													((IOnQueueSignal)conf.getQueueController()).onQueueSignal(eventQueue, signal);
+													if(conf.isImplementingIOnQueueSignal())
+													{
+														((IOnQueueSignal)conf.getQueueController()).onQueueSignal(eventQueue, signal);
+													}
 												}
 											}
 											catch (Exception e) {}
@@ -829,7 +880,7 @@ public class QueueWorker extends Thread
 									{
 										if(go)
 										{
-											if(conf.getQueueController() instanceof IOnJobDone)
+											if(conf.isImplementingIOnJobDone())
 											{
 												((IOnJobDone)conf.getQueueController()).onJobDone(dueJob.getJob());
 											}

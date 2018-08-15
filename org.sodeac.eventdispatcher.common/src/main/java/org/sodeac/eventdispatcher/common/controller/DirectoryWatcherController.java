@@ -153,7 +153,7 @@ public class DirectoryWatcherController implements IQueueController, IOnSchedule
 	}
 
 	@Override
-	public void onJobError(IQueueJob job, Exception exception)
+	public void onJobError(IQueueJob job, Throwable exception)
 	{
 		CommonEventDispatcherHelper.log(context, logService, LogService.LOG_ERROR, "Error on run EventDispatcher job", exception);
 	}

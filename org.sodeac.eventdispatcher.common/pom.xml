@@ -11,20 +11,6 @@
     <guava.version>14.0.0</guava.version>
   </properties>
   
-    <repositories>
-  	 <repository>
-	    <id>oss.sonatype.org-snapshot</id>
-	    <name>OSS Sonatype Snapshot Repository</name>
-	    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-	 </repository>
-  </repositories>
-  
   <parent>
     <groupId>org.sodeac</groupId>
     <artifactId>sodeac-eventdispatcher-parent</artifactId>
@@ -36,11 +22,6 @@
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.api</artifactId>
       <version>0.9.3-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.sodeac</groupId>
-      <artifactId>org.sodeac.xuri</artifactId>
-      <version>0.9.0-SNAPSHOT</version>
     </dependency>
     <dependency>
 	    <groupId>com.googlecode.json-simple</groupId>

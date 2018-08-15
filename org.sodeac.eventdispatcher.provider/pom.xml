@@ -39,11 +39,6 @@
       <version>0.9.3-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>org.sodeac</groupId>
-      <artifactId>org.sodeac.xuri</artifactId>
-      <version>0.9.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
 	    <groupId>io.dropwizard.metrics</groupId>
 	    <artifactId>metrics-core</artifactId>
 	    <version>3.2.6</version>
@@ -65,6 +60,7 @@
             <Bundle-ActivationPolicy>lazy</Bundle-ActivationPolicy>
           	<Import-Package>
             	org.sodeac.eventdispatcher.api;version="0.9.3",
+            	org.sodeac.multichainlist;version="0.9.0",
             	*
             </Import-Package>
             <Private-Package>org.sodeac.eventdispatcher.impl</Private-Package>

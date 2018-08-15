@@ -139,6 +139,7 @@ public abstract class AbstractTest
 			mavenBundle("io.dropwizard.metrics", "metrics-core", "3.2.6").start(),
 			mavenBundle("org.easymock", "easymock", "3.4").start(),
 			mavenBundle("org.sodeac","org.sodeac.xuri","0.9.0-SNAPSHOT").start(),
+			mavenBundle("org.sodeac","org.sodeac.multichainlist","0.9.0-SNAPSHOT").start(),
 			mavenBundle("com.googlecode.json-simple", "json-simple", "1.1.1").start(),
 			mavenBundle("com.google.guava", "guava", "25.1-jre").start(),
 			reactorBundle("org.sodeac.eventdispatcher.api","0.9.3").start(),

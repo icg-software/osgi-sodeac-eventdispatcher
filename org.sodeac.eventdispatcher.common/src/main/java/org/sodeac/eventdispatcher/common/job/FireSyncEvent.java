@@ -48,7 +48,7 @@ public class FireSyncEvent implements IQueueJob,IConcernEvent
 			{
 				queue.removeEvent(this.event.getUUID());
 			}
-			catch (Exception e) {}
+			catch (Exception e) {e.printStackTrace();} // TODO log
 		}
 		queue.sendEvent(this.topic, this.properties);	
 	}

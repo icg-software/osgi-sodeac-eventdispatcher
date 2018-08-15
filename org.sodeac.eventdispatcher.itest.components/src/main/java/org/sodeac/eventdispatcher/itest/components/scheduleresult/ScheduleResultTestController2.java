@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.itest.components.scheduleresult;
 
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -28,6 +28,7 @@ import org.sodeac.eventdispatcher.api.IOnScheduleEventList;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.IScheduleResult;
+import org.sodeac.multichainlist.Snapshot;
 
 @Component
 (
@@ -71,9 +72,14 @@ public class ScheduleResultTestController2 implements EventHandler, IQueueContro
 	}
 
 	@Override
-	public void onScheduleEventList(IQueue queue, List<IQueuedEvent> eventList)
+	public void onScheduleEventList(IQueue queue, Snapshot<IQueuedEvent> newEvents)
 	{
-		IQueuedEvent event = eventList.get(0);
+		Iterator<IQueuedEvent> eventList = newEvents.iterator();
+		if(! eventList.hasNext())
+		{
+			return;
+		}
+		IQueuedEvent event = eventList.next();
 		Long scheduleTime = (Long)event.getNativeEventProperties().get(PROPERTY_SCHEDULE_TIME);
 		Boolean scheduleDone = (Boolean)event.getNativeEventProperties().get(PROPERTY_SCHEDULE_DONE);
 		Exception manualAddException = (Exception)event.getNativeEventProperties().get(PROPERTY_MANUAL_ADD_EXCEPTION);
@@ -83,14 +89,14 @@ public class ScheduleResultTestController2 implements EventHandler, IQueueContro
 			Thread.sleep(scheduleTime);
 			if(manualAddException != null)
 			{
-				for(IQueuedEvent evt : eventList)
+				for(IQueuedEvent evt : newEvents)
 				{
 					evt.getScheduleResultObject().addError(manualAddException);
 				}
 			}
 			if((scheduleDone != null) && scheduleDone.booleanValue())
 			{
-				for(IQueuedEvent evt : eventList)
+				for(IQueuedEvent evt : newEvents)
 				{
 					evt.getScheduleResultObject().setScheduled();
 				}
