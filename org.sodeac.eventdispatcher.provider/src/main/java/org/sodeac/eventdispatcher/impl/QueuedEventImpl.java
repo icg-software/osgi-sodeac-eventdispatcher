@@ -23,11 +23,11 @@ import org.sodeac.multichainlist.Node;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
-import org.sodeac.eventdispatcher.api.IScheduleResult;
+import org.sodeac.eventdispatcher.api.IQueueEventResult;
 
 public class QueuedEventImpl implements IQueuedEvent
 {
-	private ScheduleResultImpl scheduleResult = null;
+	private QueueEventResultImpl scheduleResult = null;
 	private QueueImpl queue = null;
 	private Event event = null;
 	private String uuid = null;
@@ -66,12 +66,12 @@ public class QueuedEventImpl implements IQueuedEvent
 	}
 	
 	@Override
-	public IScheduleResult getScheduleResultObject()
+	public IQueueEventResult getScheduleResultObject()
 	{
 		return this.scheduleResult;
 	}
 
-	public void setScheduleResultObject(ScheduleResultImpl scheduleResult)
+	public void setScheduleResultObject(QueueEventResultImpl scheduleResult)
 	{
 		this.scheduleResult = scheduleResult;
 	}

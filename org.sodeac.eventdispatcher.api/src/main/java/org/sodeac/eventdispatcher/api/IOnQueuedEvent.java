@@ -10,24 +10,21 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
-import org.osgi.service.event.Event;
-
 /**
  * 
- * An extension interface for {@link IQueueController} to consume a notification if jobs (re)fire an event by invoke {@link IQueue}.send/postEvent 
+ * An extension interface for {@link IQueueController} to consume a notification if {@link IQueue} has queued an {@link IQueuedEvent}
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnFireEvent extends IQueueController
+public interface IOnQueuedEvent extends IQueueController
 {
 	/**
-	 * This is fired, if {@link IQueue} sends / posts  a new {@link org.osgi.service.event.Event}
+	 * This is fired, if {@link IQueue} has queued an {@link IQueuedEvent}
 	 * <br>
 	 * invoked and synchronized by queue worker
 	 * 
-	 * @param event new fired {@link org.osgi.service.event.Event}
-	 * @param queue fire by {@link IQueue}
+	 * @param event new event, contains {@link org.osgi.service.event.Event}
 	 */
-	public void onFireEvent(Event event,IQueue queue);
+	public void onQueuedEvent(IQueuedEvent event);
 }

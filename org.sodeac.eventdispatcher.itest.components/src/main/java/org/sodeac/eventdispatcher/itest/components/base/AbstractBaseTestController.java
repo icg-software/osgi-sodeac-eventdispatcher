@@ -39,13 +39,13 @@ public class AbstractBaseTestController
 		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_QUEUE_OBSERVE,queue));
 	}
 
-	public void onRemoveEvent(IQueuedEvent event)
+	public void onRemovedEvent(IQueuedEvent event)
 	{
 		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_REMOVE_EVENT,event));
 		event.getQueue().signal(SIGNAL_REMOVE_EVENT);
 	}
 
-	public void onFireEvent(Event event, IQueue queue)
+	public void onFiredEvent(Event event, IQueue queue)
 	{
 		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_FIRE_EVENT,queue));
 	}

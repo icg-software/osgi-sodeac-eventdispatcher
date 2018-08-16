@@ -16,15 +16,15 @@ import javax.management.ObjectName;
 
 import org.sodeac.eventdispatcher.api.IDescriptionProvider;
 import org.sodeac.eventdispatcher.api.IQueueController;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
-import org.sodeac.eventdispatcher.api.IOnFireEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
+import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IOnJobError;
 import org.sodeac.eventdispatcher.api.IOnJobTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
-import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
+import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IStateInfoProvider;
 
 public class EventController implements EventControllerMBean
@@ -62,13 +62,13 @@ public class EventController implements EventControllerMBean
 	@Override
 	public boolean isImplementsOnEventScheduled()
 	{
-		return this.eventController instanceof IOnScheduleEvent;
+		return this.eventController instanceof IOnQueuedEvent;
 	}
 
 	@Override
 	public boolean isImplementsOnFireEvent()
 	{
-		return this.eventController instanceof IOnFireEvent;
+		return this.eventController instanceof IOnFiredEvent;
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class EventController implements EventControllerMBean
 	@Override
 	public boolean isImplementsOnRemoveEvent()
 	{
-		return this.eventController instanceof IOnRemoveEvent;
+		return this.eventController instanceof IOnRemovedEvent;
 	}
 
 	@Override

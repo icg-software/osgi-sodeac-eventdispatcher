@@ -22,7 +22,7 @@ import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
-import org.sodeac.eventdispatcher.api.IScheduleResult;
+import org.sodeac.eventdispatcher.api.IQueueEventResult;
 import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingObject;
@@ -119,14 +119,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertTrue("event should be scheduled", result.isScheduled());
+		assertTrue("event should be scheduled", result.isQeueued());
 		assertFalse("result should not contains errors", result.hasErrors());
 		long timeDiff = ts2 - ts1;
 		assertTrue("ScheduleTime should be in Tolarance " + scheduleTime + " (+/- 150ms) . Actual: " + timeDiff, super.checkTimeMeasure(scheduleTime, timeDiff, 150, -1));
@@ -149,7 +149,7 @@ public class ScheduleResultTest extends AbstractTest
 		Event event =  new Event(ScheduleResultTestController1.SCHEDULE_EVENT,eventProperties);
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
 		resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		
@@ -172,14 +172,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertFalse("event should be scheduled", result.isScheduled());
+		assertFalse("event should be scheduled", result.isQeueued());
 		assertFalse("result should not contains errors", result.hasErrors());
 		long timeDiff = ts2 - ts1;
 		assertTrue("ScheduleTime should be in Tolarance " + scheduleTime + " (+/- 150ms) . Actual: " + timeDiff, super.checkTimeMeasure(scheduleTime, timeDiff, 150, -1));
@@ -204,14 +204,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertFalse("event should be scheduled", result.isScheduled());
+		assertFalse("event should be scheduled", result.isQeueued());
 		assertTrue("result should not contains errors", result.hasErrors());
 		assertEquals("result should contains 1 error", 1, result.getErrorList().size());
 		long timeDiff = ts2 - ts1;
@@ -237,14 +237,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertFalse("event should be scheduled", result.isScheduled());
+		assertFalse("event should be scheduled", result.isQeueued());
 		assertTrue("result should not contains errors", result.hasErrors());
 		assertEquals("result should contains 1 error", 1, result.getErrorList().size());
 		long timeDiff = ts2 - ts1;
@@ -271,14 +271,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController1.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertFalse("event should be scheduled", result.isScheduled());
+		assertFalse("event should be scheduled", result.isQeueued());
 		assertTrue("result should not contains errors", result.hasErrors());
 		assertEquals("result should contains 2 error", 2, result.getErrorList().size());
 		long timeDiff = ts2 - ts1;
@@ -303,14 +303,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertTrue("event should be scheduled", result.isScheduled());
+		assertTrue("event should be scheduled", result.isQeueued());
 		assertFalse("result should not contains errors", result.hasErrors());
 		long timeDiff = ts2 - ts1;
 		assertTrue("ScheduleTime should be in Tolarance " + scheduleTime + " (+/- 150ms) . Actual: " + timeDiff, super.checkTimeMeasure(scheduleTime, timeDiff, 150, -1));
@@ -333,7 +333,7 @@ public class ScheduleResultTest extends AbstractTest
 		Event event =  new Event(ScheduleResultTestController2.SCHEDULE_EVENT,eventProperties);
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
 		resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		
@@ -356,14 +356,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertFalse("event should be scheduled", result.isScheduled());
+		assertFalse("event should be scheduled", result.isQeueued());
 		assertFalse("result should not contains errors", result.hasErrors());
 		long timeDiff = ts2 - ts1;
 		assertTrue("ScheduleTime should be in Tolarance " + scheduleTime + " (+/- 150ms) . Actual: " + timeDiff, super.checkTimeMeasure(scheduleTime, timeDiff, 150, -1));
@@ -388,14 +388,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertFalse("event should be scheduled", result.isScheduled());
+		assertFalse("event should be scheduled", result.isQeueued());
 		assertTrue("result should not contains errors", result.hasErrors());
 		assertEquals("result should contains 1 error", 1, result.getErrorList().size());
 		long timeDiff = ts2 - ts1;
@@ -421,14 +421,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertFalse("event should be scheduled", result.isScheduled());
+		assertFalse("event should be scheduled", result.isQeueued());
 		assertTrue("result should not contains errors", result.hasErrors());
 		assertEquals("result should contains 1 error", 1, result.getErrorList().size());
 		long timeDiff = ts2 - ts1;
@@ -455,14 +455,14 @@ public class ScheduleResultTest extends AbstractTest
 		long ts1 = System.currentTimeMillis();
 		eventAdmin.sendEvent(event);
 		
-		Future<IScheduleResult> resultFuture = (Future<IScheduleResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
+		Future<IQueueEventResult> resultFuture = (Future<IQueueEventResult>)bridge.get(ScheduleResultTestController2.PROPERTY_FUTURE);
 		assertNotNull("resultFuture should not be null" ,resultFuture);
-		IScheduleResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
+		IQueueEventResult result = resultFuture.get(maxwaitTime, TimeUnit.MILLISECONDS);
 		assertNotNull("result should not be null" ,result);
 		long ts2 = System.currentTimeMillis();
 		
 		assertTrue("future should be done", resultFuture.isDone());
-		assertFalse("event should be scheduled", result.isScheduled());
+		assertFalse("event should be scheduled", result.isQeueued());
 		assertTrue("result should not contains errors", result.hasErrors());
 		assertEquals("result should contains 2 error", 2, result.getErrorList().size());
 		long timeDiff = ts2 - ts1;

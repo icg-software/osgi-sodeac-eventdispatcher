@@ -10,21 +10,24 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+import org.sodeac.multichainlist.Snapshot;
+
 /**
  * 
- * An extension interface for {@link IQueueController} to consume notifications if a {@link IQueuedEvent} is removed on {@link IQueue}
+ * An extension interface for {@link IQueueController} to consume a notification if {@link IQueue} has queued one or more {@link IQueuedEvent}s
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnRemoveEvent extends IQueueController
+public interface IOnQueuedEventList extends IQueueController
 {
 	/**
-	 * This methode is fired, if {@link IQueueController} remove a scheduled {@link IQueuedEvent}
+	 * This is fired, if {@link IQueue} has queued one or more {@link IQueuedEvent}s
 	 * <br>
 	 * invoked and synchronized by queue worker
-	 *  
-	 * @param event removed event
+	 * 
+	 * @param queue related {@link IQueue}
+	 * @param queuedEvents new events, wraps {@link org.osgi.service.event.Event}
 	 */
-	public void onRemoveEvent(IQueuedEvent event);
+	public void onQueuedEventList(IQueue queue, Snapshot<IQueuedEvent> queuedEvents);
 }

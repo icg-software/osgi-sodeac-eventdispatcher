@@ -16,29 +16,29 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.sodeac.eventdispatcher.api.IScheduleResult;
+import org.sodeac.eventdispatcher.api.IQueueEventResult;
 
-public class ScheduleResultImpl implements IScheduleResult
+public class QueueEventResultImpl implements IQueueEventResult
 {
 	private				ReentrantLock		lock						= null;
 	private 			CountDownLatch 		countDownLatch 				= null;
-	private volatile 	boolean 			scheduledIsFinished 		= false; 
+	private volatile 	boolean 			processingIsFinished 		= false; 
 	
-	private volatile 	boolean 			scheduled 					= false;
+	private volatile 	boolean 			queued 					= false;
 	private volatile 	List<Throwable> 	errorList 					= null;
 	private volatile 	Object 				detailResultObject 			= null;
 	private volatile 	List<Object> 		detailResultObjectList 		= null;
 	
-	public ScheduleResultImpl()
+	public QueueEventResultImpl()
 	{
 		super();
 		this.countDownLatch = new CountDownLatch(1);
 		this.lock = new ReentrantLock(true);
 	}
 	
-	protected void waitForScheduledIsFinished()
+	protected void waitForProcessingIsFinished()
 	{
-		while(! scheduledIsFinished)
+		while(! processingIsFinished)
 		{
 			try
 			{
@@ -48,9 +48,9 @@ public class ScheduleResultImpl implements IScheduleResult
 		}
 	}
 	
-	protected void schedulePhaseIsFinished()
+	protected void processPhaseIsFinished()
 	{
-		this.scheduledIsFinished = true;
+		this.processingIsFinished = true;
 		this.countDownLatch.countDown();
 	}
 	
@@ -101,15 +101,15 @@ public class ScheduleResultImpl implements IScheduleResult
 	}
 
 	@Override
-	public boolean isScheduled()
+	public boolean isQeueued()
 	{
-		return scheduled;
+		return queued;
 	}
 
 	@Override
-	public void setScheduled()
+	public void markQueued()
 	{
-		this.scheduled = true;
+		this.queued = true;
 	}
 
 	@Override

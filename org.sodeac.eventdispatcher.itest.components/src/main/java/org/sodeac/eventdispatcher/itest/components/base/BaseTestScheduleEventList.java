@@ -25,16 +25,16 @@ import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IOnScheduleEventList;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
-import org.sodeac.eventdispatcher.api.IOnFireEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEventList;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
+import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IOnJobError;
 import org.sodeac.eventdispatcher.api.IOnJobTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
-import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
+import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
@@ -53,7 +53,7 @@ import org.sodeac.multichainlist.Snapshot;
 		EventConstants.EVENT_TOPIC+"=" + BaseTestScheduleEventList.SCHEDULE_EVENT
 	}
 )
-public class BaseTestScheduleEventList  extends AbstractBaseTestController implements EventHandler,IQueueController,IOnScheduleEvent,IOnScheduleEventList,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseTestScheduleEventList  extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnQueuedEventList,IOnRemovedEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final String 	QUEUE_ID 			= "basetestscheduleeventlistqueue";
 	public static final String 	JOB_EVENT	 		= "org/sodeac/eventdispatcher/itest/basetestscheduleeventlist/jobevent";
@@ -72,7 +72,7 @@ public class BaseTestScheduleEventList  extends AbstractBaseTestController imple
 	}
 	
 	@Override
-	public void onScheduleEvent(IQueuedEvent event)
+	public void onQueuedEvent(IQueuedEvent event)
 	{
 		if(event.getEvent().getTopic().equals(BUSY_EVENT))
 		{
@@ -95,7 +95,7 @@ public class BaseTestScheduleEventList  extends AbstractBaseTestController imple
 	}
 
 	@Override
-	public void onScheduleEventList(IQueue queue, Snapshot<IQueuedEvent> eventList)
+	public void onQueuedEventList(IQueue queue, Snapshot<IQueuedEvent> eventList)
 	{
 		List<IQueuedEvent> list = new ArrayList<IQueuedEvent>();
 		for(IQueuedEvent event : eventList)

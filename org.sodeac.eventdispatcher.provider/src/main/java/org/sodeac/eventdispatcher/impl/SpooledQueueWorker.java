@@ -21,23 +21,15 @@ public class SpooledQueueWorker
 	
 	private QueueImpl queue;
 	private long wakeupTime;
-	private boolean valid = true;
+	private volatile boolean valid = true;
 	
 	public QueueImpl getQueue()
 	{
 		return queue;
 	}
-	public void setQueue(QueueImpl queue)
-	{
-		this.queue = queue;
-	}
 	public long getWakeupTime()
 	{
 		return wakeupTime;
-	}
-	public void setWakeupTime(long wakeupTime)
-	{
-		this.wakeupTime = wakeupTime;
 	}
 	public boolean isValid()
 	{

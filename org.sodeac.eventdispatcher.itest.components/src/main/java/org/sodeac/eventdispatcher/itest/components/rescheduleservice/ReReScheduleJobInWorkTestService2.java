@@ -24,7 +24,7 @@ import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
@@ -44,7 +44,7 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 		EventConstants.EVENT_TOPIC+"=" + ReReScheduleJobInWorkTestService2.DATA_VALUE_EVENT
 	}
 )
-public class ReReScheduleJobInWorkTestService2 implements EventHandler,IQueueController,IOnScheduleEvent,IQueueService
+public class ReReScheduleJobInWorkTestService2 implements EventHandler,IQueueController,IOnQueuedEvent,IQueueService
 {
 	public static final String QUEUE_ID = "reschedulejobbyoneventscheduledtestservicequeue2";
 	public static final String SERVICE_ID = "reschedulejobbyoneventscheduledtestservice2";
@@ -95,7 +95,7 @@ public class ReReScheduleJobInWorkTestService2 implements EventHandler,IQueueCon
 	}
 
 	@Override
-	public void onScheduleEvent(IQueuedEvent event)
+	public void onQueuedEvent(IQueuedEvent event)
 	{
 		List<IQueuedEvent> eventList  = event.getQueue().getEventList(null, null, null);
 		if(eventList.isEmpty())

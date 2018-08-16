@@ -23,7 +23,7 @@ import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
@@ -49,7 +49,7 @@ import com.google.common.collect.ImmutableMap;
 		IQueueController.PROPERTY_CONSUME_EVENT_TOPIC+"=" + IReactiveServiceDiscovery.EVENT_TOPIC_RESPONSE,
 	}
 )
-public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueueController,IOnScheduleEvent,IOnQueueObserve, IOnQueueReverse
+public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueueController,IOnQueuedEvent,IOnQueueObserve, IOnQueueReverse
 {
 	
 	private IQueue managementQueue = null;
@@ -137,7 +137,7 @@ public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueu
 	}
 
 	@Override
-	public void onScheduleEvent(IQueuedEvent event)
+	public void onQueuedEvent(IQueuedEvent event)
 	{
 		if(event.getQueue() != this.managementQueue)
 		{
@@ -158,7 +158,7 @@ public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueu
 			{
 				return;
 			}
-			scope.scheduleEvent(event.getEvent());
+			scope.queueEvent(event.getEvent());
 		}
 		
 	}

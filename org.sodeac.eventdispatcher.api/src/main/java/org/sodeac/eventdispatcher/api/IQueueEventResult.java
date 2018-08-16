@@ -14,24 +14,25 @@ import java.util.List;
 
 /**
  * 
- * This object inform invoker of {@link IQueue#scheduleEvent(org.osgi.service.event.Event)} (or related) about state of scheduling
- * The schedule implementation {@link IOnScheduleEvent} / {@link IOnScheduleEventList} has confirm scheduled state, if it is in charge of this event type
+ * This object inform invoker of {@link IQueue#queueEvent(org.osgi.service.event.Event)} (or related) about state of queueing
+ * The implementation {@link IOnQueuedEvent} / {@link IOnQueuedEventList} has confirm process queued event, if it is in charge of this event type
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IScheduleResult
+public interface IQueueEventResult
 {
 	/**
-	 * marks event(s) as scheduled
+	 * marks event(s) as qeueued
 	 */
-	public void setScheduled();
+	public void markQueued();
 	
 	/**
-	 * getter for scheduled-state
-	 * @return
+	 * Getter for queued-state. This mark is only set, if a controller of type {@link IOnQueuedEvent} or {@link IOnQueuedEventList} marks queued event !
+	 * 
+	 * @return true, if {@link IOnQueuedEvent} / {@link IOnQueuedEventList} successfully processed queued event, otherwise false
 	 */
-	public boolean isScheduled();
+	public boolean isQeueued();
 	
 	/**
 	 * publish an error

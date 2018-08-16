@@ -10,24 +10,24 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
-import org.sodeac.multichainlist.Snapshot;
+import org.osgi.service.event.Event;
 
 /**
  * 
- * An extension interface for {@link IQueueController} to consume a notification if {@link IQueue} has to schedule one or more {@link IQueuedEvent}s
+ * An extension interface for {@link IQueueController} to consume a notification if jobs (re)fire an event by invoke {@link IQueue}.send/postEvent 
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnScheduleEventList extends IQueueController
+public interface IOnFiredEvent extends IQueueController
 {
 	/**
-	 * This is fired, if {@link IQueueController} has to schedule one or more {@link org.osgi.service.event.Event}s.
+	 * This is fired, if {@link IQueue} sends / posts  a new {@link org.osgi.service.event.Event}
 	 * <br>
 	 * invoked and synchronized by queue worker
 	 * 
-	 * @param queue related {@link IQueue}
-	 * @param eventList new events, contains {@link org.osgi.service.event.Event}
+	 * @param event new fired {@link org.osgi.service.event.Event}
+	 * @param queue fire by {@link IQueue}
 	 */
-	public void onScheduleEventList(IQueue queue, Snapshot<IQueuedEvent> newEvents);
+	public void onFiredEvent(Event event,IQueue queue);
 }

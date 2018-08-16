@@ -27,9 +27,9 @@ import org.sodeac.eventdispatcher.api.IOnJobTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
-import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
-import org.sodeac.eventdispatcher.api.IOnFireEvent;
+import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
+import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.common.job.FireSyncEvent;
@@ -46,7 +46,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 		EventConstants.EVENT_TOPIC+"=" + BaseGetJobTestController.GETJOB_EVENT
 	}
 )
-public class BaseGetJobTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnScheduleEvent,IOnRemoveEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFireEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseGetJobTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final int		DELAY			= 5000;	
 	public static final String 	QUEUE_ID 		= "basegetjobtestqueue";
@@ -65,7 +65,7 @@ public class BaseGetJobTestController extends AbstractBaseTestController impleme
 	}
 	
 	@Override
-	public void onScheduleEvent(IQueuedEvent event)
+	public void onQueuedEvent(IQueuedEvent event)
 	{
 		if(event.getEvent().getTopic().equals(SCHEDULE_EVENT))
 		{

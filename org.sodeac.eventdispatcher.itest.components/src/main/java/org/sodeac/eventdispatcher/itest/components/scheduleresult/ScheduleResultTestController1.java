@@ -22,9 +22,9 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
-import org.sodeac.eventdispatcher.api.IScheduleResult;
+import org.sodeac.eventdispatcher.api.IQueueEventResult;
 
 @Component
 (
@@ -36,7 +36,7 @@ import org.sodeac.eventdispatcher.api.IScheduleResult;
 		EventConstants.EVENT_TOPIC+"=" + ScheduleResultTestController1.SCHEDULE_EVENT
 	}
 )
-public class ScheduleResultTestController1 implements EventHandler, IQueueController, IOnScheduleEvent
+public class ScheduleResultTestController1 implements EventHandler, IQueueController, IOnQueuedEvent
 {
 	public static final String QUEUE_ID 						= "scheduleresulttest1"	;
 	public static final String SCHEDULE_EVENT 					= "org/sodeac/eventdispatcher/itest/metrics/scheduleresulttes1/run";
@@ -57,7 +57,7 @@ public class ScheduleResultTestController1 implements EventHandler, IQueueContro
 		try
 		{
 			Map<String,Object> bridge = (Map<String,Object>)event.getProperty(PROPERTY_BRIDGE);
-			Future<IScheduleResult> resultFuture = dispatcher.schedule(QUEUE_ID, event);
+			Future<IQueueEventResult> resultFuture = dispatcher.schedule(QUEUE_ID, event);
 			bridge.put(PROPERTY_FUTURE, resultFuture);
 			
 		}
@@ -68,7 +68,7 @@ public class ScheduleResultTestController1 implements EventHandler, IQueueContro
 	}
 
 	@Override
-	public void onScheduleEvent(IQueuedEvent event)
+	public void onQueuedEvent(IQueuedEvent event)
 	{
 		Long scheduleTime = (Long)event.getNativeEventProperties().get(PROPERTY_SCHEDULE_TIME);
 		Boolean scheduleDone = (Boolean)event.getNativeEventProperties().get(PROPERTY_SCHEDULE_DONE);
@@ -83,7 +83,7 @@ public class ScheduleResultTestController1 implements EventHandler, IQueueContro
 			}
 			if((scheduleDone != null) && scheduleDone.booleanValue())
 			{
-				event.getScheduleResultObject().setScheduled();
+				event.getScheduleResultObject().markQueued();
 			}
 			
 		}

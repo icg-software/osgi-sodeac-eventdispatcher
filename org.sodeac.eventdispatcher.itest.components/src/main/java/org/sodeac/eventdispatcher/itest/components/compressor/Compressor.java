@@ -21,7 +21,7 @@ import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IJobControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueJob;
@@ -42,7 +42,7 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 		IQueueController.PROPERTY_CONSUME_EVENT_TOPIC +"=" + CompressorStatics.TOPIC_RAW_EVENT
 	}
 )
-public class Compressor implements IQueueService,IQueueController,IOnScheduleEvent
+public class Compressor implements IQueueService,IQueueController,IOnQueuedEvent
 {
 	@Reference(cardinality=ReferenceCardinality.OPTIONAL,policy=ReferencePolicy.DYNAMIC)
 	protected volatile IEventDispatcher dispatcher;
@@ -53,7 +53,7 @@ public class Compressor implements IQueueService,IQueueController,IOnScheduleEve
 	private int collectedEvents = 0;
 	
 	@Override
-	public void onScheduleEvent(IQueuedEvent event)
+	public void onQueuedEvent(IQueuedEvent event)
 	{
 		if(event.getEvent().getTopic().equals(CompressorStatics.TOPIC_START_COMPRESSOR))
 		{

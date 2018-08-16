@@ -19,26 +19,26 @@ import org.sodeac.multichainlist.Snapshot;
 
 public interface IDynamicController extends 
 						IQueueController,
-						IOnFireEvent,
+						IOnFiredEvent,
 						IOnJobDone,
 						IOnJobError,
 						IOnJobTimeout,
 						IOnQueueObserve,
 						IOnQueueReverse,
 						IOnQueueSignal,
-						IOnScheduleEvent,
-						IOnScheduleEventList,
-						IOnRemoveEvent
+						IOnQueuedEvent,
+						IOnQueuedEventList,
+						IOnRemovedEvent
 {
 	
-	public default boolean implementsOnScheduleEventList()
+	public default boolean implementsOnQueuedEventList()
 	{
-		return implementsControllerMethod("onScheduleEventList", Void.TYPE, Snapshot.class, List.class);
+		return implementsControllerMethod("onQueuedEventList", Void.TYPE, Snapshot.class, List.class);
 	}
 	
-	public default boolean implementsOnScheduleEvent()
+	public default boolean implementsOnQueuedEvent()
 	{
-		return implementsControllerMethod("onScheduleEvent", Void.TYPE, IQueuedEvent.class);
+		return implementsControllerMethod("onQueuedEvent", Void.TYPE, IQueuedEvent.class);
 	}
 	
 	public default boolean implementsOnQueueSignal()
@@ -71,21 +71,21 @@ public interface IDynamicController extends
 		return implementsControllerMethod("onJobTimeout", Void.TYPE, IQueueJob.class);
 	}
 	
-	public default boolean implementsOnFireEvent()
+	public default boolean implementsOnFiredEvent()
 	{
-		return implementsControllerMethod("onFireEvent", Void.TYPE, Event.class, IQueue.class);
+		return implementsControllerMethod("onFiredEvent", Void.TYPE, Event.class, IQueue.class);
 	}
 
-	public default boolean implementsOnRemoveEvent()
+	public default boolean implementsOnRemovedEvent()
 	{
-		return implementsControllerMethod("onRemoveEvent", Void.TYPE, IQueuedEvent.class);
+		return implementsControllerMethod("onRemovedEvent", Void.TYPE, IQueuedEvent.class);
 	}
 	
 	@Override
-	default void onScheduleEventList(IQueue queue, Snapshot<IQueuedEvent> newEvents){}
+	default void onQueuedEventList(IQueue queue, Snapshot<IQueuedEvent> newEvents){}
 
 	@Override
-	default void onScheduleEvent(IQueuedEvent event){}
+	default void onQueuedEvent(IQueuedEvent event){}
 
 	@Override
 	default void onQueueSignal(IQueue queue, String signal){}
@@ -106,10 +106,10 @@ public interface IDynamicController extends
 	default void onJobTimeout(IQueueJob job){}
 
 	@Override
-	default void onFireEvent(Event event, IQueue queue){}
+	default void onFiredEvent(Event event, IQueue queue){}
 	
 	@Override
-	default void onRemoveEvent(IQueuedEvent event) {};
+	default void onRemovedEvent(IQueuedEvent event) {};
 	
 	
 	default boolean implementsControllerMethod(String name,Class<?> returnType, Class<?>... parameterTypes)

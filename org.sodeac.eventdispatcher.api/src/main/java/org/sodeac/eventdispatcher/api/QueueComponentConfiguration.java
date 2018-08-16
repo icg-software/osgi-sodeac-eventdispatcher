@@ -411,7 +411,7 @@ public abstract class QueueComponentConfiguration implements Serializable
 	}
 	
 	/**
-	 * Subscribe a {@link IQueueComponent} to consume an event. The event will append to queue and  processed by all {@link IQueueController}s implements {@link IOnScheduleEvent}.
+	 * Subscribe a {@link IQueueComponent} to consume an event. The event will append to queue and  processed by all {@link IQueueController}s implements {@link IOnQueuedEvent}.
 	 * 
 	 * @author Sebastian Palarus
 	 *
@@ -428,7 +428,7 @@ public abstract class QueueComponentConfiguration implements Serializable
 		private String filter;
 		
 		/**
-		 * Constructor to subscribe a {@link IQueueComponent} to consume an event. The event will append to queue and  processed by all {@link IQueueController}s implements {@link IOnScheduleEvent}.
+		 * Constructor to subscribe a {@link IQueueComponent} to consume an event. The event will append to queue and  processed by all {@link IQueueController}s implements {@link IOnQueuedEvent}.
 		 * <br><br>
 		 * Note: A subscription for event type {@link EventType#ScheduledByEventDispatcher} is not possible. Scheduled events will automatically deliver to addressed queues.
 		 * 

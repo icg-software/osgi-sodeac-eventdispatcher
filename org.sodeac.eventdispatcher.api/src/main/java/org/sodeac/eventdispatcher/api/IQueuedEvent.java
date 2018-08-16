@@ -81,11 +81,11 @@ public interface IQueuedEvent
 	public Map<String,Object> getNativeEventProperties();
 	
 	/**
-	 * getter for {@link IScheduleResult} to inform schedule invoker about result
+	 * getter for {@link IQueueEventResult} to inform schedule invoker about result
 	 * 
 	 * @return schedule result object
 	 */
-	public IScheduleResult getScheduleResultObject();
+	public IQueueEventResult getScheduleResultObject();
 	
 	/**
 	 * get registered adapter

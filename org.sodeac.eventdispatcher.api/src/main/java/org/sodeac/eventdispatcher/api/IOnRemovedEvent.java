@@ -12,19 +12,19 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IQueueController} to consume a notification if {@link IQueue} has to schedule a {@link IQueuedEvent}
+ * An extension interface for {@link IQueueController} to consume notifications if a {@link IQueuedEvent} is removed on {@link IQueue}
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnScheduleEvent extends IQueueController
+public interface IOnRemovedEvent extends IQueueController
 {
 	/**
-	 * This is fired, if {@link IQueueController} has to schedule a new {@link org.osgi.service.event.Event}.
+	 * This methode is fired, if {@link IQueueController} removed a queued {@link IQueuedEvent}
 	 * <br>
 	 * invoked and synchronized by queue worker
-	 * 
-	 * @param event new event, contains {@link org.osgi.service.event.Event}
+	 *  
+	 * @param event removed event
 	 */
-	public void onScheduleEvent(IQueuedEvent event);
+	public void onRemovedEvent(IQueuedEvent event);
 }

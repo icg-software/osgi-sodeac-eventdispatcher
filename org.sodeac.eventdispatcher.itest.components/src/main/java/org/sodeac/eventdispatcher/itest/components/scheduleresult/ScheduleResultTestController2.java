@@ -23,11 +23,11 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
-import org.sodeac.eventdispatcher.api.IOnScheduleEventList;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEventList;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
-import org.sodeac.eventdispatcher.api.IScheduleResult;
+import org.sodeac.eventdispatcher.api.IQueueEventResult;
 import org.sodeac.multichainlist.Snapshot;
 
 @Component
@@ -40,7 +40,7 @@ import org.sodeac.multichainlist.Snapshot;
 		EventConstants.EVENT_TOPIC+"=" + ScheduleResultTestController2.SCHEDULE_EVENT
 	}
 )
-public class ScheduleResultTestController2 implements EventHandler, IQueueController, IOnScheduleEventList
+public class ScheduleResultTestController2 implements EventHandler, IQueueController, IOnQueuedEventList
 {
 	public static final String QUEUE_ID 						= "scheduleresulttest2"	;
 	public static final String SCHEDULE_EVENT 					= "org/sodeac/eventdispatcher/itest/metrics/scheduleresulttes2/run";
@@ -61,7 +61,7 @@ public class ScheduleResultTestController2 implements EventHandler, IQueueContro
 		try
 		{
 			Map<String,Object> bridge = (Map<String,Object>)event.getProperty(PROPERTY_BRIDGE);
-			Future<IScheduleResult> resultFuture = dispatcher.schedule(QUEUE_ID, event);
+			Future<IQueueEventResult> resultFuture = dispatcher.schedule(QUEUE_ID, event);
 			bridge.put(PROPERTY_FUTURE, resultFuture);
 			
 		}
@@ -72,7 +72,7 @@ public class ScheduleResultTestController2 implements EventHandler, IQueueContro
 	}
 
 	@Override
-	public void onScheduleEventList(IQueue queue, Snapshot<IQueuedEvent> newEvents)
+	public void onQueuedEventList(IQueue queue, Snapshot<IQueuedEvent> newEvents)
 	{
 		Iterator<IQueuedEvent> eventList = newEvents.iterator();
 		if(! eventList.hasNext())
@@ -98,7 +98,7 @@ public class ScheduleResultTestController2 implements EventHandler, IQueueContro
 			{
 				for(IQueuedEvent evt : newEvents)
 				{
-					evt.getScheduleResultObject().setScheduled();
+					evt.getScheduleResultObject().markQueued();
 				}
 			}
 			

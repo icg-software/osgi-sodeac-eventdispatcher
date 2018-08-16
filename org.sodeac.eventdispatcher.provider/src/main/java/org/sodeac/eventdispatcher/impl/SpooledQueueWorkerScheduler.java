@@ -10,11 +10,9 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import org.sodeac.multichainlist.MultiChainList;
+import org.sodeac.multichainlist.Snapshot;
+import org.sodeac.multichainlist.Link;
 
 import org.osgi.service.log.LogService;
 
@@ -27,12 +25,7 @@ public class SpooledQueueWorkerScheduler extends Thread
 		super();
 		this.eventDispatcher = eventDispatcher;
 		
-		this.lock = new ReentrantReadWriteLock(true);
-		this.readLock = this.lock.readLock();
-		this.writeLock = this.lock.writeLock();
-		
-		this.scheduledList = new ArrayList<SpooledQueueWorker>();
-		this.removeList = new ArrayList<SpooledQueueWorker>();
+		this.scheduledList = new MultiChainList<SpooledQueueWorker>();
 		
 		super.setDaemon(true);
 		super.setName(SpooledQueueWorkerScheduler.class.getSimpleName() + " " + eventDispatcher.getId());
@@ -44,25 +37,12 @@ public class SpooledQueueWorkerScheduler extends Thread
 	private volatile long currentWait = -1;
 	
 	private Object waitMonitor = new Object();
-	private List<SpooledQueueWorker> removeList = null;
-	private ReentrantReadWriteLock lock;
-	private ReadLock readLock;
-	private WriteLock writeLock;
-	
-	private List<SpooledQueueWorker> scheduledList = null;
+	private MultiChainList<SpooledQueueWorker> scheduledList = null;
 	
 	protected SpooledQueueWorker scheduleQueueWorker(QueueImpl queue, long wakeUpTime)
 	{
 		SpooledQueueWorker spooledQueueWorker = new SpooledQueueWorker(queue, wakeUpTime);
-		this.writeLock.lock();
-		try
-		{
-			scheduledList.add(spooledQueueWorker);
-		}
-		finally 
-		{
-			this.writeLock.unlock();
-		}
+		scheduledList.append(spooledQueueWorker,null);
 		
 		synchronized (this.waitMonitor)
 		{
@@ -82,10 +62,10 @@ public class SpooledQueueWorkerScheduler extends Thread
 	@Override
 	public void run()
 	{
+		SpooledQueueWorker worker;
 		long spoolCleanRun = 0;
 		while(go)
 		{
-			removeList.clear();
 			long minWakeUpTimestamp = -1;
 			
 			long now = System.currentTimeMillis();
@@ -110,19 +90,26 @@ public class SpooledQueueWorkerScheduler extends Thread
 			
 			try
 			{
-				readLock.lock();
+				Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createSnapshot(null, null);
 				try
 				{
-					for(SpooledQueueWorker worker : this.scheduledList)
+					for(Link<SpooledQueueWorker> workerLink : snapshot.linkIterable())
 					{
+						worker = workerLink.getElement();
+						if(worker == null)
+						{
+							workerLink.unlink();
+							continue;
+						}
 						if(! worker.isValid())
 						{
-							removeList.add(worker);
+							workerLink.unlink();							
 							continue;
 						}
 						if(now >= worker.getWakeupTime())
 						{
-							removeList.add(worker);
+							worker.getQueue().notifyOrCreateWorker(worker.getWakeupTime());
+							workerLink.unlink();
 							continue;
 						}
 						if(minWakeUpTimestamp < 0)
@@ -134,10 +121,11 @@ public class SpooledQueueWorkerScheduler extends Thread
 							minWakeUpTimestamp = worker.getWakeupTime();
 						}
 					}
+				
 				}
 				finally 
 				{
-					readLock.unlock();
+					snapshot.close();
 				}
 				
 			}
@@ -149,34 +137,6 @@ public class SpooledQueueWorkerScheduler extends Thread
 			{
 				log(LogService.LOG_ERROR,"Error while run SpooledQueueWorkerScheduler",e);
 			}
-			
-			
-			if(! removeList.isEmpty())
-			{
-				writeLock.lock();
-				
-				try
-				{
-					for(SpooledQueueWorker toRemove : removeList)
-					{
-						this.scheduledList.remove(toRemove);
-					}
-				}
-				finally 
-				{
-					writeLock.unlock();
-				}
-				
-				for(SpooledQueueWorker toRemove : removeList)
-				{
-					if(! toRemove.isValid())
-					{
-						continue;
-					}
-					toRemove.getQueue().notifyOrCreateWorker(toRemove.getWakeupTime());
-				}
-			}
-			
 			
 			try
 			{
@@ -219,6 +179,26 @@ public class SpooledQueueWorkerScheduler extends Thread
 				log(LogService.LOG_ERROR,"Error while run SpooledQueueWorkerScheduler",e);
 			}
 		}
+		Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createSnapshot(null, null); // TODO clearAlll
+		try
+		{
+			for(Link<SpooledQueueWorker> workerLink : snapshot.linkIterable())
+			{
+				workerLink.unlink();
+			}
+		}
+		finally 
+		{
+			try
+			{
+				snapshot.close();
+			}
+			catch (Exception e) 
+			{
+				log(LogService.LOG_ERROR,"Error close snapshot",e);
+			}
+		}
+		
 	}
 	public void stopScheduler()
 	{

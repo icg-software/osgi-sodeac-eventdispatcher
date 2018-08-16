@@ -37,24 +37,24 @@ public interface IQueue
 	
 	
 	/**
-	 * schedule an osgi event to queue
+	 * queue an osgi event
 	 * 
-	 * @param event osgi-event to schedule 
+	 * @param event osgi-event to queue
 	 * 
-	 * @return Future of {@link IScheduleResult}
+	 * @return Future of {@link IQueueEventResult}
 	 * @throws QueueIsFullException
 	 */
-	public Future<IScheduleResult> scheduleEvent(Event event) throws QueueIsFullException;
+	public Future<IQueueEventResult> queueEvent(Event event) throws QueueIsFullException;
 	
 	/**
-	 * schedule a list of osgi events to queue
+	 * queue a list of osgi events
 	 * 
-	 * @param eventList list of osgi-events to schedule 
+	 * @param eventList list of osgi-events to queue
 	 * 
-	 * @return Future of {@link IScheduleResult}
+	 * @return Future of {@link IQueueEventResult}
 	 * @throws QueueIsFullException
 	 */
-	public Future<IScheduleResult> scheduleEventList(List<Event> eventList) throws QueueIsFullException;
+	public Future<IQueueEventResult> queueEventList(List<Event> eventList) throws QueueIsFullException;
 	
 	/**
 	 * getter for configuration propertyblock of queue
@@ -230,7 +230,7 @@ public interface IQueue
 	
 	/**
 	 * Sends an osgi-{@link org.osgi.service.event.Event} synchronously. 
-	 * Following this all {@link IQueueController} manage this {@link IQueue} and implements {@link IOnFireEvent} will notify asynchronously by queueworker.
+	 * Following this all {@link IQueueController} manage this {@link IQueue} and implements {@link IOnFiredEvent} will notify asynchronously by queueworker.
 	 * 
 	 * @param topic event topic
 	 * @param properties event properties
@@ -239,7 +239,7 @@ public interface IQueue
 	
 	/**
 	 * Post an osgi-{@link org.osgi.service.event.Event} asynchronously. 
-	 * Following this all {@link IQueueController} manage this {@link IQueue} and implements {@link IOnFireEvent} will notify asynchronously by queueworker.
+	 * Following this all {@link IQueueController} manage this {@link IQueue} and implements {@link IOnFiredEvent} will notify asynchronously by queueworker.
 	 * 
 	 * @param topic event topic
 	 * @param properties event properties

@@ -21,16 +21,16 @@ import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IDynamicController;
-import org.sodeac.eventdispatcher.api.IOnFireEvent;
+import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IOnJobError;
 import org.sodeac.eventdispatcher.api.IOnJobTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
-import org.sodeac.eventdispatcher.api.IOnRemoveEvent;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
-import org.sodeac.eventdispatcher.api.IOnScheduleEventList;
+import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEventList;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.MetricsRequirement;
 import org.sodeac.eventdispatcher.api.QueueComponentConfiguration;
@@ -98,29 +98,29 @@ public class ControllerContainer
 		if(this.queueController instanceof IDynamicController)
 		{
 			IDynamicController dynamicController = (IDynamicController)this.queueController;
-			implementsIOnFireEvent = dynamicController.implementsOnFireEvent();
+			implementsIOnFireEvent = dynamicController.implementsOnFiredEvent();
 			implementsIOnJobDone = dynamicController.implementsOnJobDone();
 			implementsIOnJobError = dynamicController.implementsOnJobError();
 			implementsIOnJobTimeout = dynamicController.implementsOnJobTimeout();
 			implementsIOnQueueObserve = dynamicController.implementsOnQueueObserve();
 			implementsIOnQueueReverse = dynamicController.implementsOnQueueReverse();
 			implementsIOnQueueSignal = dynamicController.implementsOnQueueSignal();
-			implementsIOnScheduleEvent = dynamicController.implementsOnScheduleEvent();
-			implementsIOnScheduleEventList = dynamicController.implementsOnScheduleEventList();
-			implementsIOnRemoveEvent = dynamicController.implementsOnRemoveEvent();
+			implementsIOnScheduleEvent = dynamicController.implementsOnQueuedEvent();
+			implementsIOnScheduleEventList = dynamicController.implementsOnQueuedEventList();
+			implementsIOnRemoveEvent = dynamicController.implementsOnRemovedEvent();
 		}
 		else
 		{
-			implementsIOnFireEvent = this.queueController instanceof IOnFireEvent;
+			implementsIOnFireEvent = this.queueController instanceof IOnFiredEvent;
 			implementsIOnJobDone = this.queueController instanceof IOnJobDone;
 			implementsIOnJobError = this.queueController instanceof IOnJobError;
 			implementsIOnJobTimeout = this.queueController instanceof IOnJobTimeout;
 			implementsIOnQueueObserve = this.queueController instanceof IOnQueueObserve;
 			implementsIOnQueueReverse = this.queueController instanceof IOnQueueReverse;
 			implementsIOnQueueSignal = this.queueController instanceof IOnQueueSignal;
-			implementsIOnScheduleEvent = this.queueController instanceof IOnScheduleEvent;
-			implementsIOnScheduleEventList = this.queueController instanceof IOnScheduleEventList;
-			implementsIOnRemoveEvent = this.queueController instanceof IOnRemoveEvent;
+			implementsIOnScheduleEvent = this.queueController instanceof IOnQueuedEvent;
+			implementsIOnScheduleEventList = this.queueController instanceof IOnQueuedEventList;
+			implementsIOnRemoveEvent = this.queueController instanceof IOnRemovedEvent;
 		}
 	}
 	

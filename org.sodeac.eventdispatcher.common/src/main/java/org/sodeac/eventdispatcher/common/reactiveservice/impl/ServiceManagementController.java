@@ -18,7 +18,7 @@ import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.DiscoverReactiveServiceRequest;
@@ -37,7 +37,7 @@ import com.google.common.collect.ImmutableMap;
 		IReactiveServiceDiscovery.SERVICE_PROPERTY__CONSUME_EVENTS_DISCOVER_SERVICE,
 	}
 )
-public class ServiceManagementController implements IQueueController, IOnQueueObserve, IOnQueueReverse, IOnQueueSignal, IOnScheduleEvent
+public class ServiceManagementController implements IQueueController, IOnQueueObserve, IOnQueueReverse, IOnQueueSignal, IOnQueuedEvent
 {
 	@Override
 	public void onQueueObserve(IQueue queue)
@@ -64,7 +64,7 @@ public class ServiceManagementController implements IQueueController, IOnQueueOb
 	}
 	
 	@Override
-	public void onScheduleEvent(IQueuedEvent event)
+	public void onQueuedEvent(IQueuedEvent event)
 	{
 		if(IReactiveServiceDiscovery.EVENT_TOPIC_REQUEST.equals(event.getEvent().getTopic()))
 		{

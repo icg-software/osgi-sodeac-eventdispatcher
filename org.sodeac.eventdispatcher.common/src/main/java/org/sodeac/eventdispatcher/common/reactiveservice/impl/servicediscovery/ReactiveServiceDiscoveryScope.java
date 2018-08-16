@@ -17,7 +17,7 @@ import org.osgi.service.component.annotations.Component;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
@@ -41,7 +41,7 @@ import com.google.common.collect.ImmutableMap;
 	}
 )
 
-public class ReactiveServiceDiscoveryScope implements IQueueController,IOnQueueObserve, IOnScheduleEvent
+public class ReactiveServiceDiscoveryScope implements IQueueController,IOnQueueObserve, IOnQueuedEvent
 {
 
 	@Override
@@ -66,7 +66,7 @@ public class ReactiveServiceDiscoveryScope implements IQueueController,IOnQueueO
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void onScheduleEvent(IQueuedEvent event)
+	public void onQueuedEvent(IQueuedEvent event)
 	{
 		event.removeFromQueue();
 		

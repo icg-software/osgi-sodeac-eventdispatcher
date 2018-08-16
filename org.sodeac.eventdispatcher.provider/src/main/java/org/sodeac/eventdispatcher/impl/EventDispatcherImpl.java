@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -56,7 +57,7 @@ import org.sodeac.eventdispatcher.api.IQueueComponentConfigurable;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
-import org.sodeac.eventdispatcher.api.IScheduleResult;
+import org.sodeac.eventdispatcher.api.IQueueEventResult;
 import org.sodeac.eventdispatcher.api.ITimer;
 import org.sodeac.eventdispatcher.api.MetricsRequirement;
 import org.sodeac.eventdispatcher.api.QueueComponentConfiguration;
@@ -83,7 +84,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private ReadLock osgiLifecycleReadLock;
 	private WriteLock osgiLifecycleWriteLock;
 	
-	private List<QueueWorker> workerPool;
+	private LinkedList<QueueWorker> workerPool;
 	private ReentrantReadWriteLock workerPoolLock;
 	private ReadLock workerPoolReadLock;
 	private WriteLock workerPoolWriteLock;
@@ -187,7 +188,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		this.extensionListReadLock = extensionListLock.readLock();
 		this.extensionListWriteLock = extensionListLock.writeLock();
 		
-		this.workerPool = new ArrayList<QueueWorker>();
+		this.workerPool = new LinkedList<QueueWorker>();
 		this.workerPoolLock = new ReentrantReadWriteLock(true);
 		this.workerPoolReadLock = this.workerPoolLock.readLock();
 		this.workerPoolWriteLock = this.workerPoolLock.writeLock();
@@ -208,7 +209,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public Future<IScheduleResult> schedule(String queueId, Event event)
+	public Future<IQueueEventResult> schedule(String queueId, Event event)
 	{
 		osgiLifecycleReadLock.lock();
 		try
@@ -257,7 +258,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				throw new QueueNotFoundException(queueId);
 			}
 			
-			return queue.scheduleEvent(event);
+			return queue.queueEvent(event);
 		}
 		finally 
 		{
@@ -266,7 +267,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public Future<IScheduleResult> schedule(String queueId, List<Event> eventList)
+	public Future<IQueueEventResult> schedule(String queueId, List<Event> eventList)
 	{
 		osgiLifecycleReadLock.lock();
 		try
@@ -315,7 +316,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				throw new QueueNotFoundException(queueId);
 			}
 			
-			return queue.scheduleEventList(eventList);
+			return queue.queueEventList(eventList);
 		}
 		finally 
 		{
@@ -2083,7 +2084,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		this.workerPoolWriteLock.lock();
 		try
 		{
-			this.workerPool.add(0, worker);
+			this.workerPool.addFirst(worker);
 		}
 		finally 
 		{
@@ -2101,7 +2102,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			QueueWorker foundWorker = null;
 			while(! this.workerPool.isEmpty())
 			{
-				foundWorker = this.workerPool.remove(0);
+				foundWorker = this.workerPool.removeFirst();
 				if(! foundWorker.isGo())
 				{
 					continue;
@@ -2130,7 +2131,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		try
 		{
 			long shutdownTimeStamp = System.currentTimeMillis() - QueueWorker.DEFAULT_SHUTDOWN_TIME;
-			List<QueueWorker> removeList = new ArrayList<QueueWorker>();
+			LinkedList<QueueWorker> removeList = new LinkedList<QueueWorker>();
 			for(QueueWorker worker : this.workerPool)
 			{
 				try
@@ -2164,6 +2165,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				catch (Exception e) {this.log(LogService.LOG_ERROR, "remove spooled worker", e);}
 				catch (Error e) {this.log(LogService.LOG_ERROR, "remove spooled worker", e);}
 			}
+			removeList.clear();
 		}
 		finally 
 		{
@@ -2281,14 +2283,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		catch (Exception e) {}
 	}
 	
-	public Future<IScheduleResult> createFutureOfScheduleResult(ScheduleResultImpl scheduleResult)
+	public Future<IQueueEventResult> createFutureOfScheduleResult(QueueEventResultImpl scheduleResult)
 	{
-		Callable<IScheduleResult> call = new Callable<IScheduleResult>()
+		Callable<IQueueEventResult> call = new Callable<IQueueEventResult>()
 		{
 			@Override
-			public IScheduleResult call() throws Exception
+			public IQueueEventResult call() throws Exception
 			{
-				scheduleResult.waitForScheduledIsFinished();
+				scheduleResult.waitForProcessingIsFinished();
 				return scheduleResult;
 			}
 			

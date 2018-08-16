@@ -28,7 +28,7 @@ import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnJobDone;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IOnScheduleEvent;
+import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 
@@ -42,7 +42,7 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 		EventConstants.EVENT_TOPIC+"=" + JobMetricTestController.RUN_EVENT
 	}
 )
-public class JobMetricTestController implements IQueueController,IOnScheduleEvent, EventHandler, IOnJobDone
+public class JobMetricTestController implements IQueueController,IOnQueuedEvent, EventHandler, IOnJobDone
 {
 	public static final String EVENT_PROPERTY_LATCH 		= "LATCH"		;
 	public static final String EVENT_PROPERTY_REPEAT 		= "REPEAT"		;
@@ -70,7 +70,7 @@ public class JobMetricTestController implements IQueueController,IOnScheduleEven
 	// IOnEventScheduled
 	
 	@Override
-	public void onScheduleEvent(IQueuedEvent event)
+	public void onQueuedEvent(IQueuedEvent event)
 	{
 		this.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		event.getQueue().scheduleJob
