@@ -209,7 +209,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public Future<IQueueEventResult> schedule(String queueId, Event event)
+	public Future<IQueueEventResult> queueEvent(String queueId, Event event)
 	{
 		osgiLifecycleReadLock.lock();
 		try
@@ -267,7 +267,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public Future<IQueueEventResult> schedule(String queueId, List<Event> eventList)
+	public Future<IQueueEventResult> queueEventList(String queueId, List<Event> eventList)
 	{
 		osgiLifecycleReadLock.lock();
 		try

@@ -57,7 +57,7 @@ public class BaseHeartbeatTimeoutTestController extends AbstractBaseTestControll
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(BaseHeartbeatTimeoutTestController.QUEUE_ID,event);
+		dispatcher.queueEvent(BaseHeartbeatTimeoutTestController.QUEUE_ID,event);
 	}
 	
 	@Override

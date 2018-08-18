@@ -430,7 +430,7 @@ public abstract class QueueComponentConfiguration implements Serializable
 		/**
 		 * Constructor to subscribe a {@link IQueueComponent} to consume an event. The event will append to queue and  processed by all {@link IQueueController}s implements {@link IOnQueuedEvent}.
 		 * <br><br>
-		 * Note: A subscription for event type {@link EventType#ScheduledByEventDispatcher} is not possible. Scheduled events will automatically deliver to addressed queues.
+		 * Note: A subscription for event type {@link EventType#QueuedByEventDispatcher} is not possible. Queued events will automatically deliver to addressed queues.
 		 * 
 		 * @param topic event topic
 		 * @param filter ldap match filter to event 
@@ -627,7 +627,7 @@ public abstract class QueueComponentConfiguration implements Serializable
 		/**
 		 * setter for periodic repetition interval of service in ms
 		 * @param periodicRepetitionIntervalMS repetition interval of service in ms
-		 * * @return queue service configuration
+		 * @return queue service configuration
 		 */
 		public QueueServiceConfiguration setPeriodicRepetitionIntervalMS(long periodicRepetitionIntervalMS)
 		{

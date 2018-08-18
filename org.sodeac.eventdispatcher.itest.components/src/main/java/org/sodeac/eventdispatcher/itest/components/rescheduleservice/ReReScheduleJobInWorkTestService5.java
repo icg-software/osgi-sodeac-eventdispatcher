@@ -129,7 +129,7 @@ public class ReReScheduleJobInWorkTestService5 implements EventHandler,IQueueCon
 		}
 		if(event.getTopic().equals(DATA_VALUE_EVENT))
 		{
-			dispatcher.schedule(QUEUE_ID, event);
+			dispatcher.queueEvent(QUEUE_ID, event);
 		}
 	}
 

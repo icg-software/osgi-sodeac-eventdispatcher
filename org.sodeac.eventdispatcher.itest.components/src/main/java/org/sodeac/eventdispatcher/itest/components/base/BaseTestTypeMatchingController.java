@@ -58,7 +58,7 @@ public class BaseTestTypeMatchingController extends AbstractBaseTestController i
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(BaseTestTypeMatchingController.QUEUE_ID, event);
+		dispatcher.queueEvent(BaseTestTypeMatchingController.QUEUE_ID, event);
 	}
 	
 	@Override

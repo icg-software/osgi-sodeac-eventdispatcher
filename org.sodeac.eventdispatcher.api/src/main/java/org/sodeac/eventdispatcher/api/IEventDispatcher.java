@@ -32,7 +32,7 @@ public interface IEventDispatcher
 	public static final String DEFAULT_DISPATCHER_ID = "default";
 	
 	/**
-	 * schedule an osgi event to eventdispatcher queue
+	 * queue an osgi event to addressed queue
 	 * 
 	 * @param queueId id of {@link IQueue} 
 	 * @param event osgi-event to schedule to {@link IQueue} 
@@ -42,10 +42,10 @@ public interface IEventDispatcher
 	 * @throws QueueNotFoundException
 	 * @throws QueueIsFullException
 	 */
-	public Future<IQueueEventResult> schedule(String queueId,Event event) throws QueueNotFoundException, QueueIsFullException;
+	public Future<IQueueEventResult> queueEvent(String queueId,Event event) throws QueueNotFoundException, QueueIsFullException;
 	
 	/**
-	 * schedule a list of osgi events to eventdispatcher queue
+	 * queue a list of osgi events to addressed queue
 	 * 
 	 * @param queueId id of {@link IQueue} 
 	 * @param eventList list of osgi-events to schedule to {@link IQueue} 
@@ -55,7 +55,7 @@ public interface IEventDispatcher
 	 * @throws QueueNotFoundException
 	 * @throws QueueIsFullException
 	 */
-	public Future<IQueueEventResult> schedule(String queueId,List<Event> eventList) throws QueueNotFoundException, QueueIsFullException;
+	public Future<IQueueEventResult> queueEventList(String queueId,List<Event> eventList) throws QueueNotFoundException, QueueIsFullException;
 	
 	/**
 	 * factory-methode creating instance of {@link IPropertyBlock} 

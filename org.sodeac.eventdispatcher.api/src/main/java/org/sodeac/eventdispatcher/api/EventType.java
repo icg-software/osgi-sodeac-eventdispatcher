@@ -37,7 +37,7 @@ public enum EventType
 	/**
 	 * {@link Event} scheduled by ({@link IEventDispatcher}) : {@link IEventDispatcher#schedule(String, Event)} / {@link IEventDispatcher#schedule(String, java.util.List)}
 	 */
-	ScheduledByEventDispatcher(2),
+	QueuedByEventDispatcher(2),
 	
 	/**
 	 * {@link Event} published by ({@link IEventDispatcher})
@@ -50,12 +50,12 @@ public enum EventType
 	PublishedByAny(5),
 	
 	/**
-	 * {@link Event} scheduled or published by ({@link IEventDispatcher})
+	 * {@link Event} queued or published by ({@link IEventDispatcher})
 	 */
 	AllByEventDispatcher(6),
 	
 	/**
-	 * {@link Event} scheduled or published by ({@link IEventDispatcher}) or send or posted by {@link EventAdmin}
+	 * {@link Event} queued or published by ({@link IEventDispatcher}) or send or posted by {@link EventAdmin}
 	 */
 	All(7);
 	

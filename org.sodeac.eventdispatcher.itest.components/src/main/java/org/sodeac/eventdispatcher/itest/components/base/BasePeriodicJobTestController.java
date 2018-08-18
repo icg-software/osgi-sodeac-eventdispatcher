@@ -56,7 +56,7 @@ public class BasePeriodicJobTestController extends AbstractBaseTestController im
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(BasePeriodicJobTestController.QUEUE_ID,event);
+		dispatcher.queueEvent(BasePeriodicJobTestController.QUEUE_ID,event);
 	}
 	
 	@Override

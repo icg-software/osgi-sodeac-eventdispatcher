@@ -61,7 +61,7 @@ public class BaseReCreateWorkerTestController extends AbstractBaseTestController
 	@Override
 	public void handleEvent(Event event)
 	{
-		dispatcher.schedule(BaseReCreateWorkerTestController.QUEUE_ID,event);
+		dispatcher.queueEvent(BaseReCreateWorkerTestController.QUEUE_ID,event);
 	}
 	
 	@Override

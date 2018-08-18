@@ -64,7 +64,7 @@ public class EventSubscriptionsMerger
 						continue;
 					}
 					// TODO Bitoperation
-					if(subscribeEvent.getEventType() == EventType.ScheduledByEventDispatcher)
+					if(subscribeEvent.getEventType() == EventType.QueuedByEventDispatcher)
 					{
 						continue;
 					}
@@ -104,7 +104,7 @@ public class EventSubscriptionsMerger
 						continue;
 					}
 					// TODO Bitoperation
-					if(subscribeEvent.getEventType() == EventType.ScheduledByEventDispatcher)
+					if(subscribeEvent.getEventType() == EventType.QueuedByEventDispatcher)
 					{
 						continue;
 					}

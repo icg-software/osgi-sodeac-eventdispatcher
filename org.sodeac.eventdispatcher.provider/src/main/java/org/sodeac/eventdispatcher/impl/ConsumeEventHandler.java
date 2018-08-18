@@ -33,7 +33,7 @@ public class ConsumeEventHandler implements EventHandler
 	@Override
 	public void handleEvent(Event event)
 	{
-		this.dispatcher.schedule(this.queueId, event);
+		this.dispatcher.queueEvent(this.queueId, event);
 	}
 
 	public String getQueueId()
