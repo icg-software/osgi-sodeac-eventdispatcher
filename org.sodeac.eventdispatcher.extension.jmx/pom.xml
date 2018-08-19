@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>org.sodeac.eventdispatcher.extension.jmx</artifactId>
-  <version>0.9.5-SNAPSHOT</version>
+  <version>0.9.6-SNAPSHOT</version>
   <packaging>bundle</packaging>
   <name>JMX Extension for Sodeac Event Dispatcher</name>
   
@@ -14,19 +14,19 @@
   
   <properties>
     <!-- bundle.version>${project.version}</bundle.version-->
-    <bundle.version>0.9.5</bundle.version>
+    <bundle.version>0.9.6</bundle.version>
   </properties>
   
   <dependencies>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.api</artifactId>
-      <version>0.9.3-SNAPSHOT</version>
+      <version>0.9.4-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.provider</artifactId>
-      <version>0.9.5-SNAPSHOT</version>
+      <version>0.9.6-SNAPSHOT</version>
     </dependency>
   </dependencies>
   
@@ -36,7 +36,7 @@
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <extensions>true</extensions>
-        <version>3.5.0</version>
+        <version>3.5.1</version>
         <configuration>
           <instructions>
           	<Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
@@ -44,8 +44,8 @@
             <Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
             <Bundle-ActivationPolicy>lazy</Bundle-ActivationPolicy>
           	<Import-Package>
-            	org.sodeac.eventdispatcher.api;version="0.9.3",
-            	org.sodeac.eventdispatcher.extension.api;version="[0.9.3,0.9.3]",
+            	org.sodeac.eventdispatcher.api;version="0.9.4",
+            	org.sodeac.eventdispatcher.extension.api;version="[0.9.4,0.9.4]",
             	*
             </Import-Package>
             <Private-Package>org.sodeac.eventdispatcher.extension.jmx</Private-Package>

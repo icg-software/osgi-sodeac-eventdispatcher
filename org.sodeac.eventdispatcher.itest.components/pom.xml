@@ -21,17 +21,17 @@
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.api</artifactId>
-      <version>0.9.3-SNAPSHOT</version>
+      <version>0.9.4-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.common</artifactId>
-      <version>0.9.3-SNAPSHOT</version>
+      <version>0.9.4-SNAPSHOT</version>
     </dependency>
         <dependency>
 	    <groupId>io.dropwizard.metrics</groupId>
 	    <artifactId>metrics-core</artifactId>
-	    <version>3.2.5</version>
+	    <version>3.2.6</version>
 	</dependency>
   </dependencies>
   
@@ -41,7 +41,7 @@
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <extensions>true</extensions>
-        <version>3.5.0</version>
+        <version>3.5.1</version>
         <configuration>
           <instructions>
           	<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
