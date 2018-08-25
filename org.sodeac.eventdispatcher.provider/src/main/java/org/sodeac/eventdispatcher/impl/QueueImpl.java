@@ -259,7 +259,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 			queuedEvent = new QueuedEventImpl(event,this);
 			queuedEvent.setScheduleResultObject(resultImpl);
-			queuedEvent.setNode(this.eventQueue.append(queuedEvent, null));
+			queuedEvent.setNode(this.eventQueue.append(queuedEvent));
 		}
 		finally 
 		{
@@ -271,7 +271,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			newScheduledListUpdate = true; 
-			this.newEventQueue.append(queuedEvent,null);
+			this.newEventQueue.append(queuedEvent);
 		}
 		finally 
 		{
@@ -310,7 +310,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				queuedEvent.setScheduleResultObject(resultImpl);
 				queuedEventList.add(queuedEvent);
 			}
-			Node<QueuedEventImpl>[] nodes = eventQueue.append(queuedEventList, null);
+			Node<QueuedEventImpl>[] nodes = eventQueue.append(queuedEventList);
 			for(int i = 0; i < nodes.length; i++)
 			{
 				queuedEventList.get(i).setNode(nodes[i]);
@@ -327,7 +327,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			newScheduledListUpdate = true;
 			for(QueuedEventImpl queuedEvent : queuedEventList)
 			{
-				this.newEventQueue.append(queuedEvent,null);
+				this.newEventQueue.append(queuedEvent);
 			}
 		}
 		finally 
@@ -1642,7 +1642,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			removedEventListUpdate = true;
-			this.removedEventQueue.append(removed,null);
+			this.removedEventQueue.append(removed);
 		}
 		finally 
 		{
@@ -1715,7 +1715,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			removedEventListUpdate = true;
 			for(QueuedEventImpl event : removeEventList)
 			{
-				this.removedEventQueue.append(event,null);
+				this.removedEventQueue.append(event);
 			}
 		}
 		finally 
@@ -2106,7 +2106,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			try
 			{
 				firedEventListUpdate = true;
-				this.fireEventQueue.append(event,null);
+				this.fireEventQueue.append(event);
 			}
 			finally 
 			{
@@ -2137,7 +2137,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			firedEventListUpdate = true;
-			this.fireEventQueue.append(event,null);
+			this.fireEventQueue.append(event);
 		}
 		finally 
 		{

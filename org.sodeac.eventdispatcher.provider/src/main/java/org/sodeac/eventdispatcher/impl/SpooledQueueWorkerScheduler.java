@@ -42,7 +42,7 @@ public class SpooledQueueWorkerScheduler extends Thread
 	protected SpooledQueueWorker scheduleQueueWorker(QueueImpl queue, long wakeUpTime)
 	{
 		SpooledQueueWorker spooledQueueWorker = new SpooledQueueWorker(queue, wakeUpTime);
-		scheduledList.append(spooledQueueWorker,null);
+		scheduledList.append(spooledQueueWorker);
 		
 		synchronized (this.waitMonitor)
 		{
