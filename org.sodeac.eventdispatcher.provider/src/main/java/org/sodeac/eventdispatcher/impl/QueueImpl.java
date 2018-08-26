@@ -1472,7 +1472,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			return null;
 		}
 		
-		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createSnapshot(null, null);
+		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createImmutableSnapshot(null, null);
 		try
 		{
 			for(IQueuedEvent queuedEvent : snapshot)
@@ -1503,7 +1503,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	{
 		boolean match = true;
 		List<IQueuedEvent> queryList = new ArrayList<>();
-		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createSnapshot(null, null);
+		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createImmutableSnapshot(null, null);
 		try
 		{
 			for(IQueuedEvent queuedEvent : snapshot)
@@ -1608,7 +1608,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 		
 		QueuedEventImpl removed = null;
-		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createSnapshot(null, null);
+		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createImmutableSnapshot(null, null);
 		
 		try
 		{
@@ -1669,7 +1669,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 		boolean removed = false;
 		List<QueuedEventImpl> removeEventList = new ArrayList<QueuedEventImpl>(uuidList.size());
-		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createSnapshot(null, null);
+		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createImmutableSnapshot(null, null);
 		try
 		{
 			for(QueuedEventImpl event : snapshot)
@@ -2028,7 +2028,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			newScheduledListUpdate = false;
-			return this.newEventQueue.createSnapshotAndClearChain(null, null);
+			return this.newEventQueue.createImmutableSnapshotAndClearChain(null, null);
 		}
 		finally 
 		{
@@ -2047,7 +2047,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			removedEventListUpdate = false;
-			return this.removedEventQueue.createSnapshotAndClearChain(null, null);
+			return this.removedEventQueue.createImmutableSnapshotAndClearChain(null, null);
 		}
 		finally 
 		{
@@ -2066,7 +2066,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			firedEventListUpdate = false;
-			return this.fireEventQueue.createSnapshotAndClearChain(null, null);
+			return this.fireEventQueue.createImmutableSnapshotAndClearChain(null, null);
 		}
 		finally 
 		{

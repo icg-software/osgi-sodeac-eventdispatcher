@@ -90,7 +90,7 @@ public class SpooledQueueWorkerScheduler extends Thread
 			
 			try
 			{
-				Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createSnapshot(null, null);
+				Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createImmutableSnapshot(null, null);
 				try
 				{
 					for(Link<SpooledQueueWorker> workerLink : snapshot.linkIterable())
@@ -179,7 +179,7 @@ public class SpooledQueueWorkerScheduler extends Thread
 				log(LogService.LOG_ERROR,"Error while run SpooledQueueWorkerScheduler",e);
 			}
 		}
-		Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createSnapshot(null, null); // TODO clearAlll
+		Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createImmutableSnapshot(null, null); // TODO clearAlll
 		try
 		{
 			for(Link<SpooledQueueWorker> workerLink : snapshot.linkIterable())
