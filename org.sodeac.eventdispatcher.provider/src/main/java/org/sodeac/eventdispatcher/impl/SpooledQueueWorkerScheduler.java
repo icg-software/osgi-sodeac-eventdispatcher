@@ -11,8 +11,8 @@
 package org.sodeac.eventdispatcher.impl;
 
 import org.sodeac.multichainlist.MultiChainList;
+import org.sodeac.multichainlist.Node;
 import org.sodeac.multichainlist.Snapshot;
-import org.sodeac.multichainlist.Link;
 
 import org.osgi.service.log.LogService;
 
@@ -93,23 +93,23 @@ public class SpooledQueueWorkerScheduler extends Thread
 				Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createImmutableSnapshot(null, null);
 				try
 				{
-					for(Link<SpooledQueueWorker> workerLink : snapshot.linkIterable())
+					for(Node<SpooledQueueWorker> workerNode : snapshot.nodeIterable())
 					{
-						worker = workerLink.getElement();
+						worker = workerNode.getElement();
 						if(worker == null)
 						{
-							workerLink.unlink();
+							workerNode.unlink(snapshot.getChainName());
 							continue;
 						}
 						if(! worker.isValid())
 						{
-							workerLink.unlink();							
+							workerNode.unlink(snapshot.getChainName());							
 							continue;
 						}
 						if(now >= worker.getWakeupTime())
 						{
 							worker.getQueue().notifyOrCreateWorker(worker.getWakeupTime());
-							workerLink.unlink();
+							workerNode.unlink(snapshot.getChainName());
 							continue;
 						}
 						if(minWakeUpTimestamp < 0)
@@ -182,9 +182,9 @@ public class SpooledQueueWorkerScheduler extends Thread
 		Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createImmutableSnapshot(null, null); // TODO clearAlll
 		try
 		{
-			for(Link<SpooledQueueWorker> workerLink : snapshot.linkIterable())
+			for(Node<SpooledQueueWorker> workerNode : snapshot.nodeIterable())
 			{
-				workerLink.unlink();
+				workerNode.unlink(snapshot.getChainName());
 			}
 		}
 		finally 
