@@ -28,13 +28,27 @@ public class QueueConfigurationModifyListener implements IPropertyBlockModifyLis
 	@Override
 	public void onModify(ModifyType type, String key, Object valueOld, Object valueNew)
 	{
-		((EventDispatcherImpl)queue.getDispatcher()).onConfigurationModify(this.queue);
+		((EventDispatcherImpl)queue.getDispatcher()).onConfigurationModify(this.queue, key);
 	}
 
 	@Override
 	public void onModifySet(List<PropertyBlockModifyItem> modifySet)
 	{
-		((EventDispatcherImpl)queue.getDispatcher()).onConfigurationModify(this.queue);
+		if(modifySet == null)
+		{
+			return;
+		}
+		if(modifySet.isEmpty())
+		{
+			return;
+		}
+		String[] attributes = new String[modifySet.size()];
+		int index = 0;
+		for(PropertyBlockModifyItem item : modifySet)
+		{
+			attributes[index++] = item.getKey();
+		}
+ 		((EventDispatcherImpl)queue.getDispatcher()).onConfigurationModify(this.queue,attributes);
 	}
 
 }

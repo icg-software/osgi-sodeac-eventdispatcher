@@ -2564,7 +2564,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		if((configurationProperties != null) && (!configurationProperties.isEmpty()))
 		{
-			this.eventDispatcher.onConfigurationModify(newScope);
+			this.eventDispatcher.onConfigurationModify(newScope,configurationProperties.keySet().toArray(new String[configurationProperties.size()]));
 		}
 		
 		return newScope;

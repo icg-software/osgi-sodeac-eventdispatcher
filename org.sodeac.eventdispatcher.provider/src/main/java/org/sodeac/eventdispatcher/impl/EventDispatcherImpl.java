@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -136,6 +137,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	
 	private ExecutorService executorService = null;
 	
+	private ConfigurationPropertyBindingRegistry configurationPropertyBindingRegistry = null;
+	
 	@Override
 	public String getId()
 	{
@@ -205,6 +208,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		this.metrics = new MetricImpl(this, new PropertyBlockImpl(this),true);
 		this.propertyBlock = createPropertyBlock();
+		this.configurationPropertyBindingRegistry = new ConfigurationPropertyBindingRegistry();
 
 	}
 	
@@ -615,6 +619,12 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			osgiLifecycleWriteLock.unlock();
 		}
+		
+		try
+		{
+			this.configurationPropertyBindingRegistry.clear();
+		}
+		catch (Exception e) {}
 	}
 	
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
@@ -1059,6 +1069,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				{
 					this.counterConfigurationSize.inc();
 				}
+				
+				this.configurationPropertyBindingRegistry.register(controllerContainer);
 			}
 			registerQueueController(controllerContainer);
 		}
@@ -1344,6 +1356,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					}
 				}
 				this.controllerReverseIndex.remove(queueController);
+				this.configurationPropertyBindingRegistry.unregister(controllerContainer);
 			}
 			finally 
 			{
@@ -1854,6 +1867,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				this.serviceList.add(serviceContainer);
 				this.serviceReverseIndex.put(queueService,serviceContainer);
+				this.configurationPropertyBindingRegistry.register(serviceContainer);
 			}
 			registerQueueService(serviceContainer);
 		}
@@ -1976,6 +1990,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				this.serviceReverseIndex.remove(queueService);
 				while(this.serviceList.remove(serviceContainer)) {}
+				
+				this.configurationPropertyBindingRegistry.unregister(serviceContainer);
 			}
 			finally 
 			{
@@ -2299,7 +2315,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	
-	public void onConfigurationModify(QueueImpl queue)
+	public void onConfigurationModify(QueueImpl queue, String... attributes)
 	{
 		try
 		{
@@ -2324,35 +2340,40 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		try
 		{
-			controllerListReadLock.lock();
-			try
-			{	
-				for(ControllerContainer controllerContainer : controllerList)
-				{
-					modifyFlags.reset();
+			Set<ControllerContainer> matchedControllerContainer = configurationPropertyBindingRegistry.getControllerContainer(attributes);
+			if(matchedControllerContainer != null)
+			{
+				controllerListReadLock.lock();
+				try
+				{	
+				
+					for(ControllerContainer controllerContainer : matchedControllerContainer)
+					{
+						modifyFlags.reset();
+						
+						try
+						{
+							queue.checkForController(controllerContainer,modifyFlags);
+						}
+						catch (Exception e) 
+						{
+							log(LogService.LOG_ERROR,"check queue binding for controller by configuration filter on queue configuration modify",e);
+						}
+					}
 					
 					try
 					{
-						queue.checkForController(controllerContainer,modifyFlags);
+						getMetrics().histogram(IMetrics.METRICS_ON_CONFIGURATION_MODIFY,IMetrics.METRICS_EVENT_CONTROLLER,IMetrics.METRICS_MATCH_CHECK).update(controllerList.size());
 					}
-					catch (Exception e) 
+					catch(Exception e)
 					{
-						log(LogService.LOG_ERROR,"check queue binding for controller by configuration filter on queue configuration modify",e);
+						log(LogService.LOG_ERROR, "metric histogram on-configuration-modify", e);
 					}
 				}
-				
-				try
+				finally 
 				{
-					getMetrics().histogram(IMetrics.METRICS_ON_CONFIGURATION_MODIFY,IMetrics.METRICS_EVENT_CONTROLLER,IMetrics.METRICS_MATCH_CHECK).update(controllerList.size());
+					controllerListReadLock.unlock();
 				}
-				catch(Exception e)
-				{
-					log(LogService.LOG_ERROR, "metric histogram on-configuration-modify", e);
-				}
-			}
-			finally 
-			{
-				controllerListReadLock.unlock();
 			}
 		}
 		catch (Exception e) 
@@ -2362,34 +2383,38 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		try
 		{
-			serviceListReadLock.lock();
-			try
+			Set<ServiceContainer> matchedServiceContainer = configurationPropertyBindingRegistry.getServiceContainer(attributes);
+			if(matchedServiceContainer != null)
 			{
-				for(ServiceContainer serviceContainer : serviceList)
-				{
-					modifyFlags.reset();
-					try
-					{
-						queue.checkForService(serviceContainer,modifyFlags);
-					}
-					catch (Exception e) 
-					{
-						log(LogService.LOG_ERROR,"check queue binding for services by configuration filter on queue configuration modify",e);
-					}
-				}
-				
+				serviceListReadLock.lock();
 				try
 				{
-					getMetrics().histogram(IMetrics.METRICS_ON_CONFIGURATION_MODIFY,IMetrics.METRICS_SERVICE,IMetrics.METRICS_MATCH_CHECK).update(serviceList.size());
+					for(ServiceContainer serviceContainer : matchedServiceContainer)
+					{
+						modifyFlags.reset();
+						try
+						{
+							queue.checkForService(serviceContainer,modifyFlags);
+						}
+						catch (Exception e) 
+						{
+							log(LogService.LOG_ERROR,"check queue binding for services by configuration filter on queue configuration modify",e);
+						}
+					}
+					
+					try
+					{
+						getMetrics().histogram(IMetrics.METRICS_ON_CONFIGURATION_MODIFY,IMetrics.METRICS_SERVICE,IMetrics.METRICS_MATCH_CHECK).update(serviceList.size());
+					}
+					catch(Exception e)
+					{
+						log(LogService.LOG_ERROR, "metric histogram on-configuration-modify", e);
+					}
 				}
-				catch(Exception e)
+				finally 
 				{
-					log(LogService.LOG_ERROR, "metric histogram on-configuration-modify", e);
+					serviceListReadLock.unlock();
 				}
-			}
-			finally 
-			{
-				serviceListReadLock.unlock();
 			}
 		}
 		catch (Exception e) 
