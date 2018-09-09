@@ -21,12 +21,12 @@
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.api</artifactId>
-      <version>0.9.4-SNAPSHOT</version>
+      <version>0.9.8-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.provider</artifactId>
-      <version>0.9.6-SNAPSHOT</version>
+      <version>0.9.8-SNAPSHOT</version>
     </dependency>
   </dependencies>
   
