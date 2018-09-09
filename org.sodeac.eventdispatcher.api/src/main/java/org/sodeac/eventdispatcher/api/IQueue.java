@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 
 import org.osgi.framework.Filter;
 import org.osgi.service.event.Event;
+import org.sodeac.multichainlist.Snapshot;
 
 /**
  * API for event-queues. {@link IQueue}s are configured by one or more {@link IQueueController}s. 
@@ -111,6 +112,25 @@ public interface IQueue
 	 * @return true if {@link IQueuedEvent} was found and remove, otherwise false
 	 */
 	public boolean removeEvent(String uuid);
+	
+	
+	/**
+	 * return event chain-snapshot  
+	 * 
+	 * @param chainName define chain
+	 * 
+	 * @return snapshot for chain
+	 */
+	public Snapshot<IQueuedEvent> getEventSnapshot(String chainName);
+	
+	/**
+	 * return event chain-snapshot-poll (clears returned elements)
+	 * 
+	 * @param chainName define chain
+	 * 
+	 * @return snapshot for chain
+	 */
+	public Snapshot<IQueuedEvent> getEventSnapshotPoll(String chainName);
 	
 	/**
 	 * remove list of {@link IQueuedEvent}s queued  with one of {@code uuid}s
@@ -305,4 +325,36 @@ public interface IQueue
 	 * @return  scope with given {@code scopeId} or null, if scope not found
 	 */
 	public IQueueSessionScope getSessionScope(UUID scopeId);
+	
+	/**
+	 * register a linkage definition dispatcher
+	 * 
+	 * @param dispatcherId id of linkage definition dispatcher to unregister dispatcher later
+	 * 
+	 * @return linkage definition dispatcher builder
+	 */
+	public ILinkageDefinitionDispatcherBuilder registerLinkageDefinitionDispatcher(String linkageDefinitionDispatcherId);
+	
+	/**
+	 * unregister a linkage definition dispatcher
+	 * 
+	 * @param dispatcherId id of linkage definition dispatcher to unregister
+	 */
+	public void unregisterLinkageDefinitionDispatcher(String linkageDefinitionDispatcherId);
+	
+	/**
+	 * Builder to register LinkageDefinitionDispatcher
+	 * 
+	 * @author Sebastian Palarus
+	 *
+	 */
+	public interface ILinkageDefinitionDispatcherBuilder extends ILinkageDefinitionDispatcher
+	{
+		/**
+		 * register LinkageDefinitionDispatcher
+		 * 
+		 * @return queue
+		 */
+		public IQueue build();
+	}
 }

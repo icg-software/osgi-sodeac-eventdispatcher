@@ -13,6 +13,8 @@ import org.sodeac.eventdispatcher.impl.ServiceContainer.ServiceFilterObjects;
 
 public class ConfigurationPropertyBindingRegistry
 {
+	// TODO sync / lock
+	
 	public ConfigurationPropertyBindingRegistry()
 	{
 		super();

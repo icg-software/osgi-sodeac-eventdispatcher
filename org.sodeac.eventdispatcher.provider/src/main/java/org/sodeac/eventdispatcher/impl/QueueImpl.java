@@ -13,6 +13,7 @@ package org.sodeac.eventdispatcher.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import org.osgi.framework.Filter;
 import org.osgi.service.event.Event;
 import org.osgi.service.log.LogService;
+import org.sodeac.multichainlist.LinkageDefinition;
 import org.sodeac.multichainlist.MultiChainList;
 import org.sodeac.multichainlist.Partition;
 import org.sodeac.multichainlist.Node;
@@ -37,8 +39,10 @@ import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
+import org.sodeac.eventdispatcher.api.IQueue.ILinkageDefinitionDispatcherBuilder;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IGauge;
+import org.sodeac.eventdispatcher.api.ILinkageDefinitionDispatcher;
 import org.sodeac.eventdispatcher.api.IQueueJob;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueueService;
@@ -157,6 +161,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		this.queueConfigurationModifyListener = new QueueConfigurationModifyListener(this);
 		this.configurationPropertyBlock.addModifyListener(this.queueConfigurationModifyListener);
+		
+		this.linkageDefinitionDispatcherIndex = new HashMap<String,LinkageDefinitionDispatcherImpl>();
 	}
 	
 	protected String category = null;
@@ -245,6 +251,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	protected QueueImpl parent = null;
 	
+	protected Map<String,LinkageDefinitionDispatcherImpl> linkageDefinitionDispatcherIndex = null;
+	
 	@Override
 	public Future<IQueueEventResult> queueEvent(Event event)
 	{
@@ -253,7 +261,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		eventListWriteLock.lock();
 		try
 		{
-			if(this.eventListLimit <= (mainPartitionEventQueue.getSize(null))) 
+			if(this.eventListLimit <= this.eventQueue.getSize())
 			{
 				throw new QueueIsFullException(this.queueId, this.eventListLimit);
 			}
@@ -300,7 +308,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		eventListWriteLock.lock();
 		try
 		{
-			if(this.eventListLimit < ((mainPartitionEventQueue.getSize(null)) + eventList.size()))
+			if(this.eventListLimit < ((eventQueue.getSize()) + eventList.size()))
 			{
 				throw new QueueIsFullException(this.queueId, this.eventListLimit);
 			}
@@ -1597,6 +1605,20 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 		
 		
+	}	
+
+	@Override
+	public Snapshot<IQueuedEvent> getEventSnapshot(String chainName)
+	{
+		// TODO autoclose by worker
+		return (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshot();
+	}
+
+	@Override
+	public Snapshot<IQueuedEvent> getEventSnapshotPoll(String chainName)
+	{
+		// TODO autoclose by worker
+		return (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshotPoll();
 	}
 
 	@Override
@@ -1924,6 +1946,31 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 		}
 		catch (Exception e) {}
+		
+		try
+		{
+			eventQueue.dispose();
+		}
+		catch (Exception e) { log(LogService.LOG_ERROR, "dispose event queue", e);}
+		
+		try
+		{
+			newEventQueue.dispose();
+		}
+		catch (Exception e) {log(LogService.LOG_ERROR, "dispose new event queue", e);}
+		
+		try
+		{
+			removedEventQueue.dispose();
+		}
+		catch (Exception e) {log(LogService.LOG_ERROR, "dispose removed event queue", e);}
+		
+		try
+		{
+			fireEventQueue.dispose();
+		}
+		catch (Exception e) {log(LogService.LOG_ERROR, "dispose fire vent queue", e);}
+	
 	}
 	
 	private void removeScope(QueueSessionScopeImpl scope)
@@ -2028,7 +2075,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			newScheduledListUpdate = false;
-			return this.newEventQueue.createImmutableSnapshotAndClearChain(null, null);
+			return this.newEventQueue.createImmutableSnapshotPoll(null, null);
 		}
 		finally 
 		{
@@ -2722,6 +2769,98 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		finally 
 		{
 			consumeEventHandlerListReadLock.unlock();
+		}
+		
+	}
+	
+	@Override
+	public ILinkageDefinitionDispatcherBuilder registerLinkageDefinitionDispatcher(String linkageDefinitionDispatcherId)
+	{
+		if(linkageDefinitionDispatcherId == null)
+		{
+			return null;
+		}
+		if(linkageDefinitionDispatcherId.isEmpty())
+		{
+			return null;
+		}
+		return new LinkageDefinitionDispatcherBuilder(linkageDefinitionDispatcherId);
+	}
+
+	@Override
+	public void unregisterLinkageDefinitionDispatcher(String linkageDefinitionDispatcherId)
+	{
+		this.linkageDefinitionDispatcherIndex.remove(linkageDefinitionDispatcherId);
+	}
+
+	public class LinkageDefinitionDispatcherBuilder implements ILinkageDefinitionDispatcherBuilder
+	{
+		private String linkageDefinitionDispatcherId;
+		private LinkedList<Filter> filterList;
+		private LinkedList<AddLinkageDefinition> addLinkageDefinitionList;
+		private LinkedList<String> removeLinkageDefinitionList;
+		
+		public LinkageDefinitionDispatcherBuilder(String linkageDefinitionDispatcherId)
+		{
+			super();
+			
+			this.linkageDefinitionDispatcherId = linkageDefinitionDispatcherId;
+			this.filterList = new LinkedList<Filter>();
+			this.addLinkageDefinitionList = new LinkedList<AddLinkageDefinition>();
+			this.removeLinkageDefinitionList = new LinkedList<String>();
+		}
+
+		@Override
+		public ILinkageDefinitionDispatcher onMatchFilter(Filter filter)
+		{
+			if(filter != null)
+			{
+				this.filterList.add(filter);
+			}
+			return this;
+		}
+		
+		@Override
+		public ILinkageDefinitionDispatcher addLinkageDefinition(String chainName, String partitionName)
+		{
+			this.addLinkageDefinitionList.add(new AddLinkageDefinition(chainName, partitionName));
+			return this;
+		}
+		
+		@Override
+		public ILinkageDefinitionDispatcher removeLinkageDefinition(String chainName)
+		{
+			this.removeLinkageDefinitionList.add(chainName);
+			return this;
+		}
+
+		@Override
+		public IQueue build()
+		{
+			if((this.removeLinkageDefinitionList.isEmpty() && (this.addLinkageDefinitionList.isEmpty())) || this.filterList.isEmpty() || QueueImpl.this.linkageDefinitionDispatcherIndex.containsKey(linkageDefinitionDispatcherId))
+			{
+				this.removeLinkageDefinitionList.clear();
+				this.addLinkageDefinitionList.clear();
+				this.filterList.clear();
+				
+				return QueueImpl.this;
+			}
+			
+			QueueImpl.this.linkageDefinitionDispatcherIndex.put(linkageDefinitionDispatcherId, new LinkageDefinitionDispatcherImpl(filterList, addLinkageDefinitionList, removeLinkageDefinitionList));
+			
+			return QueueImpl.this;
+		}
+		
+		protected class AddLinkageDefinition
+		{
+			private AddLinkageDefinition(String chainName,String partitionName)
+			{
+				super();
+				this.chainName = chainName;
+				this.partitionName = partitionName;
+			}
+			String chainName;
+			String partitionName;
 		}
 		
 	}
