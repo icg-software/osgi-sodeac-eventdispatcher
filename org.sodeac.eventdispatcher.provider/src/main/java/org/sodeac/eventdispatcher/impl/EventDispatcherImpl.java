@@ -2343,7 +2343,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			Set<ControllerContainer> matchedControllerContainer = configurationPropertyBindingRegistry.getControllerContainer(attributes);
 			if(matchedControllerContainer != null)
 			{
-				controllerListReadLock.lock();
+				controllerListReadLock.lock(); // TODO required ? 
 				try
 				{	
 				
@@ -2386,7 +2386,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			Set<ServiceContainer> matchedServiceContainer = configurationPropertyBindingRegistry.getServiceContainer(attributes);
 			if(matchedServiceContainer != null)
 			{
-				serviceListReadLock.lock();
+				serviceListReadLock.lock(); // TODO required?
 				try
 				{
 					for(ServiceContainer serviceContainer : matchedServiceContainer)

@@ -142,6 +142,7 @@ public class QueueWorker extends Thread
 					this.isSoftUpdated = false;
 				}
 				
+				eventQueue.closeWorkerSnapshots();
 				newEventsSnapshot = eventQueue.getNewScheduledEventsSnaphot();
 				try
 				{
@@ -573,6 +574,7 @@ public class QueueWorker extends Thread
 								}
 								if(! go)
 								{
+									eventQueue.closeWorkerSnapshots();
 									return;
 								}
 							}
@@ -624,6 +626,7 @@ public class QueueWorker extends Thread
 								
 								if(! go)
 								{
+									this.eventQueue.closeWorkerSnapshots();
 									return;
 								}
 								
@@ -704,6 +707,7 @@ public class QueueWorker extends Thread
 								
 								if(! go)
 								{
+									this.eventQueue.closeWorkerSnapshots();
 									return;
 								}
 								
@@ -736,6 +740,7 @@ public class QueueWorker extends Thread
 							
 							if(! go)
 							{
+								this.eventQueue.closeWorkerSnapshots();
 								return;
 							}
 							
@@ -937,6 +942,7 @@ public class QueueWorker extends Thread
 			}
 			
 			eventQueue.cleanDoneJobs();
+			this.eventQueue.closeWorkerSnapshots();
 			
 			try
 			{

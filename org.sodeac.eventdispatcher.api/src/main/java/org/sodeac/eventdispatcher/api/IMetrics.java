@@ -54,6 +54,11 @@ public interface IMetrics
 	public static final String GAUGE_LAST_SEND_EVENT = "LastSendEvent";
 	public static final String GAUGE_LAST_POST_EVENT = "LastPostEvent";
 	
+	public static final String GAUGE_SIZE_EVENTQUEUE = "SizeEventQueue";
+	public static final String GAUGE_SIZE_NEW_EVENTQUEUE = "SizeNewEventQueue";
+	public static final String GAUGE_SIZE_REMOVED_EVENTQUEUE = "SizeRemovedEvents";
+	public static final String GAUGE_SIZE_FIRE_EVENTQUEUE = "SizeFireEvents";
+	
 	public static final String METRICS_SEND_EVENT = "SendEvent";
 	public static final String METRICS_POST_EVENT = "PostEvent";
 	

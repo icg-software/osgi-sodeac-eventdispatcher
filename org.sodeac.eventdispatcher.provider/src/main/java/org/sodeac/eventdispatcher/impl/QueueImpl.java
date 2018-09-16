@@ -159,10 +159,47 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 		}, IMetrics.GAUGE_LAST_POST_EVENT);
 		
+		this.metrics.registerGauge(new IGauge<Long>()
+		{
+			@Override
+			public Long getValue()
+			{
+				return eventQueue.getNodeSize();
+			}
+		}, IMetrics.GAUGE_SIZE_EVENTQUEUE);
+		
+		this.metrics.registerGauge(new IGauge<Long>()
+		{
+			@Override
+			public Long getValue()
+			{
+				return newEventQueue.getNodeSize();
+			}
+		}, IMetrics.GAUGE_SIZE_NEW_EVENTQUEUE);
+		
+		this.metrics.registerGauge(new IGauge<Long>()
+		{
+			@Override
+			public Long getValue()
+			{
+				return removedEventQueue.getNodeSize();
+			}
+		}, IMetrics.GAUGE_SIZE_REMOVED_EVENTQUEUE);
+		
+		this.metrics.registerGauge(new IGauge<Long>()
+		{
+			@Override
+			public Long getValue()
+			{
+				return fireEventQueue.getNodeSize();
+			}
+		}, IMetrics.GAUGE_SIZE_FIRE_EVENTQUEUE);
+		
 		this.queueConfigurationModifyListener = new QueueConfigurationModifyListener(this);
 		this.configurationPropertyBlock.addModifyListener(this.queueConfigurationModifyListener);
 		
 		this.linkageDefinitionDispatcherIndex = new HashMap<String,LinkageDefinitionDispatcherImpl>();
+		this.snapshotsByWorkerThread = new LinkedList<Snapshot<IQueuedEvent>>();
 	}
 	
 	protected String category = null;
@@ -252,6 +289,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected QueueImpl parent = null;
 	
 	protected Map<String,LinkageDefinitionDispatcherImpl> linkageDefinitionDispatcherIndex = null;
+	protected LinkedList<Snapshot<IQueuedEvent>> snapshotsByWorkerThread;
 	
 	@Override
 	public Future<IQueueEventResult> queueEvent(Event event)
@@ -261,7 +299,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		eventListWriteLock.lock();
 		try
 		{
-			if(this.eventListLimit <= this.eventQueue.getSize())
+			if(this.eventListLimit <= this.eventQueue.getNodeSize())
 			{
 				throw new QueueIsFullException(this.queueId, this.eventListLimit);
 			}
@@ -308,7 +346,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		eventListWriteLock.lock();
 		try
 		{
-			if(this.eventListLimit < ((eventQueue.getSize()) + eventList.size()))
+			if(this.eventListLimit < ((eventQueue.getNodeSize()) + eventList.size()))
 			{
 				throw new QueueIsFullException(this.queueId, this.eventListLimit);
 			}
@@ -1610,15 +1648,53 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public Snapshot<IQueuedEvent> getEventSnapshot(String chainName)
 	{
-		// TODO autoclose by worker
+		if(Thread.currentThread() == this.queueWorker)
+		{
+			Snapshot snaphot = (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshot();
+			snapshotsByWorkerThread.add(snaphot);
+			return snaphot;
+		}
 		return (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshot();
 	}
 
 	@Override
 	public Snapshot<IQueuedEvent> getEventSnapshotPoll(String chainName)
 	{
-		// TODO autoclose by worker
+		if(Thread.currentThread() == this.queueWorker)
+		{
+			Snapshot snaphot = (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshotPoll();
+			snapshotsByWorkerThread.add(snaphot);
+			return snaphot;
+		}
 		return (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshotPoll();
+	}
+	
+	public void closeWorkerSnapshots()
+	{
+		if(this.snapshotsByWorkerThread.isEmpty())
+		{
+			return;
+		}
+		
+		try
+		{
+			for(Snapshot<IQueuedEvent> snapshot : this.snapshotsByWorkerThread)
+			{
+				try
+				{
+					snapshot.close();
+				}
+				catch (Exception e) 
+				{
+					log(LogService.LOG_ERROR,"close multichain worker snapshots",e);
+				}
+			}
+			this.snapshotsByWorkerThread.clear();
+		}
+		catch (Exception e) 
+		{
+			log(LogService.LOG_ERROR,"close multichain worker snapshots",e);
+		}
 	}
 
 	@Override
@@ -1879,6 +1955,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		stopQueueWorker();
 		
+		this.closeWorkerSnapshots();
+		
 		if((this instanceof QueueSessionScopeImpl) && (this.parent != null))
 		{
 			parent.removeScope((QueueSessionScopeImpl)this);
@@ -2094,7 +2172,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			removedEventListUpdate = false;
-			return this.removedEventQueue.createImmutableSnapshotAndClearChain(null, null);
+			return this.removedEventQueue.createImmutableSnapshotPoll(null, null);
 		}
 		finally 
 		{
@@ -2113,7 +2191,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			firedEventListUpdate = false;
-			return this.fireEventQueue.createImmutableSnapshotAndClearChain(null, null);
+			return this.fireEventQueue.createImmutableSnapshotPoll(null, null);
 		}
 		finally 
 		{
