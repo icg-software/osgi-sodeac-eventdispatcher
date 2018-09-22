@@ -94,12 +94,10 @@ public class QueueWorker extends Thread
 				}
 				catch (Exception e) 
 				{
-					this.onQueueObserveList.clear();
 					log(LogService.LOG_ERROR,"Exception on on-create() event controller",e);
 				}
 				catch (Error e) 
 				{
-					this.onQueueObserveList.clear();
 					log(LogService.LOG_ERROR,"Exception on on-create() event controller",e);
 				}
 			}
