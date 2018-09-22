@@ -81,7 +81,7 @@ public class QueueWorker extends Thread
 			{
 				this.onQueueObserveList.clear();
 			}
-			eventQueue.fetchOnQueueObserveList(this.onQueueObserveList);
+			eventQueue.fetchOnQueueObserveList(this.onQueueObserveList); // TODO mcl
 			if(this.onQueueObserveList.isEmpty())
 			{
 				return;
@@ -399,7 +399,7 @@ public class QueueWorker extends Thread
 			try
 			{
 				this.signalList.clear();
-				eventQueue.fetchSignalList(this.signalList);
+				eventQueue.fetchSignalList(this.signalList); // TODO mcl
 				if(! this.signalList.isEmpty())
 				{
 
@@ -439,7 +439,7 @@ public class QueueWorker extends Thread
 			}
 			
 			this.dueJobList.clear();
-			eventQueue.getDueJobs(this.dueJobList);
+			eventQueue.getDueJobs(this.dueJobList); // TODO mcl
 			
 			if(! dueJobList.isEmpty())
 			{
@@ -863,7 +863,7 @@ public class QueueWorker extends Thread
 							try
 							{
 								this.signalList.clear();
-								eventQueue.fetchSignalList(this.signalList);
+								eventQueue.fetchSignalList(this.signalList); // TODO mcl
 								if(! this.signalList.isEmpty())
 								{
 
