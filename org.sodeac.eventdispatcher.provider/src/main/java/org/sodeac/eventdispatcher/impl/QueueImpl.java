@@ -1934,6 +1934,19 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 		this.disposed = true;
 		
+		this.queueScopeListWriteLock.lock();
+		try
+		{
+			for(QueueSessionScopeImpl scope : this.queueScopeList)
+			{
+				scope.dispose();
+			}
+		}
+		finally 
+		{
+			this.queueScopeListWriteLock.unlock();
+		}
+		
 		if(this.queueConfigurationModifyListener != null)
 		{
 			this.configurationPropertyBlock.removeModifyListener(this.queueConfigurationModifyListener);
@@ -2649,6 +2662,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public IQueueSessionScope createSessionScope(UUID scopeId, String scopeName, IQueueSessionScope parentScope, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller, boolean adoptServices)
 	{
+		if(disposed)
+		{
+			return null;
+		}
 		if(scopeId == null)
 		{
 			scopeId = UUID.randomUUID();
@@ -2659,6 +2676,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.queueScopeListWriteLock.lock();
 		try
 		{
+			if(disposed)
+			{
+				return null;
+			}
 			if(this.queueScopeIndex.get(scopeId) != null)
 			{
 				return null;
