@@ -558,8 +558,28 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 	}
 	
-	public boolean unsetController(ControllerContainer configurationContainer)
+	private boolean unsetController(ControllerContainer configurationContainer)
 	{
+		return unsetController(configurationContainer,false);
+	}
+	
+	public boolean unsetController(ControllerContainer configurationContainer, boolean unregisterInScope)
+	{
+		if(unregisterInScope)
+		{
+			this.queueScopeListReadLock.lock();
+			try
+			{
+				for(QueueSessionScopeImpl scope : this.queueScopeList)
+				{
+					scope.unsetController(configurationContainer, false);
+				}
+			}
+			finally 
+			{
+				this.queueScopeListReadLock.unlock();
+			}
+		}
 		controllerListReadLock.lock();
 		try
 		{
@@ -884,8 +904,29 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 	}
 	
-	public boolean unsetService(ServiceContainer serviceContainer)
+	private boolean unsetService(ServiceContainer serviceContainer)
 	{
+		return unsetService(serviceContainer, false);
+	}
+	
+	public boolean unsetService(ServiceContainer serviceContainer, boolean unregisterInScope )
+	{
+		if(unregisterInScope)
+		{
+			this.queueScopeListReadLock.lock();
+			try
+			{
+				for(QueueSessionScopeImpl scope : this.queueScopeList)
+				{
+					scope.unsetService(serviceContainer, false);
+				}
+			}
+			finally 
+			{
+				this.queueScopeListReadLock.unlock();
+			}
+		}
+		
 		serviceListReadLock.lock();
 		try
 		{
@@ -1937,9 +1978,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.queueScopeListWriteLock.lock();
 		try
 		{
-			for(QueueSessionScopeImpl scope : this.queueScopeList)
+			if(!  this.queueScopeList.isEmpty())
 			{
-				scope.dispose();
+				List<QueueSessionScopeImpl> scopeCopyList = new ArrayList<QueueSessionScopeImpl>(this.queueScopeList);
+				for(QueueSessionScopeImpl scope : scopeCopyList)
+				{
+					scope.dispose();
+				}
+				scopeCopyList.clear();
 			}
 		}
 		finally 

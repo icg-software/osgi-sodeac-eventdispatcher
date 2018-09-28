@@ -772,7 +772,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		{
 			operationHandler.handle(wrapper);
 			
-			if((wrapper.modifyList != null) && (!wrapper.modifyList.isEmpty()) && (!this.modifyListenerList.isEmpty()))
+			if((wrapper.modifyList != null) && (!wrapper.modifyList.isEmpty()) && (!((this.modifyListenerList == null) || this.modifyListenerList.isEmpty())))
 			{
 				listenerList = this.modifyListenerList;
 			}

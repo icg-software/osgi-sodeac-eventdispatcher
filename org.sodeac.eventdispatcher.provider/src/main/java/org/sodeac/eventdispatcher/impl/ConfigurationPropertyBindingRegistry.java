@@ -121,27 +121,30 @@ public class ConfigurationPropertyBindingRegistry
 		lock.lock();
 		try
 		{
-			for(Entry<String,Set<ControllerContainer>> controllerContainerSetEntry : controllerContainerIndex.entrySet())
+			if(controllerContainerIndex != null)
 			{
-				if(controllerContainerSetEntry.getValue().remove(controllerContainer))
+				for(Entry<String,Set<ControllerContainer>> controllerContainerSetEntry : controllerContainerIndex.entrySet())
 				{
-	
-					if(controllerContainerSetEntry.getValue().isEmpty())
+					if(controllerContainerSetEntry.getValue().remove(controllerContainer))
 					{
-						if(removeList == null)
+		
+						if(controllerContainerSetEntry.getValue().isEmpty())
 						{
-							removeList = new LinkedList<String>();
+							if(removeList == null)
+							{
+								removeList = new LinkedList<String>();
+							}
+							removeList.add(controllerContainerSetEntry.getKey());
 						}
-						removeList.add(controllerContainerSetEntry.getKey());
 					}
 				}
-			}
-			
-			if(removeList != null)
-			{
-				for(String attribute : removeList)
+				
+				if(removeList != null)
 				{
-					controllerContainerIndex.remove(attribute);
+					for(String attribute : removeList)
+					{
+						controllerContainerIndex.remove(attribute);
+					}
 				}
 			}
 		}
@@ -158,8 +161,8 @@ public class ConfigurationPropertyBindingRegistry
 			return;
 		}
 		
-		List<ServiceFilterObjects>  controllerFilterObjectsList = serviceContainer.getFilterObjectList();
-		if(controllerFilterObjectsList == null)
+		List<ServiceFilterObjects>  serviceFilterObjectsList = serviceContainer.getFilterObjectList();
+		if(serviceFilterObjectsList == null)
 		{
 			return;
 		}
@@ -167,11 +170,11 @@ public class ConfigurationPropertyBindingRegistry
 		lock.lock();
 		try
 		{
-			for(ServiceFilterObjects controllerFilterObjects : controllerFilterObjectsList)
+			for(ServiceFilterObjects serviceFilterObjects : serviceFilterObjectsList)
 			{
-				if((controllerFilterObjects.attributes != null) && (! controllerFilterObjects.attributes.isEmpty()))
+				if((serviceFilterObjects.attributes != null) && (! serviceFilterObjects.attributes.isEmpty()))
 				{
-					for(String attributeName : controllerFilterObjects.attributes)
+					for(String attributeName : serviceFilterObjects.attributes)
 					{
 						Set<ServiceContainer> serviceContainerSet = serviceContainerIndex.get(attributeName);
 						if(serviceContainerSet == null)
@@ -234,8 +237,8 @@ public class ConfigurationPropertyBindingRegistry
 			return;
 		}
 		
-		List<ServiceFilterObjects>  controllerFilterObjectsList = serviceContainer.getFilterObjectList();
-		if(controllerFilterObjectsList == null)
+		List<ServiceFilterObjects>  serviceFilterObjectsList = serviceContainer.getFilterObjectList();
+		if(serviceFilterObjectsList == null)
 		{
 			return;
 		}
@@ -245,27 +248,30 @@ public class ConfigurationPropertyBindingRegistry
 		lock.lock();
 		try
 		{
-			for(Entry<String,Set<ServiceContainer>> serviceContainerSetEntry : serviceContainerIndex.entrySet())
+			if(serviceContainerIndex != null)
 			{
-				if(serviceContainerSetEntry.getValue().remove(serviceContainer))
+				for(Entry<String,Set<ServiceContainer>> serviceContainerSetEntry : serviceContainerIndex.entrySet())
 				{
-	
-					if(serviceContainerSetEntry.getValue().isEmpty())
+					if(serviceContainerSetEntry.getValue().remove(serviceContainer))
 					{
-						if(removeList == null)
+		
+						if(serviceContainerSetEntry.getValue().isEmpty())
 						{
-							removeList = new LinkedList<String>();
+							if(removeList == null)
+							{
+								removeList = new LinkedList<String>();
+							}
+							removeList.add(serviceContainerSetEntry.getKey());
 						}
-						removeList.add(serviceContainerSetEntry.getKey());
 					}
 				}
-			}
-			
-			if(removeList != null)
-			{
-				for(String attribute : removeList)
+				
+				if(removeList != null)
 				{
-					serviceContainerIndex.remove(attribute);
+					for(String attribute : removeList)
+					{
+						serviceContainerIndex.remove(attribute);
+					}
 				}
 			}
 		}

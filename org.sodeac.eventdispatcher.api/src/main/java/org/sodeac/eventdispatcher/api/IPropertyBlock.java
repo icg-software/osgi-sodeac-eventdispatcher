@@ -12,6 +12,8 @@ package org.sodeac.eventdispatcher.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * A thread-safe property-container
@@ -72,6 +74,56 @@ public interface IPropertyBlock
 	 * @return the property with specified key, or {@code defaultValue} if property does not exists
 	 */
 	public <T> T getProperty(String key, Class<T> resultClass, T defaultValue);
+	
+	/**
+	 * typed getter for registered property with associated {@code key}
+	 * 
+	 * @param key the key whose associated property is to be returned
+	 * @param resultClass the type of property
+	 * @param propertyFactoryIfNotExists factory to create property value if not exists , and store with specified key 
+	 * 
+	 * @return the property with specified key
+	 */
+	public default <T> T getProperty(String key, Class<T> resultClass, Supplier<T> propertyFactoryIfNotExists)
+	{
+		final Conplier<T> valueContainer = new Conplier<T>()
+		{
+			private T value = null;
+					
+			@Override
+			public void accept(T t)
+			{
+				this.value = t;
+			}
+
+			@Override
+			public T get()
+			{
+				return this.value;
+			}
+			
+		};
+		
+		operate(new IPropertyBlockOperationHandler()
+		{
+			@SuppressWarnings("unchecked")
+			@Override
+			public void handle(IPropertyBlock propertyBlock)
+			{
+				if(propertyBlock.containsKey(key))
+				{
+					valueContainer.accept((T)propertyBlock.getProperty(key));
+				}
+				else
+				{
+					valueContainer.accept(propertyFactoryIfNotExists.get());
+					propertyBlock.setProperty(key, valueContainer.get());
+				}
+			}
+		});
+		
+		return valueContainer.get();
+	}
 	
 	/**
 	 * String-typed getter for registered property with associated {@code key}. For Non-string value {@link java.lang.Object#toString()} is used as formatter. 
@@ -154,6 +206,19 @@ public interface IPropertyBlock
 	}
 	
 	/**
+	 * get registered adapter
+	 * 
+	 * @param adapterClass type of adapter
+	 * @param adapterFactoryIfNotExists factory to create adapter if not exists , and store with specified key 
+	 * 
+	 * @return registered adapter with specified adapterClass
+	 */
+	public default <T> T getAdapter(Class<T> adapterClass, Supplier<T> adapterFactoryIfNotExists)
+	{
+		return getProperty(adapterClass.getCanonicalName(), adapterClass, adapterFactoryIfNotExists);
+	}
+	
+	/**
 	 * remove registered adapter
 	 * 
 	 * @param adapterClass type of adapter
@@ -179,4 +244,6 @@ public interface IPropertyBlock
 	 * @return audit trail
 	 */
 	public IPropertyBlockOperationResult operate(IPropertyBlockOperationHandler operationHandler);
+	
+	public interface Conplier<T> extends Supplier<T>,Consumer<T>{}
 }

@@ -1413,7 +1413,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet() )
 			{
-				if(entry.getValue().unsetController(controllerContainer))
+				if(entry.getValue().unsetController(controllerContainer, true))
 				{
 					if(registeredOnQueueList == null)
 					{
@@ -2014,7 +2014,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			for(Entry<String,QueueImpl> entry :  this.queueIndex.entrySet() )
 			{
-				entry.getValue().unsetService(serviceContainer);
+				entry.getValue().unsetService(serviceContainer, true);
 			}
 		}
 		finally 

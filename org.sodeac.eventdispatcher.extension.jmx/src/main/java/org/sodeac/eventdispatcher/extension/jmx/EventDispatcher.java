@@ -250,6 +250,7 @@ public class EventDispatcher implements EventDispatcherMBean
 				{
 					objectNamePrefix = getObjectNamePrefix() + ",objecttype=controller"+ ",category=" + category +",name=" + name + "" + counter;
 					inUse = this.eventControllerObjectNameIndex.get(objectNamePrefix);
+					counter++;
 				}
 				this.eventControllerObjectNameIndex.put(objectNamePrefix,objectNamePrefix);
 				
@@ -319,6 +320,7 @@ public class EventDispatcher implements EventDispatcherMBean
 				{
 					objectNamePrefix = getObjectNamePrefix() + ",objecttype=queue,category=" + category +",queueid=" + name + "" + counter;
 					inUse = this.eventQueueObjectNameIndex.get(objectNamePrefix);
+					counter++;
 				}
 				this.eventQueueObjectNameIndex.put(objectNamePrefix,objectNamePrefix);
 				
