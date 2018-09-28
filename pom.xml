@@ -228,7 +228,7 @@
 	<url>https://github.com/spalarus/osgi-sodeac-eventdispatcher.git</url>
   </scm>
   
-  <url>https://github.com/spalarus/osgi-sodeac-streampartitioner</url>
+  <url>https://github.com/spalarus/osgi-sodeac-eventdispatcher</url>
 
   <modules>
     <module>org.sodeac.eventdispatcher.api</module>
