@@ -26,11 +26,11 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IOnJobDone;
-import org.sodeac.eventdispatcher.api.IOnJobError;
-import org.sodeac.eventdispatcher.api.IOnJobTimeout;
+import org.sodeac.eventdispatcher.api.IOnTaskDone;
+import org.sodeac.eventdispatcher.api.IOnTaskError;
+import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
@@ -39,7 +39,7 @@ import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
@@ -59,7 +59,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 	}
 )
 
-public class BaseServiceTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal,IQueueService
+public class BaseServiceTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnTaskDone,IOnTaskError,IOnTaskTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal,IQueueService
 {
 	public static final String	SERVICE_ID			= "TestService";
 	public static final String 	QUEUE_ID 			= "baseservicetestqueue";
@@ -109,10 +109,7 @@ public class BaseServiceTestController extends AbstractBaseTestController implem
 	}
 
 	@Override
-	public void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl){}
-
-	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl,List<IQueueJob> currentProcessedJobList)
+	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl,List<IQueueTask> currentProcessedJobList)
 	{
 		List<IQueuedEvent> queueEventList = queue.getEventList(null, null, null);
 		for(IQueuedEvent event : queueEventList)

@@ -20,9 +20,9 @@ import org.sodeac.multichainlist.Snapshot;
 public interface IDynamicController extends 
 						IQueueController,
 						IOnFiredEvent,
-						IOnJobDone,
-						IOnJobError,
-						IOnJobTimeout,
+						IOnTaskDone,
+						IOnTaskError,
+						IOnTaskTimeout,
 						IOnQueueObserve,
 						IOnQueueReverse,
 						IOnQueueSignal,
@@ -56,19 +56,19 @@ public interface IDynamicController extends
 		return implementsControllerMethod("onQueueObserve", Void.TYPE, IQueue.class);
 	}
 	
-	public default boolean implementsOnJobError()
+	public default boolean implementsOnTaskError()
 	{
-		return implementsControllerMethod("onJobError", Void.TYPE, IQueueJob.class, Throwable.class);
+		return implementsControllerMethod("onTaskError", Void.TYPE, IQueue.class, IQueueTask.class, Throwable.class);
 	}
 	
-	public default boolean implementsOnJobDone()
+	public default boolean implementsOnTaskDone()
 	{
-		return implementsControllerMethod("onJobDone", Void.TYPE, IQueueJob.class);
+		return implementsControllerMethod("onTaskDone", Void.TYPE, IQueue.class, IQueueTask.class);
 	}
 	
-	public default boolean implementsOnJobTimeout()
+	public default boolean implementsOnTaskTimeout()
 	{
-		return implementsControllerMethod("onJobTimeout", Void.TYPE, IQueueJob.class);
+		return implementsControllerMethod("onTaskTimeout", Void.TYPE, IQueue.class, IQueueTask.class);
 	}
 	
 	public default boolean implementsOnFiredEvent()
@@ -97,13 +97,13 @@ public interface IDynamicController extends
 	default void onQueueObserve(IQueue queue){}
 
 	@Override
-	default void onJobError(IQueueJob job, Throwable throwable){}
+	default void onTaskError(IQueue queue, IQueueTask task, Throwable throwable){}
 
 	@Override
-	default void onJobDone(IQueueJob job){}
+	default void onTaskDone(IQueue queue,IQueueTask task){}
 
 	@Override
-	default void onJobTimeout(IQueueJob job){}
+	default void onTaskTimeout(IQueue queue, IQueueTask task){}
 
 	@Override
 	default void onFiredEvent(Event event, IQueue queue){}

@@ -43,7 +43,7 @@ import org.sodeac.eventdispatcher.api.IQueue.ILinkageDefinitionDispatcherBuilder
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IGauge;
 import org.sodeac.eventdispatcher.api.ILinkageDefinitionDispatcher;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
@@ -100,8 +100,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.eventListReadLock = this.eventListLock.readLock();
 		this.eventListWriteLock = this.eventListLock.writeLock();
 		
-		this.jobList = new ArrayList<JobContainer>();
-		this.jobIndex = new HashMap<String,JobContainer>();
+		this.jobList = new ArrayList<TaskContainer>();
+		this.jobIndex = new HashMap<String,TaskContainer>();
 		this.jobListLock = new ReentrantReadWriteLock(true);
 		this.jobListReadLock = this.jobListLock.readLock();
 		this.jobListWriteLock = this.jobListLock.writeLock();
@@ -240,8 +240,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected MultiChainList<Event> fireEventQueue = null;
 	protected Partition<Event> mainPartitionFireEventQueue = null;
 	
-	protected List<JobContainer> jobList = null;
-	protected Map<String,JobContainer> jobIndex = null;
+	protected List<TaskContainer> jobList = null;
+	protected Map<String,TaskContainer> jobIndex = null;
 	protected ReentrantReadWriteLock jobListLock;
 	protected ReadLock jobListReadLock;
 	protected WriteLock jobListWriteLock;
@@ -757,9 +757,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			this.enableMetrics = enabled;
 			
 			// don't switch of on simple jobs
-			for(JobContainer jobContainer : jobList)
+			for(TaskContainer jobContainer : jobList)
 			{
-				if(jobContainer.getJob() instanceof IQueueService)
+				if(jobContainer.getTask() instanceof IQueueService)
 				{
 					continue;
 				}
@@ -955,13 +955,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			jobListReadLock.lock();
 			try
 			{
-				for(Entry<String,JobContainer> jobContainerEntry : this.jobIndex.entrySet())
+				for(Entry<String,TaskContainer> jobContainerEntry : this.jobIndex.entrySet())
 				{
 					try
 					{
-						if(jobContainerEntry.getValue().getJob() == serviceContainer.getQueueService())
+						if(jobContainerEntry.getValue().getTask() == serviceContainer.getQueueService())
 						{
-							jobContainerEntry.getValue().getJobControl().setDone();
+							jobContainerEntry.getValue().getTaskControl().setDone();
 							((MetricImpl)jobContainerEntry.getValue().getMetrics()).dispose();
 						}
 					}
@@ -1024,18 +1024,18 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 	protected int cleanDoneJobs()
 	{
-		List<JobContainer> toRemove = null;
+		List<TaskContainer> toRemove = null;
 		jobListWriteLock.lock();
 		try
 		{
 			
-			for(JobContainer jobContainer : this.jobList)
+			for(TaskContainer jobContainer : this.jobList)
 			{
-				if(jobContainer.getJobControl().isDone())
+				if(jobContainer.getTaskControl().isDone())
 				{
 					if(toRemove == null)
 					{
-						toRemove = new ArrayList<JobContainer>();
+						toRemove = new ArrayList<TaskContainer>();
 					}
 					toRemove.add(jobContainer);
 				}
@@ -1046,12 +1046,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				return 0;
 			}
 			
-			for(JobContainer jobContainer : toRemove)
+			for(TaskContainer jobContainer : toRemove)
 			{
 				String id = jobContainer.getId();
 				this.jobList.remove(jobContainer);
 				
-				JobContainer containerById = this.jobIndex.get(id);
+				TaskContainer containerById = this.jobIndex.get(id);
 				if(containerById == null)
 				{
 					continue;
@@ -1078,7 +1078,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 	}
 	
-	protected long getDueJobs(List<JobContainer> dueJobList)
+	protected long getDueJobs(List<TaskContainer> dueJobList)
 	{
 		jobListReadLock.lock();
 		long timeStamp = System.currentTimeMillis();
@@ -1086,13 +1086,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			
-			for(JobContainer jobContainer : jobList)
+			for(TaskContainer jobContainer : jobList)
 			{
-				if(jobContainer.getJobControl().isDone())
+				if(jobContainer.getTaskControl().isDone())
 				{
 					continue;
 				}
-				long executionTimeStampIntern = jobContainer.getJobControl().getExecutionTimeStampIntern();
+				long executionTimeStampIntern = jobContainer.getTaskControl().getExecutionTimeStampIntern();
 				if(executionTimeStampIntern < nextRun)
 				{
 					nextRun = executionTimeStampIntern;
@@ -1120,13 +1120,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			
-			for(JobContainer jobContainer : jobList)
+			for(TaskContainer jobContainer : jobList)
 			{
-				if(jobContainer.getJobControl().isDone())
+				if(jobContainer.getTaskControl().isDone())
 				{
 					continue;
 				}
-				long executionTimeStampIntern = jobContainer.getJobControl().getExecutionTimeStampIntern();
+				long executionTimeStampIntern = jobContainer.getTaskControl().getExecutionTimeStampIntern();
 				if(executionTimeStampIntern < nextRun)
 				{
 					nextRun = executionTimeStampIntern;
@@ -1147,10 +1147,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		jobListReadLock.lock();
 		try
 		{
-			JobContainer  jobContainer = this.jobIndex.get(id);
+			TaskContainer  jobContainer = this.jobIndex.get(id);
 			if(jobContainer != null)
 			{
-				if(! jobContainer.getJobControl().isDone())
+				if(! jobContainer.getTaskControl().isDone())
 				{
 					return jobContainer.getPropertyBlock();
 				}
@@ -1165,26 +1165,26 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 	
 	@Override
-	public List<IQueueJob> getJobList(Filter filter)
+	public List<IQueueTask> getJobList(Filter filter)
 	{
-		List<IQueueJob> queryJobList = new ArrayList<IQueueJob>();
+		List<IQueueTask> queryJobList = new ArrayList<IQueueTask>();
 		
 		jobListReadLock.lock();
 		try
 		{
-			for(JobContainer jobContainer : jobList)
+			for(TaskContainer jobContainer : jobList)
 			{
-				if(jobContainer.getJobControl().isDone()) 
+				if(jobContainer.getTaskControl().isDone()) 
 				{
 					continue;
 				}
 				if(filter == null)
 				{
-					queryJobList.add(jobContainer.getJob());
+					queryJobList.add(jobContainer.getTask());
 				}
 				else if(filter.matches(jobContainer.getPropertyBlock().getProperties()))
 				{
-					queryJobList.add(jobContainer.getJob());
+					queryJobList.add(jobContainer.getTask());
 				}
 			}
 			return Collections.unmodifiableList(queryJobList);
@@ -1196,32 +1196,32 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 	
 	@Override
-	public Map<String,IQueueJob> getJobIndex(Filter filter)
+	public Map<String,IQueueTask> getJobIndex(Filter filter)
 	{
-		Map<String,IQueueJob> queryJobIndex = new HashMap<String,IQueueJob>();
+		Map<String,IQueueTask> queryJobIndex = new HashMap<String,IQueueTask>();
 		
 		jobListReadLock.lock();
 		try
 		{
 			String id = null;
-			JobContainer jobContainer = null;
+			TaskContainer jobContainer = null;
 			
-			for(Entry<String,JobContainer> jobContainerEntry : this.jobIndex.entrySet())
+			for(Entry<String,TaskContainer> jobContainerEntry : this.jobIndex.entrySet())
 			{
 				id = jobContainerEntry.getKey();
 				jobContainer = jobContainerEntry.getValue();
 				
-				if(jobContainer.getJobControl().isDone()) 
+				if(jobContainer.getTaskControl().isDone()) 
 				{
 					continue;
 				}
 				if(filter == null)
 				{
-					queryJobIndex.put(id,jobContainer.getJob());
+					queryJobIndex.put(id,jobContainer.getTask());
 				}
 				else if(filter.matches(jobContainer.getPropertyBlock().getProperties()))
 				{
-					queryJobIndex.put(id,jobContainer.getJob());
+					queryJobIndex.put(id,jobContainer.getTask());
 				}
 			}
 			return Collections.unmodifiableMap(queryJobIndex);
@@ -1234,38 +1234,38 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 
 	@Override
-	public String scheduleJob(IQueueJob job)
+	public String scheduleJob(IQueueTask job)
 	{
 		return scheduleJob(null,job);
 	}
 	
 	@Override
-	public String scheduleJob(String id, IQueueJob job)
+	public String scheduleJob(String id, IQueueTask job)
 	{
 		return scheduleJob(id,job, null, -1, -1, -1);
 	}
 	
 	@Override
-	public String scheduleJob(String id, IQueueJob job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut )
+	public String scheduleJob(String id, IQueueTask job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut )
 	{
 		return scheduleJob(id,job, propertyBlock, executionTimeStamp, timeOutValue, heartBeatTimeOut, false);
 	}
 	
 	@Override
-	public String scheduleJob(String id, IQueueJob job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut, boolean stopOnTimeOut )
+	public String scheduleJob(String id, IQueueTask job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut, boolean stopOnTimeOut )
 	{
 
-		JobContainer jobContainer = null;
+		TaskContainer taskContainer = null;
 		
 		jobListWriteLock.lock();
 		try
 		{
-			JobContainer toRemove =  null;
-			for(JobContainer alreadyInList : this.jobList)
+			TaskContainer toRemove =  null;
+			for(TaskContainer alreadyInList : this.jobList)
 			{
-				if(alreadyInList.getJob() == job)
+				if(alreadyInList.getTask() == job)
 				{
-					if(alreadyInList.getJobControl().isDone())
+					if(alreadyInList.getTaskControl().isDone())
 					{
 						toRemove = alreadyInList;
 						break;
@@ -1297,28 +1297,28 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			if((id == null) || (id.isEmpty()))
 			{
 				id = UUID.randomUUID().toString();
-				jobContainer = new JobContainer();
+				taskContainer = new TaskContainer();
 			}
 			else
 			{
-				jobContainer = this.jobIndex.get(id);
-				if(jobContainer != null)
+				taskContainer = this.jobIndex.get(id);
+				if(taskContainer != null)
 				{
-					if(jobContainer.getJobControl().isDone())
+					if(taskContainer.getTaskControl().isDone())
 					{
-						this.jobIndex.remove(jobContainer.getId());
-						this.jobList.remove(jobContainer);
+						this.jobIndex.remove(taskContainer.getId());
+						this.jobList.remove(taskContainer);
 						
 						try
 						{
-							((MetricImpl)jobContainer.getMetrics()).dispose();
+							((MetricImpl)taskContainer.getMetrics()).dispose();
 						}
 						catch(Exception e)
 						{
 							log(LogService.LOG_ERROR, "dispose metrics", e);
 						}
 						
-						jobContainer = null;
+						taskContainer = null;
 					}
 					else
 					{
@@ -1326,8 +1326,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					}
 				}
 				
-				jobContainer = new JobContainer();
-				jobContainer.setNamedJob(true);
+				taskContainer = new TaskContainer();
+				taskContainer.setNamedTask(true);
 			}
 			
 			PropertyBlockImpl qualityValues = (PropertyBlockImpl)this.getDispatcher().createPropertyBlock();
@@ -1341,7 +1341,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				propertyBlock = (PropertyBlockImpl)this.getDispatcher().createPropertyBlock();
 			}
 			
-			JobControlImpl jobControl = new JobControlImpl(propertyBlock);
+			TaskControlImpl jobControl = new TaskControlImpl(propertyBlock);
 			if(executionTimeStamp > 0)
 			{
 				jobControl.setExecutionTimeStampSchedule(executionTimeStamp);
@@ -1357,17 +1357,17 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			
 			jobControl.setStopOnTimeOutFlag(stopOnTimeOut);
 			
-			propertyBlock.setProperty(IQueueJob.PROPERTY_KEY_JOB_ID, id);
+			propertyBlock.setProperty(IQueueTask.PROPERTY_KEY_TASK_ID, id);
 			
-			jobContainer.setId(id);
-			jobContainer.setJob(job);
-			jobContainer.setMetrics(metric);
-			jobContainer.setPropertyBlock(propertyBlock);
-			jobContainer.setJobControl(jobControl);
+			taskContainer.setId(id);
+			taskContainer.setTask(job);
+			taskContainer.setMetrics(metric);
+			taskContainer.setPropertyBlock(propertyBlock);
+			taskContainer.setTaskControl(jobControl);
 			
 			qualityValues.setProperty(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, -1L);
 			
-			if(jobContainer.isNamedJob())
+			if(taskContainer.isNamedTask())
 			{
 				metric.registerGauge(new IGauge<Long>()
 				{
@@ -1415,13 +1415,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			jobListWriteLock.unlock();
 		}
 		
-		jobContainer.getJob().configure(id, jobContainer.getMetrics(), jobContainer.getPropertyBlock(), jobContainer.getJobControl());
+		taskContainer.getTask().configure(this, id, taskContainer.getMetrics(), taskContainer.getPropertyBlock(), taskContainer.getTaskControl());
 		
 		jobListWriteLock.lock();
 		try
 		{
-			jobList.add(jobContainer);
-			jobIndex.put(id, jobContainer);
+			jobList.add(taskContainer);
+			jobIndex.put(id, taskContainer);
 		}
 		finally 
 		{
@@ -1433,9 +1433,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 	
 	@Override
-	public IQueueJob rescheduleJob(String id, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut)
+	public IQueueTask rescheduleJob(String id, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut)
 	{
-		JobContainer jobContainer = null;
+		TaskContainer jobContainer = null;
 		
 		if((id == null) || (id.isEmpty()))
 		{
@@ -1451,7 +1451,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				return null;
 			}
 			
-			if(jobContainer.getJobControl().isDone())
+			if(jobContainer.getTaskControl().isDone())
 			{
 				this.jobIndex.remove(jobContainer.getId());
 				this.jobList.remove(jobContainer);
@@ -1467,7 +1467,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				return null;
 			}
 			
-			JobControlImpl jobControl = jobContainer.getJobControl();
+			TaskControlImpl jobControl = jobContainer.getTaskControl();
 			
 			if(heartBeatTimeOut > 0)
 			{
@@ -1484,7 +1484,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				this.notifyOrCreateWorker(executionTimeStamp);
 			}
 			
-			return jobContainer.getJob();
+			return jobContainer.getTask();
 		}
 		finally 
 		{
@@ -1493,18 +1493,18 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 	
 	@Override
-	public IQueueJob getJob(String id)
+	public IQueueTask getJob(String id)
 	{
 
 		jobListReadLock.lock();
 		try
 		{
-			JobContainer  jobContainer = this.jobIndex.get(id);
+			TaskContainer  jobContainer = this.jobIndex.get(id);
 			if(jobContainer != null)
 			{
-				if(! jobContainer.getJobControl().isDone())
+				if(! jobContainer.getTaskControl().isDone())
 				{
-					return jobContainer.getJob();
+					return jobContainer.getTask();
 				}
 			}
 		}
@@ -1517,12 +1517,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 	
 	@Override
-	public IQueueJob removeJob(String id)
+	public IQueueTask removeJob(String id)
 	{
 		jobListWriteLock.lock();
 		try
 		{
-			JobContainer  jobContainer = this.jobIndex.get(id);
+			TaskContainer  jobContainer = this.jobIndex.get(id);
 			if(jobContainer != null)
 			{
 				this.jobIndex.remove(id);
@@ -2055,11 +2055,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			jobListReadLock.lock();
 			try
 			{
-				for(Entry<String,JobContainer> jobContainerEntry : this.jobIndex.entrySet())
+				for(Entry<String,TaskContainer> jobContainerEntry : this.jobIndex.entrySet())
 				{
 					try
 					{
-						jobContainerEntry.getValue().getJobControl().setDone();
+						jobContainerEntry.getValue().getTaskControl().setDone();
 						((MetricImpl)jobContainerEntry.getValue().getMetrics()).dispose();
 					}
 					catch (Exception e) 
@@ -2559,7 +2559,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 	}
 	
-	public JobContainer getCurrentRunningJob()
+	public TaskContainer getCurrentRunningJob()
 	{
 		QueueWorker worker = this.queueWorker;
 		if(worker == null)

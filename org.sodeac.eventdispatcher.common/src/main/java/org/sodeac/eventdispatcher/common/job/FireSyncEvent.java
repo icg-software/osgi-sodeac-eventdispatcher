@@ -14,14 +14,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.sodeac.eventdispatcher.api.IConcernEvent;
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 
-public class FireSyncEvent implements IQueueJob,IConcernEvent
+public class FireSyncEvent implements IQueueTask,IConcernEvent
 {
 	private IQueuedEvent event = null;
 	private String topic =  null;
@@ -37,10 +37,7 @@ public class FireSyncEvent implements IQueueJob,IConcernEvent
 	}
 	
 	@Override
-	public void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl){}
-	
-	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock properties, IJobControl jobControl, List<IQueueJob> currentProcessedJobList)
+	public void run(IQueue queue, IMetrics metrics, IPropertyBlock properties, ITaskControl taskControl, List<IQueueTask> currentProcessedJobList)
 	{
 		if((removeEvent && (this.event != null)))
 		{

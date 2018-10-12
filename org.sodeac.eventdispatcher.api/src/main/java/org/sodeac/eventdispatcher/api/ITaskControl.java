@@ -11,26 +11,26 @@
 package org.sodeac.eventdispatcher.api;
 
 /**
- * acts as state container for jobexecutions
+ * acts as state container for taskexecutions
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IJobControl
+public interface ITaskControl
 {
 	
 	public enum ExecutionTimeStampSource {SCHEDULE,RESCHEDULE,WORKER,PERODIC}
 	
 	/**
 	 * 
-	 * @return true, of job is done, otherwise false
+	 * @return true, of task is done, otherwise false
 	 */
 	public boolean isDone();
 	
 	/**
-	 * mark job as done
+	 * mark task as done
 	 * 
-	 * @return true, if job is already marked as done, otherwise false
+	 * @return true, if task is already marked as done, otherwise false
 	 */
 	public boolean setDone();
 	
@@ -52,7 +52,7 @@ public interface IJobControl
 	 * 
 	 * <br>
 	 * 
-	 * additionally job is marked done == false
+	 * additionally task is marked done == false
 	 * 
 	 * @param executionTimeStamp timestamp for next run
 	 * @param force force to set new execution timestamp
@@ -95,24 +95,24 @@ public interface IJobControl
 	public long setHeartBeatTimeOut(long heartBeatTimeOut);
 	
 	/**
-	 * notify, that this job runs to long
+	 * notify, that this task runs to long
 	 */
 	public void timeOut(); 
 
 	/**
 	 * 
-	 * @return true if job runs to long (timeout or heartbeat timeout), otherwise false
+	 * @return true if task runs to long (timeout or heartbeat timeout), otherwise false
 	 */
 	public boolean isInTimeOut();
 	
 	/**
 	 * setter for stopOnTimeout flag
 	 * 
-	 * If a job runs in a timeout, the worker is no longer in use, but normally continuing running to finish the runMethode. 
-	 * A long running job should ask for timeout by invoking isInTimeOut() periodically to clean up and skip continuing. 
+	 * If a task runs in a timeout, the worker is no longer in use, but normally continuing running to finish the runMethode. 
+	 * A long running task should ask for timeout by invoking isInTimeOut() periodically to clean up and skip continuing. 
 	 * But, if worker is blocked by network operation for example, the guardian can stop worker thread by setting  stopOnTimeoutFlag true. 
 	 * 
-	 * Attention !!! You should be familiar with all things can happens by stopping a thread. You can handle some issues if {@link IQueueJob} implements {@link IOnJobStop} 
+	 * Attention !!! You should be familiar with all things can happens by stopping a thread. You can handle some issues if {@link IQueueTask} implements {@link IOnTaskStop} 
 	 * 
 	 * 
 	 * @param stopOnTimeoutFlag new stopOnTimeoutFlag value

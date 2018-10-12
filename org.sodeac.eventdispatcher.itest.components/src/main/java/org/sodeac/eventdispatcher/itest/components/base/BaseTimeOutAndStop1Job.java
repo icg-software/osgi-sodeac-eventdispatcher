@@ -12,13 +12,13 @@ package org.sodeac.eventdispatcher.itest.components.base;
 
 import java.util.List;
 
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 
-public class BaseTimeOutAndStop1Job implements IQueueJob
+public class BaseTimeOutAndStop1Job implements IQueueTask
 {
 	private long sleepValue;
 
@@ -29,10 +29,7 @@ public class BaseTimeOutAndStop1Job implements IQueueJob
 	}
 	
 	@Override
-	public void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl){}
-
-	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl,List<IQueueJob> currentProcessedJobList)
+	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl,List<IQueueTask> currentProcessedJobList)
 	{
 		try
 		{

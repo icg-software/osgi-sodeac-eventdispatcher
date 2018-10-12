@@ -21,9 +21,9 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnJobDone;
-import org.sodeac.eventdispatcher.api.IOnJobError;
-import org.sodeac.eventdispatcher.api.IOnJobTimeout;
+import org.sodeac.eventdispatcher.api.IOnTaskDone;
+import org.sodeac.eventdispatcher.api.IOnTaskError;
+import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
@@ -31,7 +31,7 @@ import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingObject;
@@ -46,7 +46,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingObject;
 		EventConstants.EVENT_TOPIC+"=" + BaseReCreateWorkerTestController.SCHEDULE_EVENT
 	}
 )
-public class BaseReCreateWorkerTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseReCreateWorkerTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnTaskDone,IOnTaskError,IOnTaskTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final long 	SLEEP_VALUE				= 10800;
 	public static final long 	TIMEOUT_VALUE			= SLEEP_VALUE / 2;
@@ -69,7 +69,7 @@ public class BaseReCreateWorkerTestController extends AbstractBaseTestController
 	{
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		String signal = (String)event.getNativeEventProperties().get(EVENT_PROPERTY_SIGNAL);
-		IQueueJob job = new BaseRecreateTestJob(SLEEP_VALUE,signal);
+		IQueueTask job = new BaseRecreateTestJob(SLEEP_VALUE,signal);
 		IPropertyBlock jobProperties = event.getQueue().getDispatcher().createPropertyBlock();
 		jobProperties.setProperty(TracingObject.class.getName(), super.tracingObject);
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));

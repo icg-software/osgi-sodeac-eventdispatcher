@@ -12,7 +12,7 @@ package org.sodeac.eventdispatcher.itest.components;
 
 import org.osgi.service.event.Event;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 
 public class TracingEvent
@@ -65,7 +65,7 @@ public class TracingEvent
 		this.methode = methode;
 	}
 	
-	public TracingEvent(int methode,IQueueJob job)
+	public TracingEvent(int methode,IQueueTask job)
 	{
 		super();
 		this.timestamp = System.currentTimeMillis();
@@ -73,7 +73,7 @@ public class TracingEvent
 		this.methode = methode;
 	}
 	
-	public TracingEvent(int methode,IQueueJob job,Exception exception)
+	public TracingEvent(int methode,IQueueTask job,Exception exception)
 	{
 		super();
 		this.timestamp = System.currentTimeMillis();
@@ -86,7 +86,7 @@ public class TracingEvent
 	private int methode;
 	private IQueue queue;
 	private IQueuedEvent event;
-	private IQueueJob job;
+	private IQueueTask job;
 	private Exception exception;
 	private String signal;
 	private Event rawEvent;
@@ -111,7 +111,7 @@ public class TracingEvent
 	{
 		return rawEvent;
 	}
-	public IQueueJob getJob()
+	public IQueueTask getJob()
 	{
 		return job;
 	}

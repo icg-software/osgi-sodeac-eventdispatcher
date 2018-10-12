@@ -22,7 +22,7 @@ import org.sodeac.multichainlist.Snapshot;
 /**
  * API for event-queues. {@link IQueue}s are configured by one or more {@link IQueueController}s. 
  * All collected osgi-{@link org.osgi.service.event.Event}s are wrapped by {@link IQueuedEvent}. 
- * {@link IQueuedEvent}s can be processed by {@link IQueueJob}s.
+ * {@link IQueuedEvent}s can be processed by {@link IQueueTask}s.
  * 
  * @author Sebastian Palarus
  *
@@ -141,62 +141,62 @@ public interface IQueue
 	public boolean removeEventList(List<String> uuidList);
 	
 	/**
-	 * returns list of scheduled {@link IQueueJob} matched by filter parameter
+	 * returns list of scheduled {@link IQueueTask} matched by filter parameter
 	 * 
-	 * @param filter osgi-filter for {@link IQueueJob}-properties
-	 * @return list of {@link IQueueJob}s matched by filter parameter
+	 * @param filter osgi-filter for {@link IQueueTask}-properties
+	 * @return list of {@link IQueueTask}s matched by filter parameter
 	 */
-	public List<IQueueJob> getJobList(Filter filter);
+	public List<IQueueTask> getJobList(Filter filter);
 	
 	/**
 	 * returns map with jobid-job-pairs matched by filter parameter
 	 * 
-	 * @param filter osgi-filter for {@link IQueueJob}-properties
+	 * @param filter osgi-filter for {@link IQueueTask}-properties
 	 * @return map with jobid-job-pairs matched by filter parameter
 	 */
-	public Map<String,IQueueJob> getJobIndex(Filter filter);
+	public Map<String,IQueueTask> getJobIndex(Filter filter);
 	
 	/**
-	 * schedule a anonymous {@link IQueueJob} to {@link IQueue}
+	 * schedule a anonymous {@link IQueueTask} to {@link IQueue}
 	 * 
 	 * equivalent to scheduleJob(null,job, null, -1, -1, -1);
 	 * 
-	 * @param job {@link IQueueJob} to schedule
+	 * @param job {@link IQueueTask} to schedule
 	 * 
 	 * @return generated jobid
 	 */
-	public String scheduleJob(IQueueJob job);
+	public String scheduleJob(IQueueTask job);
 	
 	/**
-	 * schedule a {@link IQueueJob} to {@link IQueue}.
+	 * schedule a {@link IQueueTask} to {@link IQueue}.
 	 * 
-	 * @param id registration-id for {@link IQueueJob} to schedule
-	 * @param job {@link IQueueJob} to schedule
+	 * @param id registration-id for {@link IQueueTask} to schedule
+	 * @param job {@link IQueueTask} to schedule
 	 * 
 	 * @return jobid (generated, if parameter id is null)
 	 */
-	public String scheduleJob(String id,IQueueJob job);
+	public String scheduleJob(String id,IQueueTask job);
 	
 	/**
-	 * schedule a {@link IQueueJob} to {@link IQueue}.
+	 * schedule a {@link IQueueTask} to {@link IQueue}.
 	 * 
-	 * @param id registration-id for {@link IQueueJob} to schedule
-	 * @param job {@link IQueueJob} to schedule
-	 * @param propertyBlock {@link IQueueJob}-properties (factory in {@link IEventDispatcher})
+	 * @param id registration-id for {@link IQueueTask} to schedule
+	 * @param job {@link IQueueTask} to schedule
+	 * @param propertyBlock {@link IQueueTask}-properties (factory in {@link IEventDispatcher})
 	 * @param executionTimeStamp execution time millis
 	 * @param timeOutValue timeout value in ms, before notify for timeout
 	 * @param heartBeatTimeOut heartbeat-timeout value in ms, before notify for timeout
 	 * 
 	 * @return jobid (generated, in parameter id is null)
 	 */
-	public String scheduleJob(String id, IQueueJob job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut );
+	public String scheduleJob(String id, IQueueTask job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut );
 	
 	/**
-	 * schedule a {@link IQueueJob} to {@link IQueue}.
+	 * schedule a {@link IQueueTask} to {@link IQueue}.
 	 * 
-	 * @param id registration-id for {@link IQueueJob} to schedule
-	 * @param job {@link IQueueJob} to schedule
-	 * @param propertyBlock {@link IQueueJob}-properties (factory in {@link IEventDispatcher})
+	 * @param id registration-id for {@link IQueueTask} to schedule
+	 * @param job {@link IQueueTask} to schedule
+	 * @param propertyBlock {@link IQueueTask}-properties (factory in {@link IEventDispatcher})
 	 * @param executionTimeStamp execution time millis
 	 * @param timeOutValue timeout value in ms, before notify for timeout
 	 * @param heartBeatTimeOut heartbeat-timeout value in ms, before notify for timeout
@@ -204,40 +204,40 @@ public interface IQueue
 	 * 
 	 * @return jobid (generated, in parameter id is null)
 	 */
-	public String scheduleJob(String id, IQueueJob job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut, boolean stopOnTimeOut );
+	public String scheduleJob(String id, IQueueTask job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut, boolean stopOnTimeOut );
 	
 	/**
-	 * reset execution plan for an existing {@link IQueueJob}
+	 * reset execution plan for an existing {@link IQueueTask}
 	 * 
-	 * @param id registration-id of {@link IQueueJob} in which reset execution plan 
+	 * @param id registration-id of {@link IQueueTask} in which reset execution plan 
 	 * @param executionTimeStamp new execution time millis
 	 * @param timeOutValue new timeout value in ms, before notify for timeout
 	 * @param heartBeatTimeOut heartbeat-timeout value in ms, before notify for timeout
-	 * @return affected {@link IQueueJob} or null if not found
+	 * @return affected {@link IQueueTask} or null if not found
 	 */
-	public IQueueJob rescheduleJob(String id, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut );
+	public IQueueTask rescheduleJob(String id, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut );
 	
 	/**
-	 * returns {@link IQueueJob} scheduled under registration {@code id}
+	 * returns {@link IQueueTask} scheduled under registration {@code id}
 	 * 
-	 * @param id registration-id for {@link IQueueJob}
-	 * @return {@link IQueueJob} scheduled under registration {@code id}
+	 * @param id registration-id for {@link IQueueTask}
+	 * @return {@link IQueueTask} scheduled under registration {@code id}
 	 */
-	public IQueueJob getJob(String id);
+	public IQueueTask getJob(String id);
 	
 	/**
-	 * remove{@link IQueueJob} scheduled under registration {@code id}
+	 * remove{@link IQueueTask} scheduled under registration {@code id}
 	 * 
-	 * @param id registration-id for {@link IQueueJob} to remove
-	 * @return removed {@link IQueueJob} or null if no scheduled with {@code id} found
+	 * @param id registration-id for {@link IQueueTask} to remove
+	 * @return removed {@link IQueueTask} or null if no scheduled with {@code id} found
 	 */
-	public IQueueJob removeJob(String id);
+	public IQueueTask removeJob(String id);
 	
 	/**
-	 * returns properties of {@link IQueueJob} scheduled under registration {@code id}
+	 * returns properties of {@link IQueueTask} scheduled under registration {@code id}
 	 * 
-	 * @param id registration-id for {@link IQueueJob}
-	 * @return properties of {@link IQueueJob} scheduled under registration {@code id}
+	 * @param id registration-id for {@link IQueueTask}
+	 * @return properties of {@link IQueueTask} scheduled under registration {@code id}
 	 */
 	public IPropertyBlock getJobPropertyBlock(String id);
 	

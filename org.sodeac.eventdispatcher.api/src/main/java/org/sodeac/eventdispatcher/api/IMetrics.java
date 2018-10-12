@@ -11,7 +11,7 @@
 package org.sodeac.eventdispatcher.api;
 
 /**
- * metric-handler to read or feed metrics for {@link IEventDispatcher}, {@link IQueue} and {@link IQueueJob}
+ * metric-handler to read or feed metrics for {@link IEventDispatcher}, {@link IQueue} and {@link IQueueTask}
  * 
  * @author Sebastian Palarus
  *
@@ -169,7 +169,7 @@ public interface IMetrics
 			
 			if((jobId != null) && (!jobId.isEmpty()))
 			{
-				builder.append(IQueueJob.class.getSimpleName());
+				builder.append(IQueueTask.class.getSimpleName());
 				builder.append("." + jobId);
 			}
 		}

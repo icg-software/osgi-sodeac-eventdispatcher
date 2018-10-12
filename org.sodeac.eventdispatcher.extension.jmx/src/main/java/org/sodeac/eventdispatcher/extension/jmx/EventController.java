@@ -18,9 +18,9 @@ import org.sodeac.eventdispatcher.api.IDescriptionProvider;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
-import org.sodeac.eventdispatcher.api.IOnJobDone;
-import org.sodeac.eventdispatcher.api.IOnJobError;
-import org.sodeac.eventdispatcher.api.IOnJobTimeout;
+import org.sodeac.eventdispatcher.api.IOnTaskDone;
+import org.sodeac.eventdispatcher.api.IOnTaskError;
+import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
@@ -74,19 +74,19 @@ public class EventController implements EventControllerMBean
 	@Override
 	public boolean isImplementsOnJobDone()
 	{
-		return this.eventController instanceof IOnJobDone;
+		return this.eventController instanceof IOnTaskDone;
 	}
 
 	@Override
 	public boolean isImplementsOnJobError()
 	{
-		return this.eventController instanceof IOnJobError;
+		return this.eventController instanceof IOnTaskError;
 	}
 
 	@Override
 	public boolean isImplementsOnJobTimeout()
 	{
-		return this.eventController instanceof IOnJobTimeout;
+		return this.eventController instanceof IOnTaskTimeout;
 	}
 
 	@Override

@@ -13,15 +13,15 @@ package org.sodeac.eventdispatcher.api;
 import java.util.List;
 
 /**
- * A {@link IQueueJob} acts as processor for queued {@link IQueuedEvent}s or as service.
+ * A {@link IQueueTask} acts as processor for queued {@link IQueuedEvent}s or as service.
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IQueueJob
+public interface IQueueTask
 {
 	
-	public static final String PROPERTY_KEY_JOB_ID 					= "JOB_ID"				;
+	public static final String PROPERTY_KEY_TASK_ID 				= "TASK_ID"				;
 	public static final String PROPERTY_KEY_EXECUTION_TIMESTAMP 	= "EXECUTION_TIMESTAMP"	;
 	public static final String PROPERTY_KEY_TIMEOUT_VALUE 			= "TIMEOUT_VALUE"		;
 	public static final String PROPERTY_KEY_HEARTBEAT_TIMEOUT 		= "HEARTBEAT_TIMEOUT "	;
@@ -31,17 +31,18 @@ public interface IQueueJob
 	public static final long DEFAULT_TIMEOUT = 1080 * 1080;
 	
 	/**
-	 * invoked onetime at initialization of this job
+	 * invoked onetime at initialization of this task
 	 * 
+	 * @param queue parent-{@link IQueue} 
 	 * @param id registration-id of this job
 	 * @param metrics metric-handler for this job
 	 * @param propertyBlock properties for this job
 	 * @param jobControl state-handler for this job
 	 */
-	public default void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl) {};
+	public default void configure(IQueue queue, String id, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl jobControl) {};
 	
 	/**
-	 * run this job, invoked by queue-worker.
+	 * run this task, invoked by queue-worker.
 	 * 
 	 * @param queue parent-{@link IQueue} 
 	 * @param metrics metric-handler for this job
@@ -49,5 +50,5 @@ public interface IQueueJob
 	 * @param jobControl state-handler for this job
 	 * @param currentProcessedJobList all jobs run in the same task phase
 	 */
-	public void run(IQueue queue,IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl, List<IQueueJob> currentProcessedJobList);
+	public void run(IQueue queue,IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl jobControl, List<IQueueTask> currentProcessedJobList);
 }

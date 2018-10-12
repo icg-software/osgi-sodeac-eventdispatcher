@@ -2,7 +2,7 @@ package org.sodeac.eventdispatcher.common.queueservice;
 
 import java.util.concurrent.TimeUnit;
 
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 
@@ -45,5 +45,5 @@ public abstract class TimeOutServiceAdapter
 		return this.lastHeartBeat + timeOut;
 	}
 	
-	public abstract void onTimeout(IQueue queue,IPropertyBlock propertyBlock, IJobControl jobControl);
+	public abstract void onTimeout(IQueue queue,IPropertyBlock propertyBlock, ITaskControl jobControl);
 }

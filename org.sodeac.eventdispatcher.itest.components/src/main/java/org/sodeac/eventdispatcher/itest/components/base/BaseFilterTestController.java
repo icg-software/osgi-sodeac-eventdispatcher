@@ -23,9 +23,9 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnJobDone;
-import org.sodeac.eventdispatcher.api.IOnJobError;
-import org.sodeac.eventdispatcher.api.IOnJobTimeout;
+import org.sodeac.eventdispatcher.api.IOnTaskDone;
+import org.sodeac.eventdispatcher.api.IOnTaskError;
+import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
@@ -33,7 +33,7 @@ import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 
@@ -47,7 +47,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 		EventConstants.EVENT_TOPIC + "=" + BaseFilterTestController.SCHEDULE_EVENT + BaseFilterTestController.ALL
 	}
 )
-public class BaseFilterTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnJobDone,IOnJobError,IOnJobTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseFilterTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnTaskDone,IOnTaskError,IOnTaskTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
 {
 	public static final long 	SLEEP_VALUE			= 10800;
 	public static final String 	QUEUE_ID 			= "basefiltertestqueue";
@@ -99,7 +99,7 @@ public class BaseFilterTestController extends AbstractBaseTestController impleme
 		jobProperties.setProperty(JOB_PROPERTY_EVENT, event.getEvent());
 		
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
-		IQueueJob job = new BaseTimeOutJob(SLEEP_VALUE);
+		IQueueTask job = new BaseTimeOutJob(SLEEP_VALUE);
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
 		event.getQueue().scheduleJob((String)event.getNativeEventProperties().get(PROPERTY_JOB_ID),job,jobProperties,System.currentTimeMillis() + 2000,-1, -1);
 		

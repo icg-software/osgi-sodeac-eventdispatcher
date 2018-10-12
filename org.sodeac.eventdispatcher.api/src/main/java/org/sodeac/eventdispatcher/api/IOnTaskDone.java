@@ -12,19 +12,20 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IQueueController} to consume notifications if a job runs in a timeout
+ * An extension interface for {@link IQueueController} to consume notifications of finishing a task
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnJobTimeout extends IQueueController
+public interface IOnTaskDone extends IQueueController
 {
 	/**
-	 * This is fired, if {@link IQueueJob} runs in timeout.
+	 * This is fired, if {@link IQueueTask} remove a scheduled {@link IQueuedEvent}
 	 * <br>
-	 * Attention! This call is not synchronized by worker thread!
+	 * invoked and synchronized by queue worker
 	 * 
-	 * @param job runs in timeout
+	 * @param queue  queue of task finished {@link IQueueTask}
+	 * @param task finished {@link IQueueTask}
 	 */
-	public void onJobTimeout(IQueueJob job);
+	public void onTaskDone(IQueue queue,IQueueTask task);
 }

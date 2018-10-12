@@ -19,7 +19,7 @@ import org.osgi.service.event.EventAdmin;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
@@ -1244,13 +1244,13 @@ public class BaseContainerTest extends AbstractTest
 		assertNotNull("queuedEvent3  should not be null" ,queuedEvent3);
 		assertEquals("queuedEvent3.event should be event3", event3.getProperty(keyEventTopic), queuedEvent3.getEvent().getProperty(keyEventTopic));
 		
-		IQueueJob job1 = (IQueueJob)queuedEvent1.getProperty(BaseFilterTestController.PROPERTY_JOB);
+		IQueueTask job1 = (IQueueTask)queuedEvent1.getProperty(BaseFilterTestController.PROPERTY_JOB);
 		assertNotNull("job1  should not be null" ,job1);
 		
-		IQueueJob job2 = (IQueueJob)queuedEvent2.getProperty(BaseFilterTestController.PROPERTY_JOB);
+		IQueueTask job2 = (IQueueTask)queuedEvent2.getProperty(BaseFilterTestController.PROPERTY_JOB);
 		assertNotNull("job2  should not be null" ,job2);
 		
-		IQueueJob job3 = (IQueueJob)queuedEvent3.getProperty(BaseFilterTestController.PROPERTY_JOB);
+		IQueueTask job3 = (IQueueTask)queuedEvent3.getProperty(BaseFilterTestController.PROPERTY_JOB);
 		assertNotNull("job3  should not be null" ,job3);
 		
 		// test queueevent filter

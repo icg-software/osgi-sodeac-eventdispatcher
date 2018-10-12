@@ -78,7 +78,7 @@ public class DispatcherGuardian extends Thread
 				long heartBeatTimeOut = -1;
 				long lastHeartBeat = -1;
 				long heartBeatTimeOutStamp = -1;
-				JobContainer job = null;
+				TaskContainer job = null;
 				
 				
 				// Job TimeOut
@@ -136,7 +136,7 @@ public class DispatcherGuardian extends Thread
 					
 					if(job !=  null)
 					{
-						heartBeatTimeOut = job.getJobControl().getHeartBeatTimeOut();
+						heartBeatTimeOut = job.getTaskControl().getHeartBeatTimeOut();
 						if(heartBeatTimeOut > 0)
 						{
 							try
@@ -210,7 +210,7 @@ public class DispatcherGuardian extends Thread
 							continue;
 						}
 						
-						JobContainer job = jobObservable.queue.getCurrentRunningJob();
+						TaskContainer job = jobObservable.queue.getCurrentRunningJob();
 						if((job == null) || (job != jobObservable.job))
 						{
 							this.jobTimeOutIndex.remove(jobObservable.queue);
@@ -272,9 +272,9 @@ public class DispatcherGuardian extends Thread
 		}
 	}
 	
-	public void registerTimeOut(QueueImpl queue, JobContainer job)
+	public void registerTimeOut(QueueImpl queue, TaskContainer job)
 	{
-		JobControlImpl jobControl = job.getJobControl();
+		TaskControlImpl jobControl = job.getTaskControl();
 		if(jobControl == null)
 		{
 			return;
@@ -323,7 +323,7 @@ public class DispatcherGuardian extends Thread
 				}
 				else
 				{
-					long heartBeatTimeOut = job.getJobControl().getHeartBeatTimeOut();
+					long heartBeatTimeOut = job.getTaskControl().getHeartBeatTimeOut();
 					if(heartBeatTimeOut > 0)
 					{
 						try
@@ -359,7 +359,7 @@ public class DispatcherGuardian extends Thread
 		
 	}
 	
-	public void unregisterTimeOut(QueueImpl queue, JobContainer job)
+	public void unregisterTimeOut(QueueImpl queue, TaskContainer job)
 	{
 		jobTimeOutIndexWriteLock.lock();
 		try
@@ -403,7 +403,7 @@ public class DispatcherGuardian extends Thread
 	private class JobObservable
 	{
 		public Long jobTimeOut = null;
-		public JobContainer job = null;
+		public TaskContainer job = null;
 		public QueueImpl queue = null;
 	}
 	

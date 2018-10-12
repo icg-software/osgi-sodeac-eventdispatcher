@@ -23,13 +23,13 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IOnJobDone;
+import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 
 @Component
@@ -42,7 +42,7 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 		EventConstants.EVENT_TOPIC+"=" + JobMetricTestController.RUN_EVENT
 	}
 )
-public class JobMetricTestController implements IQueueController,IOnQueuedEvent, EventHandler, IOnJobDone
+public class JobMetricTestController implements IQueueController,IOnQueuedEvent, EventHandler, IOnTaskDone
 {
 	public static final String EVENT_PROPERTY_LATCH 		= "LATCH"		;
 	public static final String EVENT_PROPERTY_REPEAT 		= "REPEAT"		;
@@ -88,7 +88,7 @@ public class JobMetricTestController implements IQueueController,IOnQueuedEvent,
 	// IOnJobDone
 	
 	@Override
-	public void onJobDone(IQueueJob job)
+	public void onTaskDone(IQueue queue, IQueueTask job)
 	{
 		this.latch.countDown();
 		
@@ -101,7 +101,7 @@ public class JobMetricTestController implements IQueueController,IOnQueuedEvent,
 	
 	// Job
 	
-	protected class Job implements IQueueJob
+	protected class Job implements IQueueTask
 	{
 		private int repeat;
 		private int sleeptime;
@@ -123,15 +123,15 @@ public class JobMetricTestController implements IQueueController,IOnQueuedEvent,
 			IQueue queue, 
 			IMetrics metrics, 
 			IPropertyBlock propertyBlock, 
-			IJobControl jobControl,
-			List<IQueueJob> currentProcessedJobList
+			ITaskControl taskControl,
+			List<IQueueTask> currentProcessedJobList
 		)
 		{
 			jobCounter++;
 			
 			if(jobCounter < repeat)
 			{
-				jobControl.setExecutionTimeStamp(System.currentTimeMillis() + ((long)sleeptime) + ((long)worktime),true);
+				taskControl.setExecutionTimeStamp(System.currentTimeMillis() + ((long)sleeptime) + ((long)worktime),true);
 			}
 			
 			try
@@ -145,9 +145,6 @@ public class JobMetricTestController implements IQueueController,IOnQueuedEvent,
 			queue.signal("");
 			
 		}
-		
-		@Override
-		public void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl){}
 		
 	}
 

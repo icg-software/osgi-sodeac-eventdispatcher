@@ -22,9 +22,9 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IDynamicController;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
-import org.sodeac.eventdispatcher.api.IOnJobDone;
-import org.sodeac.eventdispatcher.api.IOnJobError;
-import org.sodeac.eventdispatcher.api.IOnJobTimeout;
+import org.sodeac.eventdispatcher.api.IOnTaskDone;
+import org.sodeac.eventdispatcher.api.IOnTaskError;
+import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
@@ -99,9 +99,9 @@ public class ControllerContainer
 		{
 			IDynamicController dynamicController = (IDynamicController)this.queueController;
 			implementsIOnFireEvent = dynamicController.implementsOnFiredEvent();
-			implementsIOnJobDone = dynamicController.implementsOnJobDone();
-			implementsIOnJobError = dynamicController.implementsOnJobError();
-			implementsIOnJobTimeout = dynamicController.implementsOnJobTimeout();
+			implementsIOnJobDone = dynamicController.implementsOnTaskDone();
+			implementsIOnJobError = dynamicController.implementsOnTaskError();
+			implementsIOnJobTimeout = dynamicController.implementsOnTaskTimeout();
 			implementsIOnQueueObserve = dynamicController.implementsOnQueueObserve();
 			implementsIOnQueueReverse = dynamicController.implementsOnQueueReverse();
 			implementsIOnQueueSignal = dynamicController.implementsOnQueueSignal();
@@ -112,9 +112,9 @@ public class ControllerContainer
 		else
 		{
 			implementsIOnFireEvent = this.queueController instanceof IOnFiredEvent;
-			implementsIOnJobDone = this.queueController instanceof IOnJobDone;
-			implementsIOnJobError = this.queueController instanceof IOnJobError;
-			implementsIOnJobTimeout = this.queueController instanceof IOnJobTimeout;
+			implementsIOnJobDone = this.queueController instanceof IOnTaskDone;
+			implementsIOnJobError = this.queueController instanceof IOnTaskError;
+			implementsIOnJobTimeout = this.queueController instanceof IOnTaskTimeout;
 			implementsIOnQueueObserve = this.queueController instanceof IOnQueueObserve;
 			implementsIOnQueueReverse = this.queueController instanceof IOnQueueReverse;
 			implementsIOnQueueSignal = this.queueController instanceof IOnQueueSignal;

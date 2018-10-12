@@ -14,7 +14,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.osgi.service.event.Event;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingObject;
@@ -50,7 +50,7 @@ public class AbstractBaseTestController
 		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_FIRE_EVENT,queue));
 	}
 
-	public void onJobDone(IQueueJob job)
+	public void onTaskDone(IQueue queue, IQueueTask job)
 	{
 		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_JOB_DONE,job));
 		if(this.latch != null)
@@ -59,7 +59,7 @@ public class AbstractBaseTestController
 		}
 	}
 
-	public void onJobTimeout(IQueueJob job)
+	public void onTaskTimeout(IQueue queue, IQueueTask job)
 	{
 		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_JOB_TIMEOUT,job));
 		if(this.latch != null)
@@ -68,7 +68,7 @@ public class AbstractBaseTestController
 		}
 	}
 
-	public void onJobError(IQueueJob job, Throwable exception)
+	public void onTaskError(IQueue queue, IQueueTask job, Throwable exception)
 	{
 		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_JOB_ERROR,job,(Exception)exception));
 		if(this.latch != null)

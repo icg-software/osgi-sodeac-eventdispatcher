@@ -2,7 +2,7 @@ package org.sodeac.eventdispatcher.common.queueservice;
 
 import java.util.concurrent.TimeUnit;
 
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
@@ -20,7 +20,7 @@ public class ScopeTimeoutAdapter extends TimeOutServiceAdapter
 	}
 
 	@Override
-	public void onTimeout(IQueue queue,IPropertyBlock propertyBlock, IJobControl jobControl)
+	public void onTimeout(IQueue queue,IPropertyBlock propertyBlock, ITaskControl jobControl)
 	{
 		((IQueueSessionScope)queue).dispose();
 	}

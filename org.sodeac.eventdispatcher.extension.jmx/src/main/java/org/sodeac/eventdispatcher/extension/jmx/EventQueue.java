@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import javax.management.ObjectName;
 
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleCounter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleGauge;
@@ -145,9 +145,9 @@ public class EventQueue implements EventQueueMBean
 		}
 		info.append("\n");
 		
-		Map<String,IQueueJob> jobIndex = this.queue.getJobIndex(null);
+		Map<String,IQueueTask> jobIndex = this.queue.getJobIndex(null);
 		info.append("Scheduled jobs (" + jobIndex.size() + "):\n");
-		for(Entry<String,IQueueJob> entry: jobIndex.entrySet())
+		for(Entry<String,IQueueTask> entry: jobIndex.entrySet())
 		{
 			info.append("\t" + entry.getKey() +" :: " + entry.getValue() + "\n" );
 		}

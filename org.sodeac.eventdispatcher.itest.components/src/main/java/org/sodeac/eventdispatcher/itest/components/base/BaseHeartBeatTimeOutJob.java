@@ -12,13 +12,13 @@ package org.sodeac.eventdispatcher.itest.components.base;
 
 import java.util.List;
 
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 
-public class BaseHeartBeatTimeOutJob implements IQueueJob
+public class BaseHeartBeatTimeOutJob implements IQueueTask
 {
 	public static final long HEARTBEATS_IN_TIME = 1000 + 2000 + 3000;
 	
@@ -26,12 +26,9 @@ public class BaseHeartBeatTimeOutJob implements IQueueJob
 	{
 		super();
 	}
-	
-	@Override
-	public void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl){}
 
 	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl,List<IQueueJob> currentProcessedJobList)
+	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl,List<IQueueTask> currentProcessedJobList)
 	{
 		try
 		{

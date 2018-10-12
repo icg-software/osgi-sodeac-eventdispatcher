@@ -12,24 +12,24 @@ package org.sodeac.eventdispatcher.impl;
 
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 
-public class JobContainer
+public class TaskContainer
 {
-	private IQueueJob job;
+	private IQueueTask task;
 	private String id;
 	private IPropertyBlock properties;
 	private IMetrics metrics;
-	private JobControlImpl jobControl;
-	private boolean namedJob = false;
+	private TaskControlImpl taskControl;
+	private boolean namedTask = false;
 	
-	public IQueueJob getJob()
+	public IQueueTask getTask()
 	{
-		return job;
+		return task;
 	}
-	public void setJob(IQueueJob job)
+	public void setTask(IQueueTask task)
 	{
-		this.job = job;
+		this.task = task;
 	}
 	public String getId()
 	{
@@ -55,20 +55,20 @@ public class JobContainer
 	{
 		this.metrics = metrics;
 	}
-	public JobControlImpl getJobControl()
+	public TaskControlImpl getTaskControl()
 	{
-		return jobControl;
+		return taskControl;
 	}
-	public void setJobControl(JobControlImpl jobControl)
+	public void setTaskControl(TaskControlImpl taskControl)
 	{
-		this.jobControl = jobControl;
+		this.taskControl = taskControl;
 	}
-	public boolean isNamedJob()
+	public boolean isNamedTask()
 	{
-		return namedJob;
+		return namedTask;
 	}
-	public void setNamedJob(boolean namedJob)
+	public void setNamedTask(boolean namedJob)
 	{
-		this.namedJob = namedJob;
+		this.namedTask = namedJob;
 	}
 }

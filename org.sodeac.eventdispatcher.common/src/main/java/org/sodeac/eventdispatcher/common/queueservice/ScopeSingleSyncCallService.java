@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 
@@ -27,10 +27,7 @@ public class ScopeSingleSyncCallService implements IQueueService
 	public static final String SERVICE_ID = "org.sodeac.eventdispatcher.common.queueservice.scopesinglecall";
 
 	@Override
-	public void configure(String id, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl){}
-
-	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, IJobControl jobControl,List<IQueueJob> currentProcessedJobList)
+	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl,List<IQueueTask> currentProcessedJobList)
 	{
 		@SuppressWarnings("unchecked")
 		ScopeSingleSyncCallServiceAdapter<Object> adapter = queue.getConfigurationPropertyBlock().getAdapter(ScopeSingleSyncCallServiceAdapter.class);

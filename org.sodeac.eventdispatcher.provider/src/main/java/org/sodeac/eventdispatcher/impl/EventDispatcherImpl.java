@@ -49,13 +49,13 @@ import org.osgi.service.event.EventAdmin;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IOnJobStop;
-import org.sodeac.eventdispatcher.api.IOnJobTimeout;
+import org.sodeac.eventdispatcher.api.IOnTaskStop;
+import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueComponentConfigurable;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueueEventResult;
@@ -362,12 +362,12 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 	}
 	
-	public void registerTimeOut(QueueImpl queue, JobContainer job)
+	public void registerTimeOut(QueueImpl queue, TaskContainer job)
 	{
 		this.dispatcherGuardian.registerTimeOut(queue,job);
 	}
 	
-	public void unregisterTimeOut(QueueImpl queue, JobContainer job)
+	public void unregisterTimeOut(QueueImpl queue, TaskContainer job)
 	{
 		this.dispatcherGuardian.unregisterTimeOut(queue,job);
 	}
@@ -2194,28 +2194,28 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		return this.spooledQueueWorkerScheduler.scheduleQueueWorker(queue, wakeUpTime);
 	}
 	
-	public void executeOnJobTimeOut(IOnJobTimeout controller, IQueueJob job)
+	public void executeOnJobTimeOut(IOnTaskTimeout controller, IQueue queue, IQueueTask task)
 	{
 		try
 		{
-			this.executorService.submit(new Callable<IQueueJob>()
+			this.executorService.submit(new Callable<IQueueTask>()
 			{
 				@Override
-				public IQueueJob call()
+				public IQueueTask call()
 				{
 					try
 					{
-						controller.onJobTimeout(job);
+						controller.onTaskTimeout(queue, task);
 					}
 					catch (Exception e) {}
-					return job;
+					return task;
 				}
 			}).get(7, TimeUnit.SECONDS);
 		}
 		catch (Exception e) {}
 	}
 	
-	public void executeOnJobStopExecuter(QueueWorker worker, IQueueJob job)
+	public void executeOnJobStopExecuter(QueueWorker worker, IQueueTask job)
 	{
 		this.executorService.execute(new Runnable()
 		{
@@ -2225,13 +2225,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				if(worker.isAlive())
 				{
-					if(job instanceof IOnJobStop)
+					if(job instanceof IOnTaskStop)
 					{
 						long number = 0L;
 						long moreTimeUntilNow = 0L;
 						long moreTime;
 						
-						while(worker.isAlive() && ((moreTime = ((IOnJobStop)job).requestForMoreLifeTime(number, moreTimeUntilNow, worker.getWorkerWrapper())) > 0) )
+						while(worker.isAlive() && ((moreTime = ((IOnTaskStop)job).requestForMoreLifeTime(number, moreTimeUntilNow, worker.getWorkerWrapper())) > 0) )
 						{
 							try
 							{

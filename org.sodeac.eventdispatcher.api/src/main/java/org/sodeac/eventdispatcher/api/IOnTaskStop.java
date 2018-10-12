@@ -11,12 +11,12 @@
 package org.sodeac.eventdispatcher.api;
 
 /**
- * extension interface for {@link IQueueJob} to facilitate prevention of deadlocks and inconsistent data structures in result of {@link java.lang.Thread#stop()} 
+ * extension interface for {@link IQueueTask} to facilitate prevention of deadlocks and inconsistent data structures in result of {@link java.lang.Thread#stop()} 
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnJobStop extends IQueueJob
+public interface IOnTaskStop extends IQueueTask
 {
 	/**
 	 * 
@@ -24,11 +24,11 @@ public interface IOnJobStop extends IQueueJob
 	 * 
 	 * Attention! The call is not synchronized in worker thread!
 	 * 
-	 * @param requestNumber how many times this request is invoked since {@link IQueueJob#run(IQueue, IMetrics, IPropertyBlock, IJobControl, java.util.List)} is invoked
-	 * @param totalMoreTimeUntilNow how many time in ms was requested since {@link IQueueJob#run(IQueue, IMetrics, IPropertyBlock, IJobControl, java.util.List)} is invoked
-	 * @param worker worker thread invoked {@link IQueueJob#run(IQueue, IMetrics, IPropertyBlock, IJobControl, java.util.List)} currently runs in timeout
+	 * @param requestNumber how many times this request is invoked since {@link IQueueTask#run(IQueue, IMetrics, IPropertyBlock, IJobControl, java.util.List)} is invoked
+	 * @param totalMoreTimeUntilNow how many time in ms was requested since {@link IQueueTask#run(IQueue, IMetrics, IPropertyBlock, IJobControl, java.util.List)} is invoked
+	 * @param worker worker thread invoked {@link IQueueTask#run(IQueue, IMetrics, IPropertyBlock, IJobControl, java.util.List)} currently runs in timeout
 	 * 
-	 * @return time in ms jobs requires for clean up
+	 * @return time in ms tasks requires for clean up
 	 */
 	public long requestForMoreLifeTime(long requestNumber, long totalMoreTimeUntilNow,IQueueWorker worker);
 }

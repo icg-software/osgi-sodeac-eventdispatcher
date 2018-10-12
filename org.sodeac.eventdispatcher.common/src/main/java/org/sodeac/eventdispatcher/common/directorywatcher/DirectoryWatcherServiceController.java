@@ -37,14 +37,14 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
-import org.sodeac.eventdispatcher.api.IOnJobError;
+import org.sodeac.eventdispatcher.api.IOnTaskError;
 import org.sodeac.eventdispatcher.api.IOnQueueObserve;
 import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
 
@@ -60,7 +60,7 @@ import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
 		IQueueService.PROPERTY_TIMEOUT_MS + "=" + (1000L * 3600L * 24L * 365L * 1080L), 
 	}
 )
-public class DirectoryWatcherServiceController implements IQueueController, IOnJobError, IOnQueueObserve, IOnQueueReverse, IQueueService
+public class DirectoryWatcherServiceController implements IQueueController, IOnTaskError, IOnQueueObserve, IOnQueueReverse, IQueueService
 {
 	private volatile ComponentContext context = null;
 	
@@ -122,8 +122,8 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnJ
 	public void run
 	(
 		IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, 
-		IJobControl jobControl,
-		List<IQueueJob> currentProcessedJobList
+		ITaskControl jobControl,
+		List<IQueueTask> currentProcessedJobList
 	)
 	{
 		if(! queue.getConfigurationPropertyBlock().getProperty(SERVICE_ID + ".run" , Boolean.class, false))
@@ -301,7 +301,7 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnJ
 	
 
 	@Override
-	public void onJobError(IQueueJob job, Throwable exception)
+	public void onTaskError(IQueue queue, IQueueTask job, Throwable exception)
 	{
 		CommonEventDispatcherHelper.log(context, logService, LogService.LOG_ERROR, "error watching directory for modification", exception);
 	}

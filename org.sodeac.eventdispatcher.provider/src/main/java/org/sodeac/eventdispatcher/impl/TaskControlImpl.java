@@ -12,36 +12,36 @@ package org.sodeac.eventdispatcher.impl;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.sodeac.eventdispatcher.api.IJobControl;
+import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
-import org.sodeac.eventdispatcher.api.IQueueJob;
+import org.sodeac.eventdispatcher.api.IQueueTask;
 
-public class JobControlImpl implements IJobControl
+public class TaskControlImpl implements ITaskControl
 {
 	private volatile boolean done = false;
 	private volatile boolean inTimeOut = false;
 	private volatile long executionTimeStamp = 0L;
-	private volatile long timeOutValue = IQueueJob.DEFAULT_TIMEOUT;
+	private volatile long timeOutValue = IQueueTask.DEFAULT_TIMEOUT;
 	private volatile long heartBeatTimeOut = -1;
 	
 	private volatile boolean stopJobOnTimeout = false;
 	private volatile boolean inRun = false;
-	private volatile ExecutionTimeStampSource executionTimeStampSource = IJobControl.ExecutionTimeStampSource.SCHEDULE;
+	private volatile ExecutionTimeStampSource executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.SCHEDULE;
 	
 	
-	private IPropertyBlock jobPropertyBlock = null;
+	private IPropertyBlock taskPropertyBlock = null;
 	
 	private ReentrantLock executionTimestampLock = null;
 	
-	public JobControlImpl(IPropertyBlock jobPropertyBlock)
+	public TaskControlImpl(IPropertyBlock taskPropertyBlock)
 	{
 		super();
 		this.executionTimeStamp = System.currentTimeMillis();
-		this.jobPropertyBlock = jobPropertyBlock;
+		this.taskPropertyBlock = taskPropertyBlock;
 		
-		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
-		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
-		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
+		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
+		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
 		
 		this.executionTimestampLock = new ReentrantLock();
 	}
@@ -124,14 +124,14 @@ public class JobControlImpl implements IJobControl
 				(executionTimeStamp < old) || 
 				force || 
 				(old < System.currentTimeMillis()) || 
-				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.SCHEDULE) ||
-				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.WORKER) ||
-				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.PERODIC)
+				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.SCHEDULE) ||
+				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.WORKER) ||
+				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.PERODIC)
 			) 
 			{
 				this.executionTimeStamp = executionTimeStamp;
-				this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.WORKER;
-				this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+				this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.WORKER;
+				this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
 				
 				if(inRun)
 				{
@@ -158,7 +158,7 @@ public class JobControlImpl implements IJobControl
 			if
 			(
 				(old > System.currentTimeMillis()) &&
-				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.RESCHEDULE) &&
+				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.RESCHEDULE) &&
 				(executionTimeStamp > 0)
 			)
 			{
@@ -166,8 +166,8 @@ public class JobControlImpl implements IJobControl
 			}
 			
 			this.executionTimeStamp = executionTimeStamp;
-			this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.PERODIC;
-			this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+			this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.PERODIC;
+			this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
 		}
 		finally 
 		{
@@ -181,8 +181,8 @@ public class JobControlImpl implements IJobControl
 		try
 		{
 			this.executionTimeStamp = executionTimeStamp;
-			this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.SCHEDULE;
-			this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+			this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.SCHEDULE;
+			this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
 		}
 		finally 
 		{
@@ -201,13 +201,13 @@ public class JobControlImpl implements IJobControl
 			( 
 				(executionTimeStamp < old) || 
 				(old < System.currentTimeMillis()) || 
-				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.SCHEDULE) ||
-				(this.executionTimeStampSource == IJobControl.ExecutionTimeStampSource.RESCHEDULE) 
+				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.SCHEDULE) ||
+				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.RESCHEDULE) 
 			) 
 			{
 				this.executionTimeStamp = executionTimeStamp;
-				this.executionTimeStampSource = IJobControl.ExecutionTimeStampSource.RESCHEDULE;
-				this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);	
+				this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.RESCHEDULE;
+				this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);	
 			}
 		}
 		finally 
@@ -227,7 +227,7 @@ public class JobControlImpl implements IJobControl
 	{
 		long old = this.timeOutValue;
 		this.timeOutValue = timeOut;
-		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
+		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
 		return old;
 	}
 	
@@ -241,7 +241,7 @@ public class JobControlImpl implements IJobControl
 	{
 		long old =  this.heartBeatTimeOut;
 		this.heartBeatTimeOut = heartBeatTimeOut;
-		this.jobPropertyBlock.setProperty(IQueueJob.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
+		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
 		return old;
 	}
 
