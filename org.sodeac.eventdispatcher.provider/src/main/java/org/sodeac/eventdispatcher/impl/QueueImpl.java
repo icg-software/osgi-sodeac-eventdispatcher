@@ -2824,11 +2824,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				continue;
 			}
-			if(currentParentScopeId.equals(parentScopeId))
+			if(! currentParentScopeId.equals(parentScopeId))
 			{
 				continue;
 			}
-			
+			filterList.add(scope);
 		}
 		return Collections.unmodifiableList(filterList);
 	}

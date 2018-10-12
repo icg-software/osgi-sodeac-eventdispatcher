@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common.controller;
+package org.sodeac.eventdispatcher.common.directorywatcher;
 
 import java.io.File;
 import java.util.HashMap;
@@ -36,8 +36,8 @@ import org.sodeac.eventdispatcher.api.IOnQueueReverse;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
-import org.sodeac.eventdispatcher.common.controller.DirectoryWatcherConfigurationAdapter.EventType;
-import org.sodeac.eventdispatcher.common.controller.DirectoryWatcherConfigurationAdapter.FileType;
+import org.sodeac.eventdispatcher.common.directorywatcher.DirectoryWatcherConfigurationAdapter.EventType;
+import org.sodeac.eventdispatcher.common.directorywatcher.DirectoryWatcherConfigurationAdapter.FileType;
 
 @Component
 (
@@ -47,7 +47,7 @@ import org.sodeac.eventdispatcher.common.controller.DirectoryWatcherConfiguratio
 )
 public class DirectoryWatcherQueueFactoryController implements IQueueController, IOnQueueObserve, IOnQueueReverse, IOnQueuedEvent
 {
-	public static final String SERVICE_PID = "org.sodeac.eventdispatcher.common.controller.directorywatcher";
+	public static final String SERVICE_PID = "org.sodeac.eventdispatcher.common.directorywatcher";
 	
 	@ObjectClassDefinition(name=SERVICE_PID, description="",factoryPid=DirectoryWatcherQueueFactoryController.SERVICE_PID)
 	interface Config

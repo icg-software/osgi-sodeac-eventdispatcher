@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common.controller;
+package org.sodeac.eventdispatcher.common.directorywatcher;
 
 import java.io.File;
 import java.io.IOException;

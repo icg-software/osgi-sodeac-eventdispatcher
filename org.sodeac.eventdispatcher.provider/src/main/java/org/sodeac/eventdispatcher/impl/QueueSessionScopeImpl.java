@@ -103,20 +103,20 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 
 	public IQueueSessionScope createScope(String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
-		return null;
+		return null; // TODO
 	}
 
 	@Override
 	public List<IQueueSessionScope> getSessionScopes()
 	{
-		return null;
+		return null; // TODO
 	}
 
 
 	@Override
 	public List<IQueueSessionScope> getSessionScopes(Filter filter)
 	{
-		return null;
+		return null; // TDOD
 	}
 
 }

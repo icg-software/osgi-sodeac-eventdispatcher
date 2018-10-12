@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common.controller;
+package org.sodeac.eventdispatcher.common.directorywatcher;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import org.sodeac.eventdispatcher.api.IQueue;
 
 public class DirectoryWatcherConfigurationAdapter
 {
-	public static final String ADAPTER_CLASS = "org.sodeac.eventdispatcher.common.controller.DirectoryWatcherConfigurationAdapter";
+	public static final String ADAPTER_CLASS = "org.sodeac.eventdispatcher.common.directorywatcher.DirectoryWatcherConfigurationAdapter";
 	
 	public DirectoryWatcherConfigurationAdapter(IQueue watcherServiceControllerQueue)
 	{

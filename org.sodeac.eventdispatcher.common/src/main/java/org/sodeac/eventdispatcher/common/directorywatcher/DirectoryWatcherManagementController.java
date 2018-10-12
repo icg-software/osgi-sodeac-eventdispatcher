@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common.controller;
+package org.sodeac.eventdispatcher.common.directorywatcher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
