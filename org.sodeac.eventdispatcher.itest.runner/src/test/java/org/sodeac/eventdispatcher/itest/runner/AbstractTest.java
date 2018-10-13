@@ -139,13 +139,13 @@ public abstract class AbstractTest
 			mavenBundle("io.dropwizard.metrics", "metrics-core", "3.2.6").start(),
 			mavenBundle("org.easymock", "easymock", "3.4").start(),
 			mavenBundle("org.sodeac","org.sodeac.xuri","0.9.0-SNAPSHOT").start(),
-			mavenBundle("org.sodeac","org.sodeac.multichainlist","0.9.4-SNAPSHOT").start(),
+			mavenBundle("org.sodeac","org.sodeac.multichainlist","0.9.5-SNAPSHOT").start(),
 			mavenBundle("com.googlecode.json-simple", "json-simple", "1.1.1").start(),
 			mavenBundle("com.google.guava", "guava", "25.1-jre").start(),
-			reactorBundle("org.sodeac.eventdispatcher.api","0.9.9").start(),
-			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.9").start(),
-			reactorBundle("org.sodeac.eventdispatcher.extension.jmx","0.9.9").start(),
-			reactorBundle("org.sodeac.eventdispatcher.common","0.9.9").start(),
+			reactorBundle("org.sodeac.eventdispatcher.api","0.9.10").start(),
+			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.10").start(),
+			reactorBundle("org.sodeac.eventdispatcher.extension.jmx","0.9.10").start(),
+			reactorBundle("org.sodeac.eventdispatcher.common","0.9.10").start(),
 			reactorBundle("org.sodeac.eventdispatcher.itest.components","0.9.0").start()
 		};
 	}

@@ -13,22 +13,22 @@
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.api</artifactId>
-      <version>0.9.9-SNAPSHOT</version>
+      <version>0.9.10-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.common</artifactId>
-      <version>0.9.9-SNAPSHOT</version>
+      <version>0.9.10-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.provider</artifactId>
-      <version>0.9.9-SNAPSHOT</version>
+      <version>0.9.10-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.extension.jmx</artifactId>
-      <version>0.9.9-SNAPSHOT</version>
+      <version>0.9.10-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
