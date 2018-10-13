@@ -114,7 +114,7 @@ public class ReReScheduleJobInWorkTestService2 implements EventHandler,IQueueCon
 		}
 		
 		reReScheduleInWork = true;
-		event.getQueue().rescheduleJob(SERVICE_ID, System.currentTimeMillis(), -1, -1);
+		event.getQueue().rescheduleTask(SERVICE_ID, System.currentTimeMillis(), -1, -1);
 	}
 
 	@Override

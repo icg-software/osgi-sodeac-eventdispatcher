@@ -14,12 +14,12 @@ import java.util.List;
 
 import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IPeriodicQueueJob;
+import org.sodeac.eventdispatcher.api.IPeriodicQueueTask;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueTask;
 
-public class PeriodicTestJob implements IPeriodicQueueJob
+public class PeriodicTestJob implements IPeriodicQueueTask
 {
 	
 	private int counter = 0;

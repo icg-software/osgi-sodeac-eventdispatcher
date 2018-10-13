@@ -67,8 +67,8 @@ public class TaskContainer
 	{
 		return namedTask;
 	}
-	public void setNamedTask(boolean namedJob)
+	public void setNamedTask(boolean namedTask)
 	{
-		this.namedTask = namedJob;
+		this.namedTask = namedTask;
 	}
 }

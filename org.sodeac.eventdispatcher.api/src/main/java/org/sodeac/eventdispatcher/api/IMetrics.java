@@ -42,15 +42,15 @@ public interface IMetrics
 	public static final String METRICS_SERVICE = "Service";
 	public static final String METRICS_ON_CONFIGURATION_MODIFY = "OnConfigurationModify";
 	
-	public static final String METRICS_RUN_JOB = "Run";
-	public static final String METRICS_RUN_JOB_ERROR = "ErrorRun";
+	public static final String METRICS_RUN_TASK = "Run";
+	public static final String METRICS_RUN_TASK_ERROR = "ErrorRun";
 	public static final String METRICS_SCHEDULE_EVENT = "ScheduleEvent";
 	public static final String METRICS_SIGNAL = "Signal";
 	
-	public static final String GAUGE_JOB_CREATED = "JobCreated";
-	public static final String GAUGE_JOB_STARTED = "JobStarted";
-	public static final String GAUGE_JOB_FINISHED = "JobFinished";
-	public static final String GAUGE_JOB_LAST_HEARTBEAT = "LastHeartbeat";
+	public static final String GAUGE_TASK_CREATED = "TaskCreated";
+	public static final String GAUGE_TASK_STARTED = "TaskStarted";
+	public static final String GAUGE_TASK_FINISHED = "TaskFinished";
+	public static final String GAUGE_TASK_LAST_HEARTBEAT = "LastHeartbeat";
 	public static final String GAUGE_LAST_SEND_EVENT = "LastSendEvent";
 	public static final String GAUGE_LAST_POST_EVENT = "LastPostEvent";
 	
@@ -149,13 +149,13 @@ public interface IMetrics
 	 * 
 	 * @param dispatcherId id of dispatcher or null
 	 * @param queueId id of queue or null
-	 * @param jobId id of job or null
+	 * @param taskId id of task or null
 	 * @param postfix Counter/Gauge/Histogram/Meter/Timer
 	 * @param names registration name of metric object
 	 * 
 	 * @return common metric key 
 	 */
-	public static String metricName(String dispatcherId,String queueId, String jobId, String postfix, String... names)
+	public static String metricName(String dispatcherId,String queueId, String taskId, String postfix, String... names)
 	{
 		StringBuilder builder = new StringBuilder();
 		
@@ -167,10 +167,10 @@ public interface IMetrics
 			builder.append(IQueue.class.getSimpleName());
 			builder.append("." + queueId);
 			
-			if((jobId != null) && (!jobId.isEmpty()))
+			if((taskId != null) && (!taskId.isEmpty()))
 			{
 				builder.append(IQueueTask.class.getSimpleName());
-				builder.append("." + jobId);
+				builder.append("." + taskId);
 			}
 		}
 		else

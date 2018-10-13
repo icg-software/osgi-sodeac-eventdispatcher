@@ -73,7 +73,7 @@ public class JobMetricTestController implements IQueueController,IOnQueuedEvent,
 	public void onQueuedEvent(IQueuedEvent event)
 	{
 		this.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
-		event.getQueue().scheduleJob
+		event.getQueue().scheduleTask
 		(
 			(String)event.getNativeEventProperties().get(EVENT_PROPERTY_JOB_ID),
 			new Job

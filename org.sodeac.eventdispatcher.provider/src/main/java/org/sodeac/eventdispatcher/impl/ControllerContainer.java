@@ -66,9 +66,9 @@ public class ControllerContainer
 	private volatile Set<String> filterAttributes;
 	
 	private volatile boolean implementsIOnFireEvent = false;
-	private volatile boolean implementsIOnJobDone = false;
-	private volatile boolean implementsIOnJobError = false;
-	private volatile boolean implementsIOnJobTimeout = false;
+	private volatile boolean implementsIOnTaskDone = false;
+	private volatile boolean implementsIOnTaskError = false;
+	private volatile boolean implementsIOnTaskTimeout = false;
 	private volatile boolean implementsIOnQueueObserve = false;
 	private volatile boolean implementsIOnQueueReverse = false;
 	private volatile boolean implementsIOnQueueSignal = false;
@@ -81,16 +81,16 @@ public class ControllerContainer
 		if(this.queueController == null)
 		{
 			implementsIOnFireEvent = false;
-			implementsIOnJobDone = false;
-			implementsIOnJobError = false;
-			implementsIOnJobTimeout = false;
+			implementsIOnTaskDone = false;
+			implementsIOnTaskError = false;
+			implementsIOnTaskTimeout = false;
 			implementsIOnQueueObserve = false;
 			implementsIOnQueueReverse = false;
 			implementsIOnQueueSignal = false;
 			implementsIOnScheduleEvent = false;
 			implementsIOnScheduleEventList = false;
 			implementsIOnRemoveEvent = false;
-			implementsIOnJobTimeout = false;
+			implementsIOnTaskTimeout = false;
 			return;
 		}
 		
@@ -99,9 +99,9 @@ public class ControllerContainer
 		{
 			IDynamicController dynamicController = (IDynamicController)this.queueController;
 			implementsIOnFireEvent = dynamicController.implementsOnFiredEvent();
-			implementsIOnJobDone = dynamicController.implementsOnTaskDone();
-			implementsIOnJobError = dynamicController.implementsOnTaskError();
-			implementsIOnJobTimeout = dynamicController.implementsOnTaskTimeout();
+			implementsIOnTaskDone = dynamicController.implementsOnTaskDone();
+			implementsIOnTaskError = dynamicController.implementsOnTaskError();
+			implementsIOnTaskTimeout = dynamicController.implementsOnTaskTimeout();
 			implementsIOnQueueObserve = dynamicController.implementsOnQueueObserve();
 			implementsIOnQueueReverse = dynamicController.implementsOnQueueReverse();
 			implementsIOnQueueSignal = dynamicController.implementsOnQueueSignal();
@@ -112,9 +112,9 @@ public class ControllerContainer
 		else
 		{
 			implementsIOnFireEvent = this.queueController instanceof IOnFiredEvent;
-			implementsIOnJobDone = this.queueController instanceof IOnTaskDone;
-			implementsIOnJobError = this.queueController instanceof IOnTaskError;
-			implementsIOnJobTimeout = this.queueController instanceof IOnTaskTimeout;
+			implementsIOnTaskDone = this.queueController instanceof IOnTaskDone;
+			implementsIOnTaskError = this.queueController instanceof IOnTaskError;
+			implementsIOnTaskTimeout = this.queueController instanceof IOnTaskTimeout;
 			implementsIOnQueueObserve = this.queueController instanceof IOnQueueObserve;
 			implementsIOnQueueReverse = this.queueController instanceof IOnQueueReverse;
 			implementsIOnQueueSignal = this.queueController instanceof IOnQueueSignal;
@@ -297,14 +297,14 @@ public class ControllerContainer
 		return implementsIOnFireEvent;
 	}
 
-	public boolean isImplementingIOnJobDone()
+	public boolean isImplementingIOnTaskDone()
 	{
-		return implementsIOnJobDone;
+		return implementsIOnTaskDone;
 	}
 
-	public boolean isImplementingIOnJobError()
+	public boolean isImplementingIOnTaskError()
 	{
-		return implementsIOnJobError;
+		return implementsIOnTaskError;
 	}
 
 	public boolean isImplementingIOnQueueObserve()
@@ -337,9 +337,9 @@ public class ControllerContainer
 		return implementsIOnRemoveEvent;
 	}
 
-	public boolean isImplementingIOnJobTimeout()
+	public boolean isImplementingIOnTaskTimeout()
 	{
-		return implementsIOnJobTimeout;
+		return implementsIOnTaskTimeout;
 	}
 	
 }

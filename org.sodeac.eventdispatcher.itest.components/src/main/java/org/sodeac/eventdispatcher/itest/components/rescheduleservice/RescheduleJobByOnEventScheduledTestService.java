@@ -105,7 +105,7 @@ public class RescheduleJobByOnEventScheduledTestService implements EventHandler,
 			return;
 		}
 		
-		event.getQueue().rescheduleJob(SERVICE_ID, System.currentTimeMillis(), -1, -1);
+		event.getQueue().rescheduleTask(SERVICE_ID, System.currentTimeMillis(), -1, -1);
 	}
 
 	@Override

@@ -362,14 +362,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 	}
 	
-	public void registerTimeOut(QueueImpl queue, TaskContainer job)
+	public void registerTimeOut(QueueImpl queue, TaskContainer taskContainer)
 	{
-		this.dispatcherGuardian.registerTimeOut(queue,job);
+		this.dispatcherGuardian.registerTimeOut(queue,taskContainer);
 	}
 	
-	public void unregisterTimeOut(QueueImpl queue, TaskContainer job)
+	public void unregisterTimeOut(QueueImpl queue, TaskContainer taskContainer)
 	{
-		this.dispatcherGuardian.unregisterTimeOut(queue,job);
+		this.dispatcherGuardian.unregisterTimeOut(queue,taskContainer);
 	}
 	
 	private ICounter counterQueueSize;
@@ -2194,7 +2194,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		return this.spooledQueueWorkerScheduler.scheduleQueueWorker(queue, wakeUpTime);
 	}
 	
-	public void executeOnJobTimeOut(IOnTaskTimeout controller, IQueue queue, IQueueTask task)
+	public void executeOnTaskTimeOut(IOnTaskTimeout controller, IQueue queue, IQueueTask task)
 	{
 		try
 		{
@@ -2215,7 +2215,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		catch (Exception e) {}
 	}
 	
-	public void executeOnJobStopExecuter(QueueWorker worker, IQueueTask job)
+	public void executeOnTaskStopExecuter(QueueWorker worker, IQueueTask task)
 	{
 		this.executorService.execute(new Runnable()
 		{
@@ -2225,13 +2225,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			{
 				if(worker.isAlive())
 				{
-					if(job instanceof IOnTaskStop)
+					if(task instanceof IOnTaskStop)
 					{
 						long number = 0L;
 						long moreTimeUntilNow = 0L;
 						long moreTime;
 						
-						while(worker.isAlive() && ((moreTime = ((IOnTaskStop)job).requestForMoreLifeTime(number, moreTimeUntilNow, worker.getWorkerWrapper())) > 0) )
+						while(worker.isAlive() && ((moreTime = ((IOnTaskStop)task).requestForMoreLifeTime(number, moreTimeUntilNow, worker.getWorkerWrapper())) > 0) )
 						{
 							try
 							{

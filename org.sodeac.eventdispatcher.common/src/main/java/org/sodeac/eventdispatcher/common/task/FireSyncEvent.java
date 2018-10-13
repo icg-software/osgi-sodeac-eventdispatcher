@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.eventdispatcher.common.job;
+package org.sodeac.eventdispatcher.common.task;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +37,7 @@ public class FireSyncEvent implements IQueueTask,IConcernEvent
 	}
 	
 	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock properties, ITaskControl taskControl, List<IQueueTask> currentProcessedJobList)
+	public void run(IQueue queue, IMetrics metrics, IPropertyBlock properties, ITaskControl taskControl, List<IQueueTask> currentProcessedTaskList)
 	{
 		if((removeEvent && (this.event != null)))
 		{

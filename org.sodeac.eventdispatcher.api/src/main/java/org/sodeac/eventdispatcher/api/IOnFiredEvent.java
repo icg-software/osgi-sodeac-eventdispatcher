@@ -14,7 +14,7 @@ import org.osgi.service.event.Event;
 
 /**
  * 
- * An extension interface for {@link IQueueController} to consume a notification if jobs (re)fire an event by invoke {@link IQueue}.send/postEvent 
+ * An extension interface for {@link IQueueController} to consume a notification if tasks (re)fire an event by invoke {@link IQueue}.send/postEvent 
  * 
  * @author Sebastian Palarus
  *

@@ -122,13 +122,13 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 	public void run
 	(
 		IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, 
-		ITaskControl jobControl,
-		List<IQueueTask> currentProcessedJobList
+		ITaskControl taskControl,
+		List<IQueueTask> currentProcessedTaskList
 	)
 	{
 		if(! queue.getConfigurationPropertyBlock().getProperty(SERVICE_ID + ".run" , Boolean.class, false))
 		{
-			jobControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			return;
 		}
 		
@@ -136,14 +136,14 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 		if(dir == null)
 		{
 			CommonEventDispatcherHelper.log(context, logService, LogService.LOG_ERROR, "directory to monitored not defined",null);
-			jobControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			return;
 		}
 		String topic = queue.getConfigurationPropertyBlock().getProperty("eventtopic",String.class);
 		if((topic == null) || topic.isEmpty())
 		{
 			CommonEventDispatcherHelper.log(context, logService, LogService.LOG_ERROR, "topic to fire on directory modified not defined", null);
-			jobControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			return;
 		}
 		
@@ -271,7 +271,7 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 			}
 			if(! queue.getConfigurationPropertyBlock().getProperty(SERVICE_ID + ".run" , Boolean.class, false))
 			{
-				jobControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+				taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
 				return;
 			}
 			
@@ -279,12 +279,12 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 		}
 		catch(NoSuchFileException e )
 		{
-			jobControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			CommonEventDispatcherHelper.log(DirectoryWatcherServiceController.this.context, DirectoryWatcherServiceController.this.logService, LogService.LOG_ERROR, "directory for modification not exists", e);
 		}
 		catch(IOException e )
 		{
-			jobControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			CommonEventDispatcherHelper.log(DirectoryWatcherServiceController.this.context, DirectoryWatcherServiceController.this.logService, LogService.LOG_ERROR, "error watching directory for modification", e);
 		}
 		finally
@@ -301,7 +301,7 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 	
 
 	@Override
-	public void onTaskError(IQueue queue, IQueueTask job, Throwable exception)
+	public void onTaskError(IQueue queue, IQueueTask task, Throwable exception)
 	{
 		CommonEventDispatcherHelper.log(context, logService, LogService.LOG_ERROR, "error watching directory for modification", exception);
 	}

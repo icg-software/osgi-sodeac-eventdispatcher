@@ -14,9 +14,9 @@ public interface EventControllerMBean
 {
 	public boolean isImplementsOnEventScheduled();
 	public boolean isImplementsOnFireEvent();
-	public boolean isImplementsOnJobDone();
-	public boolean isImplementsOnJobError();
-	public boolean isImplementsOnJobTimeout();
+	public boolean isImplementsOnTaskDone();
+	public boolean isImplementsOnTaskError();
+	public boolean isImplementsOnTaskTimeout();
 	public boolean isImplementsOnQueueObserve();
 	public boolean isImplementsOnQueueReserve();
 	public boolean isImplementsOnQueueSignal();

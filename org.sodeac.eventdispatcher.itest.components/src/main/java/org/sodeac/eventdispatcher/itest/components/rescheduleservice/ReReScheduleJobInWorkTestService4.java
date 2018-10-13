@@ -72,7 +72,7 @@ public class ReReScheduleJobInWorkTestService4 implements EventHandler,IQueueCon
 		
 		if(reReScheduleInWork)
 		{
-			queue.rescheduleJob(SERVICE_ID, System.currentTimeMillis() - 13, -1, -1);
+			queue.rescheduleTask(SERVICE_ID, System.currentTimeMillis() - 13, -1, -1);
 			reReScheduleInWork = false;
 			return;
 		}
@@ -114,7 +114,7 @@ public class ReReScheduleJobInWorkTestService4 implements EventHandler,IQueueCon
 		}
 		
 		reReScheduleInWork = true;
-		event.getQueue().rescheduleJob(SERVICE_ID, System.currentTimeMillis(), -1, -1);
+		event.getQueue().rescheduleTask(SERVICE_ID, System.currentTimeMillis(), -1, -1);
 	}
 
 	@Override

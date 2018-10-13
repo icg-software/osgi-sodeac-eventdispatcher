@@ -32,7 +32,7 @@ import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
-import org.sodeac.eventdispatcher.common.job.FireSyncEvent;
+import org.sodeac.eventdispatcher.common.task.FireSyncEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 
 @Component
@@ -72,12 +72,12 @@ public class BaseGetJobTestController extends AbstractBaseTestController impleme
 			super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 			IQueueTask job = new FireSyncEvent(event,JOB_EVENT,event.getNativeEventProperties());
 			super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-			event.getQueue().scheduleJob(JOB_ID,job,null,System.currentTimeMillis() + DELAY, -1,-1);
+			event.getQueue().scheduleTask(JOB_ID,job,null,System.currentTimeMillis() + DELAY, -1,-1);
 
 		}
 		if(event.getEvent().getTopic().equals(GETJOB_EVENT))
 		{
-			IQueueTask job = event.getQueue().getJob(JOB_ID);
+			IQueueTask job = event.getQueue().getTask(JOB_ID);
 			if(job == null)
 			{
 				super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_QUEUE_SIGNAL,event.getQueue(),"JOB_NOT_FOUND"));

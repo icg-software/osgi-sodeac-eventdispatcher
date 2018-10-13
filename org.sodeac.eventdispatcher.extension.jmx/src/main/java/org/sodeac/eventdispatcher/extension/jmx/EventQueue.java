@@ -145,9 +145,9 @@ public class EventQueue implements EventQueueMBean
 		}
 		info.append("\n");
 		
-		Map<String,IQueueTask> jobIndex = this.queue.getJobIndex(null);
-		info.append("Scheduled jobs (" + jobIndex.size() + "):\n");
-		for(Entry<String,IQueueTask> entry: jobIndex.entrySet())
+		Map<String,IQueueTask> taskIndex = this.queue.getTaskIndex(null);
+		info.append("Scheduled tasks (" + taskIndex.size() + "):\n");
+		for(Entry<String,IQueueTask> entry: taskIndex.entrySet())
 		{
 			info.append("\t" + entry.getKey() +" :: " + entry.getValue() + "\n" );
 		}

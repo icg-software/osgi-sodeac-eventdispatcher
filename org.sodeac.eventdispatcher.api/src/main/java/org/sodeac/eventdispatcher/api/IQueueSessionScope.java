@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 /**
- *  API for a special scope in sessions event-queues. Session Scopes has a private event queue, job queue and propertyblock
+ *  API for a special scope in sessions event-queues. Session Scopes has a private event queue, task queue and propertyblock
  *  
  * @author Sebastian Palarus
  *

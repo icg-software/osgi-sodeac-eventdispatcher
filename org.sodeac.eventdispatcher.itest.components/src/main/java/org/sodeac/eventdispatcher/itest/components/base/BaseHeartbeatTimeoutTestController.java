@@ -66,6 +66,6 @@ public class BaseHeartbeatTimeoutTestController extends AbstractBaseTestControll
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		IQueueTask job = new BaseHeartBeatTimeOutJob();
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-		event.getQueue().scheduleJob(null,job,null,-1, -1, HEARTBEAT_TIMEOUT);
+		event.getQueue().scheduleTask(null,job,null,-1, -1, HEARTBEAT_TIMEOUT);
 	}
 }

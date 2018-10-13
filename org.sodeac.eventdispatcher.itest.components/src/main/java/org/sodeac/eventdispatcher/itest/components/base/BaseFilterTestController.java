@@ -101,7 +101,7 @@ public class BaseFilterTestController extends AbstractBaseTestController impleme
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		IQueueTask job = new BaseTimeOutJob(SLEEP_VALUE);
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-		event.getQueue().scheduleJob((String)event.getNativeEventProperties().get(PROPERTY_JOB_ID),job,jobProperties,System.currentTimeMillis() + 2000,-1, -1);
+		event.getQueue().scheduleTask((String)event.getNativeEventProperties().get(PROPERTY_JOB_ID),job,jobProperties,System.currentTimeMillis() + 2000,-1, -1);
 		
 		event.setProperty(PROPERTY_JOB, job);
 	}

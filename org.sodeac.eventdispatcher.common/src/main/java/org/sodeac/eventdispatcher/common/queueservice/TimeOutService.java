@@ -27,7 +27,7 @@ public class TimeOutService implements IQueueService
 	public static final String SERVICE_ID = "org.sodeac.eventdispatcher.common.queueservice.timeout";
 
 	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl, List<IQueueTask> currentProcessedJobList)
+	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl, List<IQueueTask> currentProcessedTaskList)
 	{
 		TimeOutServiceAdapter adapter = queue.getConfigurationPropertyBlock().getAdapter(TimeOutServiceAdapter.class);
 		long nextTimeOut = adapter.calculateNextTimeOutTimestamp();

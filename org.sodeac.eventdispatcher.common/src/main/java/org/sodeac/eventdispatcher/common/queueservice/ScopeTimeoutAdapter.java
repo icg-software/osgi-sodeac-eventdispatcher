@@ -20,7 +20,7 @@ public class ScopeTimeoutAdapter extends TimeOutServiceAdapter
 	}
 
 	@Override
-	public void onTimeout(IQueue queue,IPropertyBlock propertyBlock, ITaskControl jobControl)
+	public void onTimeout(IQueue queue,IPropertyBlock propertyBlock, ITaskControl taskControl)
 	{
 		((IQueueSessionScope)queue).dispose();
 	}

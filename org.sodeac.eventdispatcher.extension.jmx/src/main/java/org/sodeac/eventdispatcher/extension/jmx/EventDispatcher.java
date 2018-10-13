@@ -429,7 +429,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = counter.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}
@@ -477,7 +477,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = counter.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}
@@ -525,7 +525,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = meter.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}
@@ -573,7 +573,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = meter.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}
@@ -622,7 +622,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = histogram.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}
@@ -670,7 +670,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = histogram.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}
@@ -718,7 +718,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = timer.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}
@@ -766,7 +766,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = timer.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}
@@ -814,7 +814,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = gauge.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}
@@ -862,7 +862,7 @@ public class EventDispatcher implements EventDispatcherMBean
 	{
 		IExtensibleMetrics metrics = gauge.getMetrics();
 		IExtensibleQueue extensibleQueue = metrics.getQueue();
-		if(metrics.getJobId() != null)
+		if(metrics.getTaskId() != null)
 		{
 			return;
 		}

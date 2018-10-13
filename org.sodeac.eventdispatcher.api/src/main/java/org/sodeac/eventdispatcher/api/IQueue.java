@@ -146,65 +146,65 @@ public interface IQueue
 	 * @param filter osgi-filter for {@link IQueueTask}-properties
 	 * @return list of {@link IQueueTask}s matched by filter parameter
 	 */
-	public List<IQueueTask> getJobList(Filter filter);
+	public List<IQueueTask> getTaskList(Filter filter);
 	
 	/**
-	 * returns map with jobid-job-pairs matched by filter parameter
+	 * returns map with taskid-task-pairs matched by filter parameter
 	 * 
 	 * @param filter osgi-filter for {@link IQueueTask}-properties
-	 * @return map with jobid-job-pairs matched by filter parameter
+	 * @return map with taskid-task-pairs matched by filter parameter
 	 */
-	public Map<String,IQueueTask> getJobIndex(Filter filter);
+	public Map<String,IQueueTask> getTaskIndex(Filter filter);
 	
 	/**
 	 * schedule a anonymous {@link IQueueTask} to {@link IQueue}
 	 * 
-	 * equivalent to scheduleJob(null,job, null, -1, -1, -1);
+	 * equivalent to scheduleTask(null,task, null, -1, -1, -1);
 	 * 
-	 * @param job {@link IQueueTask} to schedule
+	 * @param task {@link IQueueTask} to schedule
 	 * 
-	 * @return generated jobid
+	 * @return generated taskid
 	 */
-	public String scheduleJob(IQueueTask job);
+	public String scheduleTask(IQueueTask task);
 	
 	/**
 	 * schedule a {@link IQueueTask} to {@link IQueue}.
 	 * 
 	 * @param id registration-id for {@link IQueueTask} to schedule
-	 * @param job {@link IQueueTask} to schedule
+	 * @param task {@link IQueueTask} to schedule
 	 * 
-	 * @return jobid (generated, if parameter id is null)
+	 * @return taskid (generated, if parameter id is null)
 	 */
-	public String scheduleJob(String id,IQueueTask job);
+	public String scheduleTask(String id,IQueueTask task);
 	
 	/**
 	 * schedule a {@link IQueueTask} to {@link IQueue}.
 	 * 
 	 * @param id registration-id for {@link IQueueTask} to schedule
-	 * @param job {@link IQueueTask} to schedule
+	 * @param task {@link IQueueTask} to schedule
 	 * @param propertyBlock {@link IQueueTask}-properties (factory in {@link IEventDispatcher})
 	 * @param executionTimeStamp execution time millis
 	 * @param timeOutValue timeout value in ms, before notify for timeout
 	 * @param heartBeatTimeOut heartbeat-timeout value in ms, before notify for timeout
 	 * 
-	 * @return jobid (generated, in parameter id is null)
+	 * @return taskid (generated, in parameter id is null)
 	 */
-	public String scheduleJob(String id, IQueueTask job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut );
+	public String scheduleTask(String id, IQueueTask task, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut );
 	
 	/**
 	 * schedule a {@link IQueueTask} to {@link IQueue}.
 	 * 
 	 * @param id registration-id for {@link IQueueTask} to schedule
-	 * @param job {@link IQueueTask} to schedule
+	 * @param task {@link IQueueTask} to schedule
 	 * @param propertyBlock {@link IQueueTask}-properties (factory in {@link IEventDispatcher})
 	 * @param executionTimeStamp execution time millis
 	 * @param timeOutValue timeout value in ms, before notify for timeout
 	 * @param heartBeatTimeOut heartbeat-timeout value in ms, before notify for timeout
-	 * @param stopOnTimeOut stop unlinked worker-thread on timeout. This option is NOT necessary to create new worker running other jobs. Attention: can be dangerous  
+	 * @param stopOnTimeOut stop unlinked worker-thread on timeout. This option is NOT necessary to create new worker running other tasks. Attention: can be dangerous  
 	 * 
-	 * @return jobid (generated, in parameter id is null)
+	 * @return taskid (generated, in parameter id is null)
 	 */
-	public String scheduleJob(String id, IQueueTask job, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut, boolean stopOnTimeOut );
+	public String scheduleTask(String id, IQueueTask task, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut, boolean stopOnTimeOut );
 	
 	/**
 	 * reset execution plan for an existing {@link IQueueTask}
@@ -215,7 +215,7 @@ public interface IQueue
 	 * @param heartBeatTimeOut heartbeat-timeout value in ms, before notify for timeout
 	 * @return affected {@link IQueueTask} or null if not found
 	 */
-	public IQueueTask rescheduleJob(String id, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut );
+	public IQueueTask rescheduleTask(String id, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut );
 	
 	/**
 	 * returns {@link IQueueTask} scheduled under registration {@code id}
@@ -223,7 +223,7 @@ public interface IQueue
 	 * @param id registration-id for {@link IQueueTask}
 	 * @return {@link IQueueTask} scheduled under registration {@code id}
 	 */
-	public IQueueTask getJob(String id);
+	public IQueueTask getTask(String id);
 	
 	/**
 	 * remove{@link IQueueTask} scheduled under registration {@code id}
@@ -231,7 +231,7 @@ public interface IQueue
 	 * @param id registration-id for {@link IQueueTask} to remove
 	 * @return removed {@link IQueueTask} or null if no scheduled with {@code id} found
 	 */
-	public IQueueTask removeJob(String id);
+	public IQueueTask removeTask(String id);
 	
 	/**
 	 * returns properties of {@link IQueueTask} scheduled under registration {@code id}
@@ -239,7 +239,7 @@ public interface IQueue
 	 * @param id registration-id for {@link IQueueTask}
 	 * @return properties of {@link IQueueTask} scheduled under registration {@code id}
 	 */
-	public IPropertyBlock getJobPropertyBlock(String id);
+	public IPropertyBlock getTaskPropertyBlock(String id);
 	
 	/**
 	 * Sends a signal. All {@link IQueueController} manage this {@link IQueue} and implements {@link IOnQueueSignal} will notify asynchronously by queueworker.

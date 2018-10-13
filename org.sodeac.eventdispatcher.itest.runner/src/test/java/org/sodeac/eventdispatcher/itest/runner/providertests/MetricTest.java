@@ -236,7 +236,7 @@ public class MetricTest extends AbstractTest
 		
 		// Job Created
 		
-		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_CREATED);
+		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_TASK_CREATED);
 		Gauge<Long> jobCreatedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNotNull("jobCreatedGauge should not be null" ,jobCreatedGauge);
 		long diff = jobCreatedGauge.getValue() - startTS;
@@ -244,7 +244,7 @@ public class MetricTest extends AbstractTest
 		
 		// Job Started
 		
-		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_STARTED);
+		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_TASK_STARTED);
 		Gauge<Long> jobStartedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNotNull("jobStartedGauge should not be null" ,jobStartedGauge);
 		diff = jobStartedGauge.getValue() - (startTS + ((repeat-1) * sleeptime) + ((repeat-1) * worktime));
@@ -252,7 +252,7 @@ public class MetricTest extends AbstractTest
 		
 		// Last Heartbeat
 		
-		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_LAST_HEARTBEAT);
+		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_TASK_LAST_HEARTBEAT);
 		Gauge<Long> jobLastHeartbeatGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNotNull("jobLastHeartbeatGauge should not be null" ,jobLastHeartbeatGauge);
 		diff = jobLastHeartbeatGauge.getValue() - ( startTS + ((repeat-1) * sleeptime) + ((repeat-1) * worktime));
@@ -270,7 +270,7 @@ public class MetricTest extends AbstractTest
 		
 		// Job Finished
 		
-		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_FINISHED);
+		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_TASK_FINISHED);
 		Gauge<Long> jobFinishedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNotNull("jobFinishedGauge should not be null" ,jobFinishedGauge);
 		diff = jobFinishedGauge.getValue() - stopTS;
@@ -279,7 +279,7 @@ public class MetricTest extends AbstractTest
 		
 		// Counter/Meter/Timer Run Job
 		
-		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_TIMER, IMetrics.METRICS_RUN_JOB);
+		key = IMetrics.metricName("default", JobMetricTestController.QUEUE_ID, jobId, IMetrics.POSTFIX_TIMER, IMetrics.METRICS_RUN_TASK);
 		Timer runMeter = metricRegistry.getTimers(new MetricFilterByName(key)).get(key);
 		assertNotNull("jobRunTimer should not be null" ,runMeter);
 		assertEquals("jobRunTimer.count should equals repeat", repeat, (int)runMeter.getCount());
@@ -367,31 +367,31 @@ public class MetricTest extends AbstractTest
 		
 		// Job Created
 		
-		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_CREATED);
+		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_TASK_CREATED);
 		Gauge<Long> jobCreatedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNull("jobCreatedGauge of disabled metric should be null" ,jobCreatedGauge);
 		
 		// Job Started
 		
-		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_STARTED);
+		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_TASK_STARTED);
 		Gauge<Long> jobStartedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNull("jobStartedGauge of disabled metric should be null" ,jobStartedGauge);
 		
 		// Last Heartbeat
 		
-		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_LAST_HEARTBEAT);
+		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_TASK_LAST_HEARTBEAT);
 		Gauge<Long> jobLastHeartbeatGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNull("jobLastHeartbeatGauge of disabled metric should be null" ,jobLastHeartbeatGauge);
 		
 		// Job Finished
 		
-		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_JOB_FINISHED);
+		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_GAUGE, IMetrics.GAUGE_TASK_FINISHED);
 		Gauge<Long> jobFinishedGauge = metricRegistry.getGauges(new MetricFilterByName(key)).get(key);
 		assertNull("jobFinishedGauge of disabled metric should be null" ,jobFinishedGauge);
 		
 		// Counter/Meter/Timer Run Job
 		
-		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_TIMER, IMetrics.METRICS_RUN_JOB);
+		key = IMetrics.metricName("default", JobDisableMetricTestController1.QUEUE_ID, jobId, IMetrics.POSTFIX_TIMER, IMetrics.METRICS_RUN_TASK);
 		Timer runMeter = metricRegistry.getTimers(new MetricFilterByName(key)).get(key);
 		assertNull("disabled jobRunTimer should be null" ,runMeter);
 		

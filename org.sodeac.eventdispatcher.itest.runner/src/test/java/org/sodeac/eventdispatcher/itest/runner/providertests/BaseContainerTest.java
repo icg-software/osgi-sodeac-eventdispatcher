@@ -1332,7 +1332,7 @@ public class BaseContainerTest extends AbstractTest
 		assertTrue("queue.getJobList  1 should returns correct list",listContentEqueals
 		(
 			new Object[] {job2},
-			queue.getJobList(bundleContext.createFilter("(JSTRVAL2=valueb)"))
+			queue.getTaskList(bundleContext.createFilter("(JSTRVAL2=valueb)"))
 		));
 		
 		// test topic

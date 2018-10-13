@@ -514,7 +514,7 @@ public abstract class QueueComponentConfiguration implements Serializable
 		private long heartbeatTimeOutInMS = -1;
 		private long startDelayInMS = 0;
 		private long periodicRepetitionIntervalMS = -1;
-		private MetricsRequirement jobMetricsRequirement = MetricsRequirement.PreferMetrics;
+		private MetricsRequirement taskMetricsRequirement = MetricsRequirement.PreferMetrics;
 		
 		@Override
 		public String getDispatcherId()
@@ -641,9 +641,9 @@ public abstract class QueueComponentConfiguration implements Serializable
 			return (QueueServiceConfiguration)super.setQueueMetricsRequirement(queueMetricsRequirement);
 		}
 		
-		public QueueServiceConfiguration setJobMetricsRequirement(MetricsRequirement jobMetricsRequirement)
+		public QueueServiceConfiguration setTaskMetricsRequirement(MetricsRequirement taskMetricsRequirement)
 		{
-			this.jobMetricsRequirement = jobMetricsRequirement;
+			this.taskMetricsRequirement = taskMetricsRequirement;
 			return this;
 		}
 
@@ -659,9 +659,9 @@ public abstract class QueueComponentConfiguration implements Serializable
 			return super.getQueueMetricsRequirement();
 		}
 		
-		public MetricsRequirement getJobMetricsRequirement()
+		public MetricsRequirement getTaskMetricsRequirement()
 		{
-			return this.jobMetricsRequirement;
+			return this.taskMetricsRequirement;
 		}
 
 		@Override

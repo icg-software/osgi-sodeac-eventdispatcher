@@ -15,6 +15,6 @@ import org.sodeac.eventdispatcher.api.IMetrics;
 public interface IExtensibleMetrics extends IMetrics
 {
 	public boolean isEnabled();
-	public String getJobId();
+	public String getTaskId();
 	public IExtensibleQueue getQueue();
 }

@@ -88,7 +88,7 @@ public class BaseTestScheduleEventList  extends AbstractBaseTestController imple
 				
 			};
 			
-			event.getQueue().scheduleJob(job);
+			event.getQueue().scheduleTask(job);
 		}
 	}
 

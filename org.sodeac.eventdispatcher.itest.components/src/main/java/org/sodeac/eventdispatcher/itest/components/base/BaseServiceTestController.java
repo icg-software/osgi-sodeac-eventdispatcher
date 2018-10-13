@@ -105,7 +105,7 @@ public class BaseServiceTestController extends AbstractBaseTestController implem
 	public void onQueuedEvent(IQueuedEvent event)
 	{
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-		event.getQueue().rescheduleJob(SERVICE_ID, System.currentTimeMillis(), -1, -1);
+		event.getQueue().rescheduleTask(SERVICE_ID, System.currentTimeMillis(), -1, -1);
 	}
 
 	@Override

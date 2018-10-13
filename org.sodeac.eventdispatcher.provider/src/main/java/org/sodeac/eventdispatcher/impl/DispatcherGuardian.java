@@ -30,11 +30,11 @@ public class DispatcherGuardian extends Thread
 	{
 		super();
 		this.eventDispatcher = eventDispatcher;
-		this.jobTimeOutIndex = new HashMap<QueueImpl,JobObservable>();
+		this.taskTimeOutIndex = new HashMap<QueueImpl,TaskObservable>();
 		
-		this.jobTimeOutIndexLock = new ReentrantReadWriteLock(true);
-		this.jobTimeOutIndexReadLock = this.jobTimeOutIndexLock.readLock();
-		this.jobTimeOutIndexWriteLock = this.jobTimeOutIndexLock.writeLock();
+		this.taskTimeOutIndexLock = new ReentrantReadWriteLock(true);
+		this.taskTimeOutIndexReadLock = this.taskTimeOutIndexLock.readLock();
+		this.taskTimeOutIndexWriteLock = this.taskTimeOutIndexLock.writeLock();
 		super.setDaemon(true);
 		super.setName(DispatcherGuardian.class.getSimpleName() + " " + dispatcher.getId());
 	}
@@ -43,10 +43,10 @@ public class DispatcherGuardian extends Thread
 	private volatile boolean go = true;
 	private volatile boolean isUpdateNotified = false;
 	private volatile Object waitMonitor = new Object();
-	private volatile Map<QueueImpl,JobObservable> jobTimeOutIndex = null;
-	private volatile ReentrantReadWriteLock jobTimeOutIndexLock;
-	private volatile ReadLock jobTimeOutIndexReadLock;
-	private volatile WriteLock jobTimeOutIndexWriteLock;
+	private volatile Map<QueueImpl,TaskObservable> taskTimeOutIndex = null;
+	private volatile ReentrantReadWriteLock taskTimeOutIndexLock;
+	private volatile ReadLock taskTimeOutIndexReadLock;
+	private volatile WriteLock taskTimeOutIndexWriteLock;
 	
 	private volatile long currentWait = -1;
 	
@@ -55,7 +55,7 @@ public class DispatcherGuardian extends Thread
 	{
 		long nextTimeOutTimeStamp = -1;
 		List<QueueImpl> timeOutList = null;
-		List<JobObservable> removeJobObservableList = null;
+		List<TaskObservable> removeTaskObservableList = null;
 		boolean inTimeOut = false;
 		
 		while(go)
@@ -65,12 +65,12 @@ public class DispatcherGuardian extends Thread
 			{
 				timeOutList.clear();
 			}
-			if(removeJobObservableList != null)
+			if(removeTaskObservableList != null)
 			{
-				removeJobObservableList.clear();
+				removeTaskObservableList.clear();
 			}
 			
-			jobTimeOutIndexReadLock.lock();
+			taskTimeOutIndexReadLock.lock();
 			
 			try
 			{
@@ -78,32 +78,32 @@ public class DispatcherGuardian extends Thread
 				long heartBeatTimeOut = -1;
 				long lastHeartBeat = -1;
 				long heartBeatTimeOutStamp = -1;
-				TaskContainer job = null;
+				TaskContainer task = null;
 				
 				
-				// Job TimeOut
+				// Task TimeOut
 				
-				for(Entry<QueueImpl,JobObservable> entry : this.jobTimeOutIndex.entrySet())
+				for(Entry<QueueImpl,TaskObservable> entry : this.taskTimeOutIndex.entrySet())
 				{
 					inTimeOut = false;
-					job = entry.getKey().getCurrentRunningJob();
+					task = entry.getKey().getCurrentRunningTask();
 					
-					if((job == null) || (job != entry.getValue().job))
+					if((task == null) || (task != entry.getValue().task))
 					{
-						if(removeJobObservableList == null)
+						if(removeTaskObservableList == null)
 						{
-							removeJobObservableList = new ArrayList<JobObservable>();
+							removeTaskObservableList = new ArrayList<TaskObservable>();
 						}
-						removeJobObservableList.add(entry.getValue());
+						removeTaskObservableList.add(entry.getValue());
 					}
 					
-					// Job Timeout
+					// Task Timeout
 					
-					Long jobTimeOut = entry.getValue().jobTimeOut;
+					Long taskTimeOut = entry.getValue().taskTimeOut;
 					
-					if((jobTimeOut != null) && (jobTimeOut.longValue() > 0))
+					if((taskTimeOut != null) && (taskTimeOut.longValue() > 0))
 					{
-						if(jobTimeOut.longValue() <= currentTimeStamp)
+						if(taskTimeOut.longValue() <= currentTimeStamp)
 						{
 							if(timeOutList == null)
 							{
@@ -116,11 +116,11 @@ public class DispatcherGuardian extends Thread
 						{
 							if(nextTimeOutTimeStamp < 0)
 							{
-								nextTimeOutTimeStamp = jobTimeOut.longValue();
+								nextTimeOutTimeStamp = taskTimeOut.longValue();
 							}
-							else if(nextTimeOutTimeStamp > jobTimeOut.longValue())
+							else if(nextTimeOutTimeStamp > taskTimeOut.longValue())
 							{
-								nextTimeOutTimeStamp = jobTimeOut.longValue();
+								nextTimeOutTimeStamp = taskTimeOut.longValue();
 							}
 						}
 					}
@@ -134,14 +134,14 @@ public class DispatcherGuardian extends Thread
 					
 					heartBeatTimeOutStamp = -1;
 					
-					if(job !=  null)
+					if(task !=  null)
 					{
-						heartBeatTimeOut = job.getTaskControl().getHeartBeatTimeOut();
+						heartBeatTimeOut = task.getTaskControl().getHeartBeatTimeOut();
 						if(heartBeatTimeOut > 0)
 						{
 							try
 							{
-								lastHeartBeat = (Long)job.getMetrics().getQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
+								lastHeartBeat = (Long)task.getMetrics().getQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
 								heartBeatTimeOutStamp = lastHeartBeat + heartBeatTimeOut;
 								if(lastHeartBeat > 0)
 								{
@@ -181,7 +181,7 @@ public class DispatcherGuardian extends Thread
 				log(LogService.LOG_ERROR,"Error while run DispatcherGuardian",e);
 			}
 			
-			jobTimeOutIndexReadLock.unlock();
+			taskTimeOutIndexReadLock.unlock();
 			
 			
 			if(timeOutList != null)
@@ -192,28 +192,28 @@ public class DispatcherGuardian extends Thread
 				}
 			}
 			
-			if((removeJobObservableList != null) && (! removeJobObservableList.isEmpty()))
+			if((removeTaskObservableList != null) && (! removeTaskObservableList.isEmpty()))
 			{
-				jobTimeOutIndexWriteLock.lock();
+				taskTimeOutIndexWriteLock.lock();
 				
 				try
 				{
-					for(JobObservable jobObservable : removeJobObservableList)
+					for(TaskObservable taskObservable : removeTaskObservableList)
 					{
-						JobObservable toRemoveObservable = this.jobTimeOutIndex.get(jobObservable.queue);
+						TaskObservable toRemoveObservable = this.taskTimeOutIndex.get(taskObservable.queue);
 						if(toRemoveObservable == null)
 						{
 							continue;
 						}
-						if(toRemoveObservable != jobObservable)
+						if(toRemoveObservable != taskObservable)
 						{
 							continue;
 						}
 						
-						TaskContainer job = jobObservable.queue.getCurrentRunningJob();
-						if((job == null) || (job != jobObservable.job))
+						TaskContainer task = taskObservable.queue.getCurrentRunningTask();
+						if((task == null) || (task != taskObservable.task))
 						{
-							this.jobTimeOutIndex.remove(jobObservable.queue);
+							this.taskTimeOutIndex.remove(taskObservable.queue);
 						}
 					}
 				}
@@ -226,7 +226,7 @@ public class DispatcherGuardian extends Thread
 					log(LogService.LOG_ERROR,"Error while run DispatcherGuardian",e);
 				}
 			
-				jobTimeOutIndexWriteLock.unlock();
+				taskTimeOutIndexWriteLock.unlock();
 			}
 			
 			try
@@ -272,34 +272,34 @@ public class DispatcherGuardian extends Thread
 		}
 	}
 	
-	public void registerTimeOut(QueueImpl queue, TaskContainer job)
+	public void registerTimeOut(QueueImpl queue, TaskContainer task)
 	{
-		TaskControlImpl jobControl = job.getTaskControl();
-		if(jobControl == null)
+		TaskControlImpl taskControl = task.getTaskControl();
+		if(taskControl == null)
 		{
 			return;
 		}
 		
-		long timeOutTimeStamp = jobControl.getTimeOut() + System.currentTimeMillis();
+		long timeOutTimeStamp = taskControl.getTimeOut() + System.currentTimeMillis();
 		
-		jobTimeOutIndexWriteLock.lock();
+		taskTimeOutIndexWriteLock.lock();
 		try
 		{
-			JobObservable jobObservable = this.jobTimeOutIndex.get(queue);
-			if(jobObservable ==  null)
+			TaskObservable taskObservable = this.taskTimeOutIndex.get(queue);
+			if(taskObservable ==  null)
 			{
-				jobObservable =  new JobObservable();
-				jobObservable.queue = queue;
-				this.jobTimeOutIndex.put(queue,jobObservable);
+				taskObservable =  new TaskObservable();
+				taskObservable.queue = queue;
+				this.taskTimeOutIndex.put(queue,taskObservable);
 			}
-			if(jobControl.getTimeOut() > 0)
+			if(taskControl.getTimeOut() > 0)
 			{
-				jobObservable.job = job;
-				jobObservable.jobTimeOut = timeOutTimeStamp;
+				taskObservable.task = task;
+				taskObservable.taskTimeOut = timeOutTimeStamp;
 			}
-			else if(jobControl.getHeartBeatTimeOut() > 0)
+			else if(taskControl.getHeartBeatTimeOut() > 0)
 			{
-				jobObservable.job = job;
+				taskObservable.task = task;
 			}
 			else
 			{
@@ -308,7 +308,7 @@ public class DispatcherGuardian extends Thread
 		}
 		finally 
 		{
-			jobTimeOutIndexWriteLock.unlock();
+			taskTimeOutIndexWriteLock.unlock();
 		}
 		
 		boolean notify = false;
@@ -323,12 +323,12 @@ public class DispatcherGuardian extends Thread
 				}
 				else
 				{
-					long heartBeatTimeOut = job.getTaskControl().getHeartBeatTimeOut();
+					long heartBeatTimeOut = task.getTaskControl().getHeartBeatTimeOut();
 					if(heartBeatTimeOut > 0)
 					{
 						try
 						{
-							long lastHeartBeat = (Long)job.getMetrics().getQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
+							long lastHeartBeat = (Long)task.getMetrics().getQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
 							if(lastHeartBeat > 0)
 							{
 								long heartBeatTimeOutStamp = lastHeartBeat + heartBeatTimeOut;
@@ -359,23 +359,23 @@ public class DispatcherGuardian extends Thread
 		
 	}
 	
-	public void unregisterTimeOut(QueueImpl queue, TaskContainer job)
+	public void unregisterTimeOut(QueueImpl queue, TaskContainer task)
 	{
-		jobTimeOutIndexWriteLock.lock();
+		taskTimeOutIndexWriteLock.lock();
 		try
 		{
-			JobObservable jobObservable = this.jobTimeOutIndex.get(queue);
-			if(jobObservable !=  null)
+			TaskObservable taskObservable = this.taskTimeOutIndex.get(queue);
+			if(taskObservable !=  null)
 			{
-				if((jobObservable.job != null) && (jobObservable.job == job))
+				if((taskObservable.task != null) && (taskObservable.task == task))
 				{
-					this.jobTimeOutIndex.remove(queue);
+					this.taskTimeOutIndex.remove(queue);
 				}
 			}
 		}
 		finally 
 		{
-			jobTimeOutIndexWriteLock.unlock();
+			taskTimeOutIndexWriteLock.unlock();
 		}
 	}
 	
@@ -400,10 +400,10 @@ public class DispatcherGuardian extends Thread
 		this.eventDispatcher.log(logServiceLevel, logMessage, e);
 	}
 	
-	private class JobObservable
+	private class TaskObservable
 	{
-		public Long jobTimeOut = null;
-		public TaskContainer job = null;
+		public Long taskTimeOut = null;
+		public TaskContainer task = null;
 		public QueueImpl queue = null;
 	}
 	

@@ -45,5 +45,5 @@ public abstract class TimeOutServiceAdapter
 		return this.lastHeartBeat + timeOut;
 	}
 	
-	public abstract void onTimeout(IQueue queue,IPropertyBlock propertyBlock, ITaskControl jobControl);
+	public abstract void onTimeout(IQueue queue,IPropertyBlock propertyBlock, ITaskControl taskControl);
 }

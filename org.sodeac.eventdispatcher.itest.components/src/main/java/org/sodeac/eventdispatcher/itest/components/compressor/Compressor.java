@@ -107,7 +107,7 @@ public class Compressor implements IQueueService,IQueueController,IOnQueuedEvent
 	{
 		long now = System.currentTimeMillis();
 		Long lastSend = queue.getMetrics().getGauge(Long.class, IMetrics.GAUGE_LAST_SEND_EVENT).getValue();
-		queue.rescheduleJob(CompressorStatics.COMPRESSOR_SERVICE_ID, now + CompressorStatics.HEARTBEAT_INTERVAL, -1, -1);
+		queue.rescheduleTask(CompressorStatics.COMPRESSOR_SERVICE_ID, now + CompressorStatics.HEARTBEAT_INTERVAL, -1, -1);
 		
 		if(collectedEvents == 0)
 		{
@@ -133,7 +133,7 @@ public class Compressor implements IQueueService,IQueueController,IOnQueuedEvent
 			}
 			else
 			{
-				queue.rescheduleJob(CompressorStatics.COMPRESSOR_SERVICE_ID, lastSend + CompressorStatics.MINIMAL_INTERVAL, -1, -1);
+				queue.rescheduleTask(CompressorStatics.COMPRESSOR_SERVICE_ID, lastSend + CompressorStatics.MINIMAL_INTERVAL, -1, -1);
 			}
 		}
 	}

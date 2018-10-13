@@ -42,7 +42,7 @@ public class ScopeSingleSyncCallServiceAdapter<T>
 		this.value = value;
 		if(queue != null)
 		{
-			queue.rescheduleJob(ScopeSingleSyncCallService.SERVICE_ID,System.currentTimeMillis(),-1,-1);
+			queue.rescheduleTask(ScopeSingleSyncCallService.SERVICE_ID,System.currentTimeMillis(),-1,-1);
 		}
 	}
 	public T waitForResult(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException

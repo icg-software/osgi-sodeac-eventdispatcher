@@ -27,7 +27,7 @@ public class ScopeSingleSyncCallService implements IQueueService
 	public static final String SERVICE_ID = "org.sodeac.eventdispatcher.common.queueservice.scopesinglecall";
 
 	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl,List<IQueueTask> currentProcessedJobList)
+	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl,List<IQueueTask> currentProcessedTaskList)
 	{
 		@SuppressWarnings("unchecked")
 		ScopeSingleSyncCallServiceAdapter<Object> adapter = queue.getConfigurationPropertyBlock().getAdapter(ScopeSingleSyncCallServiceAdapter.class);

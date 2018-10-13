@@ -65,6 +65,6 @@ public class BasePeriodicJobTestController extends AbstractBaseTestController im
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		IQueueTask job = new PeriodicTestJob();
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-		event.getQueue().scheduleJob(job);
+		event.getQueue().scheduleTask(job);
 	}
 }

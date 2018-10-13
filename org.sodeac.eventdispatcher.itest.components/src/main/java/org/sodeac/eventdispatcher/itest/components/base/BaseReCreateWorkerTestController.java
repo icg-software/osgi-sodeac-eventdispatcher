@@ -73,6 +73,6 @@ public class BaseReCreateWorkerTestController extends AbstractBaseTestController
 		IPropertyBlock jobProperties = event.getQueue().getDispatcher().createPropertyBlock();
 		jobProperties.setProperty(TracingObject.class.getName(), super.tracingObject);
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-		event.getQueue().scheduleJob(null,job,jobProperties,-1,TIMEOUT_VALUE, -1);
+		event.getQueue().scheduleTask(null,job,jobProperties,-1,TIMEOUT_VALUE, -1);
 	}
 }

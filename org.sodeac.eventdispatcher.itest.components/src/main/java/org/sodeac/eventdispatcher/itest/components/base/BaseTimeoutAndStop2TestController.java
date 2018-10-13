@@ -67,6 +67,6 @@ public class BaseTimeoutAndStop2TestController extends AbstractBaseTestControlle
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		IQueueTask job = new BaseTimeOutAndStop2Job(SLEEP_VALUE);
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-		event.getQueue().scheduleJob(null,job,null,-1,TIMEOUT_VALUE, -1,true);
+		event.getQueue().scheduleTask(null,job,null,-1,TIMEOUT_VALUE, -1,true);
 	}
 }

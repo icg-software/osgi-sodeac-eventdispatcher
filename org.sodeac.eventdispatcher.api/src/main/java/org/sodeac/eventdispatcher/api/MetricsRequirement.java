@@ -15,9 +15,9 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- *  Declares the necessity to use queue metrics (for all {@link IQueueComponent}s) or job metrics ( for {@link IQueueService}s only). 
+ *  Declares the necessity to use queue metrics (for all {@link IQueueComponent}s) or task metrics ( for {@link IQueueService}s only). 
  * <br><br>
- * A {@link IQueueService} can declare the necessity for JobMetrics:<br>
+ * A {@link IQueueService} can declare the necessity for TaskMetrics:<br>
  * <br>
 
  * <table border="1">
@@ -34,7 +34,7 @@ import java.util.Set;
  * {@link MetricsRequirement#PreferNoMetrics}
  * </td>
  * <td>
- * JobMetrics Off
+ * TaskMetrics Off
  * </td>
  * </tr>
  * <tr>
@@ -42,7 +42,7 @@ import java.util.Set;
  * {@link MetricsRequirement#NoPreferenceOrRequirement}/{@link MetricsRequirement#PreferMetrics}/{@link MetricsRequirement#RequireMetrics}
  * </td>
  * <td>
- * JobMetrics ON
+ * TaskMetrics ON
  * </td>
  * </tr>
  * </table>

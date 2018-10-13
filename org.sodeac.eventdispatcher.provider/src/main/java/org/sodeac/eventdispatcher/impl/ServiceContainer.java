@@ -234,9 +234,9 @@ public class ServiceContainer
 		return countPreferNoMetrics > countPreferMetrics;
 	}
 	
-	public boolean isDisableJobMetrics()
+	public boolean isDisableTaskMetrics()
 	{
-		return serviceConfiguration.getJobMetricsRequirement() == MetricsRequirement.PreferNoMetrics;
+		return serviceConfiguration.getTaskMetricsRequirement() == MetricsRequirement.PreferNoMetrics;
 	}
 	
 	public List<ServiceFilterObjects> getFilterObjectList()

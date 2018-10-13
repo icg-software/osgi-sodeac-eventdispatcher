@@ -25,5 +25,5 @@ public interface IExtensibleQueue extends IQueue
 	// TODO Schedule Event
 	// TODO Clear EventQueue
 	// TODO Create Snapshot Overview
-	// TODO Create Complete Snapshot/Live (maxValues)(Jobs/EventQueue/Worker/Properties/Metrics/JobMetrics/Signals/Scope ... )
+	// TODO Create Complete Snapshot/Live (maxValues)(Tasks/EventQueue/Worker/Properties/Metrics/TaskMetrics/Signals/Scope ... )
 }

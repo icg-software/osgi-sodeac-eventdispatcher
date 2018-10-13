@@ -34,21 +34,21 @@ public interface IQueueTask
 	 * invoked onetime at initialization of this task
 	 * 
 	 * @param queue parent-{@link IQueue} 
-	 * @param id registration-id of this job
-	 * @param metrics metric-handler for this job
-	 * @param propertyBlock properties for this job
-	 * @param jobControl state-handler for this job
+	 * @param id registration-id of this task
+	 * @param metrics metric-handler for this task
+	 * @param propertyBlock properties for this task
+	 * @param taskControl state-handler for this task
 	 */
-	public default void configure(IQueue queue, String id, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl jobControl) {};
+	public default void configure(IQueue queue, String id, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl) {};
 	
 	/**
 	 * run this task, invoked by queue-worker.
 	 * 
 	 * @param queue parent-{@link IQueue} 
-	 * @param metrics metric-handler for this job
-	 * @param propertyBlock properties for this job
-	 * @param jobControl state-handler for this job
-	 * @param currentProcessedJobList all jobs run in the same task phase
+	 * @param metrics metric-handler for this task
+	 * @param propertyBlock properties for this task
+	 * @param taskControl state-handler for this task
+	 * @param currentProcessedTaskList all tasks run in the same task phase
 	 */
-	public void run(IQueue queue,IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl jobControl, List<IQueueTask> currentProcessedJobList);
+	public void run(IQueue queue,IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl, List<IQueueTask> currentProcessedTaskList);
 }

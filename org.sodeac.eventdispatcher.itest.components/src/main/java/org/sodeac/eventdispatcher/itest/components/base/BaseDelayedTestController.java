@@ -32,7 +32,7 @@ import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
-import org.sodeac.eventdispatcher.common.job.FireSyncEvent;
+import org.sodeac.eventdispatcher.common.task.FireSyncEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 
 @Component
@@ -67,6 +67,6 @@ public class BaseDelayedTestController extends AbstractBaseTestController implem
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		IQueueTask job = new FireSyncEvent(event,JOB_EVENT,event.getNativeEventProperties());
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-		event.getQueue().scheduleJob(null,job,null,System.currentTimeMillis() + DELAY, -1,-1);
+		event.getQueue().scheduleTask(null,job,null,System.currentTimeMillis() + DELAY, -1,-1);
 	}
 }

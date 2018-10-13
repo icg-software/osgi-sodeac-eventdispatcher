@@ -24,7 +24,7 @@ public class TaskControlImpl implements ITaskControl
 	private volatile long timeOutValue = IQueueTask.DEFAULT_TIMEOUT;
 	private volatile long heartBeatTimeOut = -1;
 	
-	private volatile boolean stopJobOnTimeout = false;
+	private volatile boolean stopTaskOnTimeout = false;
 	private volatile boolean inRun = false;
 	private volatile ExecutionTimeStampSource executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.SCHEDULE;
 	
@@ -52,7 +52,7 @@ public class TaskControlImpl implements ITaskControl
 		this.done = true;
 	}
 	
-	public void preRunPeriodicJob()
+	public void preRunPeriodicTask()
 	{
 		this.inRun = true;
 	}
@@ -254,13 +254,13 @@ public class TaskControlImpl implements ITaskControl
 	@Override
 	public boolean setStopOnTimeOutFlag(boolean value)
 	{
-		boolean oldValue = this.stopJobOnTimeout;
-		this.stopJobOnTimeout = value;
+		boolean oldValue = this.stopTaskOnTimeout;
+		this.stopTaskOnTimeout = value;
 		return oldValue;
 	}
 	
 	public boolean getStopOnTimeOutFlag()
 	{
-		return this.stopJobOnTimeout;
+		return this.stopTaskOnTimeout;
 	}
 }

@@ -26,7 +26,7 @@ import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
-import org.sodeac.eventdispatcher.common.job.FireSyncEvent;
+import org.sodeac.eventdispatcher.common.task.FireSyncEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 
 @Component
@@ -49,6 +49,6 @@ public class BaseEventRegistrationTestController extends AbstractBaseTestControl
 	{
 		super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 		super.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_EVENT_SCHEDULED,event));
-		event.getQueue().scheduleJob(new FireSyncEvent(event,UUID.randomUUID().toString(),event.getNativeEventProperties()));
+		event.getQueue().scheduleTask(new FireSyncEvent(event,UUID.randomUUID().toString(),event.getNativeEventProperties()));
 	}
 }

@@ -72,19 +72,19 @@ public class EventController implements EventControllerMBean
 	}
 
 	@Override
-	public boolean isImplementsOnJobDone()
+	public boolean isImplementsOnTaskDone()
 	{
 		return this.eventController instanceof IOnTaskDone;
 	}
 
 	@Override
-	public boolean isImplementsOnJobError()
+	public boolean isImplementsOnTaskError()
 	{
 		return this.eventController instanceof IOnTaskError;
 	}
 
 	@Override
-	public boolean isImplementsOnJobTimeout()
+	public boolean isImplementsOnTaskTimeout()
 	{
 		return this.eventController instanceof IOnTaskTimeout;
 	}
