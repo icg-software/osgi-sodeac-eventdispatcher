@@ -35,8 +35,8 @@ import org.sodeac.multichainlist.Node;
 import org.sodeac.multichainlist.Snapshot;
 
 import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueue.ILinkageDefinitionDispatcherBuilder;
@@ -109,8 +109,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.signalList = new ArrayList<String>();
 		this.signalListLock = new ReentrantLock(true);
 		
-		this.onQueueObserveList = new ArrayList<IOnQueueObserve>();
-		this.onQueueObserveListLock = new ReentrantLock(true);
+		this.onQueueAttachList = new ArrayList<IOnQueueAttach>();
+		this.onQueueAttachListLock = new ReentrantLock(true);
 		
 		this.lastWorkerAction = System.currentTimeMillis();
 		
@@ -250,9 +250,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected List<String> signalList = null;
 	protected ReentrantLock signalListLock = null;
 	
-	protected volatile boolean onQueueObserveListUpdate = false;
-	protected List<IOnQueueObserve> onQueueObserveList = null;
-	protected ReentrantLock onQueueObserveListLock = null;
+	protected volatile boolean onQueueAttachListUpdate = false;
+	protected List<IOnQueueAttach> onQueueAttachList = null;
+	protected ReentrantLock onQueueAttachListLock = null;
 	
 	protected volatile QueueWorker queueWorker = null;
 	protected volatile SpooledQueueWorker currentSpooledQueueWorker = null;
@@ -544,11 +544,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			// enable disable metrics
 			setQueueMetricsEnabled(! metricsDisabledMerger.disableMetrics());
 			
-			// observeEvent
+			// attachEvent
 			
-			if(controllerContainer.isImplementingIOnQueueObserve())
+			if(controllerContainer.isImplementingIOnQueueAttach())
 			{
-				addOnQueueObserver((IOnQueueObserve)controllerContainer.getQueueController());
+				addOnQueueAttach((IOnQueueAttach)controllerContainer.getQueueController());
 			}
 			return true;
 		}
@@ -622,11 +622,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			// enable disable metrics
 			setQueueMetricsEnabled(! metricsDisabledMerger.disableMetrics());
 			
-			// IOnQueueReverse
+			// IOnQueueDetach
 			
-			if(unlinkFromQueue.isImplementingIOnQueueReverse())
+			if(unlinkFromQueue.isImplementingIOnQueueDetach())
 			{
-				this.eventDispatcher.executeOnQueueReverse((IOnQueueReverse)unlinkFromQueue.getQueueController(), this);
+				this.eventDispatcher.executeOnQueueDetach((IOnQueueDetach)unlinkFromQueue.getQueueController(), this);
 			}
 			
 			return true;
@@ -2025,9 +2025,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				for(ControllerContainer controllerContainer : this.controllerList)
 				{
-					if(controllerContainer.isImplementingIOnQueueReverse())
+					if(controllerContainer.isImplementingIOnQueueDetach())
 					{
-						this.eventDispatcher.executeOnQueueReverse(((IOnQueueReverse)controllerContainer.getQueueController()), this);
+						this.eventDispatcher.executeOnQueueDetach(((IOnQueueDetach)controllerContainer.getQueueController()), this);
 					}
 				}
 			}
@@ -2456,7 +2456,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				return false;
 			}
-			if(! this.onQueueObserveList.isEmpty())
+			if(! this.onQueueAttachList.isEmpty())
 			{
 				return false;
 			}
@@ -2522,7 +2522,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				return false;
 			}
-			if(! this.onQueueObserveList.isEmpty())
+			if(! this.onQueueAttachList.isEmpty())
 			{
 				return false;
 			}
@@ -2614,40 +2614,40 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.notifyOrCreateWorker(-1);
 	}
 	
-	public void fetchOnQueueObserveList(List<IOnQueueObserve> fillList)
+	public void fetchOnQueueAttachList(List<IOnQueueAttach> fillList)
 	{
-		if(! onQueueObserveListUpdate)
+		if(! onQueueAttachListUpdate)
 		{
 			return;
 		}
 		
-		this.onQueueObserveListLock.lock();
+		this.onQueueAttachListLock.lock();
 		try
 		{
-			onQueueObserveListUpdate = false;
-			for(IOnQueueObserve onQueueObserve : this.onQueueObserveList)
+			onQueueAttachListUpdate = false;
+			for(IOnQueueAttach onQueueAttach : this.onQueueAttachList)
 			{
-				fillList.add(onQueueObserve);
+				fillList.add(onQueueAttach);
 			}
-			this.onQueueObserveList.clear();
+			this.onQueueAttachList.clear();
 		}
 		finally 
 		{
-			this.onQueueObserveListLock.unlock();
+			this.onQueueAttachListLock.unlock();
 		}
 	}
 	
-	public void addOnQueueObserver(IOnQueueObserve onQueueObserve)
+	public void addOnQueueAttach(IOnQueueAttach onQueueAttach)
 	{
-		this.onQueueObserveListLock.lock();
+		this.onQueueAttachListLock.lock();
 		try
 		{
-			onQueueObserveListUpdate = true;
-			this.onQueueObserveList.add(onQueueObserve);
+			onQueueAttachListUpdate = true;
+			this.onQueueAttachList.add(onQueueAttach);
 		}
 		finally 
 		{
-			this.onQueueObserveListLock.unlock();
+			this.onQueueAttachListLock.unlock();
 		}
 		
 		this.notifyOrCreateWorker(-1);

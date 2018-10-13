@@ -27,8 +27,8 @@ import org.osgi.service.metatype.annotations.AttributeType;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IQueue;
 
 @Component
@@ -39,7 +39,7 @@ import org.sodeac.eventdispatcher.api.IQueue;
 	configurationPolicy	= ConfigurationPolicy.REQUIRE
 )
 
-public class QueueFactoryController implements IQueueController,IOnQueueObserve, IOnQueueReverse
+public class QueueFactoryController implements IQueueController,IOnQueueAttach, IOnQueueDetach
 {
 	public static final String SERVICE_PID = "org.sodeac.eventdispatcher.common.controller.queuefactory";
 	
@@ -54,7 +54,7 @@ public class QueueFactoryController implements IQueueController,IOnQueueObserve,
 		@AttributeDefinition(name="dispatcher",description = "id of dispatcher (default:'default')" , defaultValue=IEventDispatcher.DEFAULT_DISPATCHER_ID, type=AttributeType.STRING, required=true)
 		String dispatcherid();
 		
-		@AttributeDefinition(name="queueid",description = "queueid of observed / created queue" ,type=AttributeType.STRING, required=true)
+		@AttributeDefinition(name="queueid",description = "queueid of attached / created queue" ,type=AttributeType.STRING, required=true)
 		String queueid();
 		
 		@AttributeDefinition(name="queuetype",description = "value for configuration property 'type'" ,type=AttributeType.STRING, required=true)
@@ -147,7 +147,7 @@ public class QueueFactoryController implements IQueueController,IOnQueueObserve,
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
 		lock.lock();
 		try
@@ -179,7 +179,7 @@ public class QueueFactoryController implements IQueueController,IOnQueueObserve,
 	}
 
 	@Override
-	public void onQueueReverse(IQueue queue)
+	public void onQueueDetach(IQueue queue)
 	{
 		lock.lock();
 		try

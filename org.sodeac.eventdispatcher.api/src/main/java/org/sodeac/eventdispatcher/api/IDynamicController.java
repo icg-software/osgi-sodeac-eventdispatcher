@@ -23,8 +23,8 @@ public interface IDynamicController extends
 						IOnTaskDone,
 						IOnTaskError,
 						IOnTaskTimeout,
-						IOnQueueObserve,
-						IOnQueueReverse,
+						IOnQueueAttach,
+						IOnQueueDetach,
 						IOnQueueSignal,
 						IOnQueuedEvent,
 						IOnQueuedEventList,
@@ -46,14 +46,14 @@ public interface IDynamicController extends
 		return implementsControllerMethod("onQueueSignal", Void.TYPE, IQueue.class, String.class);
 	}
 	
-	public default boolean implementsOnQueueReverse()
+	public default boolean implementsOnQueueDetach()
 	{
-		return implementsControllerMethod("onQueueReverse", Void.TYPE, IQueue.class);
+		return implementsControllerMethod("onQueueDetach", Void.TYPE, IQueue.class);
 	}
 	
-	public default boolean implementsOnQueueObserve()
+	public default boolean implementsOnQueueAttach()
 	{
-		return implementsControllerMethod("onQueueObserve", Void.TYPE, IQueue.class);
+		return implementsControllerMethod("onQueueAttach", Void.TYPE, IQueue.class);
 	}
 	
 	public default boolean implementsOnTaskError()
@@ -91,10 +91,10 @@ public interface IDynamicController extends
 	default void onQueueSignal(IQueue queue, String signal){}
 
 	@Override
-	default void onQueueReverse(IQueue queue){}
+	default void onQueueDetach(IQueue queue){}
 
 	@Override
-	default void onQueueObserve(IQueue queue){}
+	default void onQueueAttach(IQueue queue){}
 
 	@Override
 	default void onTaskError(IQueue queue, IQueueTask task, Throwable throwable){}

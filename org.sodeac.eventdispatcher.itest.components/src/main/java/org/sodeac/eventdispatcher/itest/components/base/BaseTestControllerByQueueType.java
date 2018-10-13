@@ -11,14 +11,14 @@
 package org.sodeac.eventdispatcher.itest.components.base;
 
 import org.sodeac.eventdispatcher.api.IQueueController;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IQueue;
 
-public class BaseTestControllerByQueueType implements IQueueController, IOnQueueObserve
+public class BaseTestControllerByQueueType implements IQueueController, IOnQueueAttach
 {
 
 	@Override
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
 		// TODO Auto-generated method stub
 

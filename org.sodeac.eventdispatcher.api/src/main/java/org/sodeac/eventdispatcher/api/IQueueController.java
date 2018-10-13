@@ -25,7 +25,7 @@ public interface IQueueController extends IQueueComponent
 	public static final String PROPERTY_CONSUME_EVENT_TOPIC 	= "consume_event_topic";
 	
 	/**
-	 * configuration property key to declare an {@link IQueueController} for disabling metrics on observe {@link IQueue}
+	 * configuration property key to declare an {@link IQueueController} for disabling metrics on attach {@link IQueue}
 	 */
 	public static final String PROPERTY_DISABLE_METRICS			= "queue_disable_metrics";
 	

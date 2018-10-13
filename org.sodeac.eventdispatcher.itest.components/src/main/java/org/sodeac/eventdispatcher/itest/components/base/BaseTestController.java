@@ -24,8 +24,8 @@ import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
 import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
@@ -45,7 +45,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 		EventConstants.EVENT_TOPIC+"=" + BaseTestController.SCHEDULE_EVENT
 	}
 )
-public class BaseTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnTaskDone,IOnTaskError,IOnTaskTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal
+public class BaseTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnTaskDone,IOnTaskError,IOnTaskTimeout,IOnFiredEvent,IOnQueueAttach,IOnQueueDetach,IOnQueueSignal
 {
 	public static final String QUEUE_ID 		= "basetestqueue";
 	public static final String JOB_EVENT 		= "org/sodeac/eventdispatcher/itest/basetest/jobevent";

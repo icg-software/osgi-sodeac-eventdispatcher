@@ -29,8 +29,8 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IPropertyBlockOperationHandler;
 import org.sodeac.eventdispatcher.api.IPropertyBlockOperationResult;
@@ -196,7 +196,7 @@ public class ServiceManagementControllerRegistration
 		private Dictionary<String, Object> serviceProperties;
 	}
 	
-	private class RegistrationController implements IQueueController, IOnQueueObserve, IOnQueueReverse
+	private class RegistrationController implements IQueueController, IOnQueueAttach, IOnQueueDetach
 	{
 		private EventDrivenServiceRegistration eventDrivenServiceRegistration;
 		private RegistrationController (EventDrivenServiceRegistration eventDrivenServiceRegistration)
@@ -207,9 +207,9 @@ public class ServiceManagementControllerRegistration
 		}
 
 		@Override
-		public void onQueueReverse(IQueue queue)
+		public void onQueueDetach(IQueue queue)
 		{
-			// TODO Reverse not synchronized, Problem?
+			// TODO Detach not synchronized, Problem?
 			IReactiveServiceRegistrationAdapter serviceRegistrationAdapter = queue.getConfigurationPropertyBlock().getAdapter(IReactiveServiceRegistrationAdapter.class);
 			if(serviceRegistrationAdapter == null)
 			{
@@ -221,7 +221,7 @@ public class ServiceManagementControllerRegistration
 		}
 
 		@Override
-		public void onQueueObserve(IQueue queue)
+		public void onQueueAttach(IQueue queue)
 		{
 			queue.getConfigurationPropertyBlock().operate(new IPropertyBlockOperationHandler()
 			{

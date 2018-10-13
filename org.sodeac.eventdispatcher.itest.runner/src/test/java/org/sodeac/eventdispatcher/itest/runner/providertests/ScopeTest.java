@@ -195,7 +195,7 @@ public class ScopeTest extends AbstractTest
 		// Global: 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 				
 		// Global: 2. Signal
@@ -222,7 +222,7 @@ public class ScopeTest extends AbstractTest
 		// Scope: 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition2 , tracingObject2.getTracingEventList().size() > tracingEventPosition2);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject2.getTracingEventList().get(tracingEventPosition2).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject2.getTracingEventList().get(tracingEventPosition2).getMethode());
 		tracingEventPosition2++;
 		
 		// Scope: 2 Signal
@@ -235,7 +235,7 @@ public class ScopeTest extends AbstractTest
 		// Scope: 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition2 , tracingObject2.getTracingEventList().size() > tracingEventPosition2);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_REVERSE, tracingObject2.getTracingEventList().get(tracingEventPosition2).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_DETACH, tracingObject2.getTracingEventList().get(tracingEventPosition2).getMethode());
 		tracingEventPosition2++;
 		
 		/*for(TracingEvent te : tracingObject.getTracingEventList())

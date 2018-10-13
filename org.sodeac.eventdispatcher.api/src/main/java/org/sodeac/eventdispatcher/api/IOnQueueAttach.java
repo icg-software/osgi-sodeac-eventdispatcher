@@ -12,19 +12,19 @@ package org.sodeac.eventdispatcher.api;
 
 /**
  * 
- * An extension interface for {@link IQueueController} to consume notifications if instance of {@link IQueueController} begins to observe a {@link IQueue}
+ * An extension interface for {@link IQueueController} to consume notifications if instance of {@link IQueueController} attach to a {@link IQueue}
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IOnQueueObserve extends IQueueController
+public interface IOnQueueAttach extends IQueueController
 {
 	/**
-	 * This is fired, if {@link IQueueController} starts to observe a {@link IQueue}
+	 * This is fired, if {@link IQueueController} attach to a {@link IQueue}
 	 * <br>
 	 * invoked and synchronized by queue worker
 	 * 
-	 * @param queue is linked with {@link IQueueController}
+	 * @param queue is attached with {@link IQueueController}
 	 */
-	public void onQueueObserve(IQueue queue);
+	public void onQueueAttach(IQueue queue);
 }

@@ -41,8 +41,8 @@ import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueService;
@@ -60,7 +60,7 @@ import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
 		IQueueService.PROPERTY_TIMEOUT_MS + "=" + (1000L * 3600L * 24L * 365L * 1080L), 
 	}
 )
-public class DirectoryWatcherServiceController implements IQueueController, IOnTaskError, IOnQueueObserve, IOnQueueReverse, IQueueService
+public class DirectoryWatcherServiceController implements IQueueController, IOnTaskError, IOnQueueAttach, IOnQueueDetach, IQueueService
 {
 	private volatile ComponentContext context = null;
 	
@@ -83,7 +83,7 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 	}
 	
 	@Override
-	public void onQueueReverse(IQueue queue)
+	public void onQueueDetach(IQueue queue)
 	{
 		queue.getConfigurationPropertyBlock().setProperty(SERVICE_ID + ".run", false);
 		
@@ -100,7 +100,7 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 	}
 
 	@Override
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
 		File dir = queue.getConfigurationPropertyBlock().getProperty("directory", File.class);
 		if(dir == null) 

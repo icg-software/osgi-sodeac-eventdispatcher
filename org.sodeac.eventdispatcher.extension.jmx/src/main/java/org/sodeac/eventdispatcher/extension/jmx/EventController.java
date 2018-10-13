@@ -21,8 +21,8 @@ import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
 import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IStateInfoProvider;
@@ -90,15 +90,15 @@ public class EventController implements EventControllerMBean
 	}
 
 	@Override
-	public boolean isImplementsOnQueueObserve()
+	public boolean isImplementsOnQueueAttach()
 	{
-		return this.eventController instanceof IOnQueueObserve;
+		return this.eventController instanceof IOnQueueAttach;
 	}
 
 	@Override
-	public boolean isImplementsOnQueueReserve()
+	public boolean isImplementsOnQueueDetach()
 	{
-		return this.eventController instanceof IOnQueueReverse;
+		return this.eventController instanceof IOnQueueDetach;
 	}
 
 	@Override

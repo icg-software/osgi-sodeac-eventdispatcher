@@ -152,7 +152,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -229,7 +229,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		//  2. Job Done
@@ -291,7 +291,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -358,7 +358,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -413,7 +413,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -487,7 +487,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -579,7 +579,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -651,7 +651,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 				
 		// 2. Schedule First Event
@@ -764,7 +764,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -815,7 +815,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -896,7 +896,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -971,7 +971,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -1428,7 +1428,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -1511,7 +1511,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		for(int i = 0; i < 3; i++)
@@ -1579,7 +1579,7 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
@@ -1647,13 +1647,13 @@ public class BaseContainerTest extends AbstractTest
 		// 1. Queue Observe
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_OBSERVE, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
+		assertEquals("Expect Queue observer",TracingEvent.ON_QUEUE_ATTACH, tracingObject.getTracingEventList().get(tracingEventPosition).getMethode());
 		tracingEventPosition++;
 		
 		// 2. Schedule Event
 		
 		assertTrue("tracingEventLists should contains item " + tracingEventPosition , tracingObject.getTracingEventList().size() > tracingEventPosition);
-		if(tracingObject.getTracingEventList().get(tracingEventPosition).getMethode() == TracingEvent.ON_QUEUE_OBSERVE)
+		if(tracingObject.getTracingEventList().get(tracingEventPosition).getMethode() == TracingEvent.ON_QUEUE_ATTACH)
 		{
 			// TODO find reason for this
 			

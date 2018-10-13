@@ -21,8 +21,8 @@ import java.util.UUID;
 import org.osgi.service.component.annotations.Component;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
@@ -49,13 +49,13 @@ import com.google.common.collect.ImmutableMap;
 		IQueueController.PROPERTY_CONSUME_EVENT_TOPIC+"=" + IReactiveServiceDiscovery.EVENT_TOPIC_RESPONSE,
 	}
 )
-public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueueController,IOnQueuedEvent,IOnQueueObserve, IOnQueueReverse
+public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueueController,IOnQueuedEvent,IOnQueueAttach, IOnQueueDetach
 {
 	
 	private IQueue managementQueue = null;
 
 	@Override
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
 		if(queue.getDispatcher().getId().equals(IEventDispatcher.DEFAULT_DISPATCHER_ID) && queue.getId().equals(QUEUE_ID))
 		{
@@ -164,7 +164,7 @@ public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueu
 	}
 	
 	@Override
-	public void onQueueReverse(IQueue queue)
+	public void onQueueDetach(IQueue queue)
 	{
 		if(queue == this.managementQueue)
 		{

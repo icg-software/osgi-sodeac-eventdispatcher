@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.osgi.service.component.annotations.Component;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
@@ -41,11 +41,11 @@ import com.google.common.collect.ImmutableMap;
 	}
 )
 
-public class ReactiveServiceDiscoveryScope implements IQueueController,IOnQueueObserve, IOnQueuedEvent
+public class ReactiveServiceDiscoveryScope implements IQueueController,IOnQueueAttach, IOnQueuedEvent
 {
 
 	@Override
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
 		// timeout for this scope
 		TimeOut timeOut = queue.getConfigurationPropertyBlock().getAdapter(DiscoverReactiveServiceRequest.class).getTimeout();

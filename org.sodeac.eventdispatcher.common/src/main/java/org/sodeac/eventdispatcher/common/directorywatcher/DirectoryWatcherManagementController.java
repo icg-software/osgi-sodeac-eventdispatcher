@@ -31,8 +31,8 @@ import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
@@ -48,7 +48,7 @@ import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
 		IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER+"="+"("+DirectoryWatcherConfigurationAdapter.ADAPTER_CLASS + "=*)",
 	}
 )
-public class DirectoryWatcherManagementController implements IQueueController,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal,IDescriptionProvider,IStateInfoProvider
+public class DirectoryWatcherManagementController implements IQueueController,IOnQueueAttach,IOnQueueDetach,IOnQueueSignal,IDescriptionProvider,IStateInfoProvider
 {
 	private volatile ComponentContext context = null;
 	
@@ -69,14 +69,14 @@ public class DirectoryWatcherManagementController implements IQueueController,IO
 	
 	
 	@Override
-	public void onQueueReverse(IQueue queue)
+	public void onQueueDetach(IQueue queue)
 	{
 		queue.getStatePropertyBlock().getAdapter(ConfigurationManagementAdapter.class).close();
 		
 	}
 
 	@Override
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
 		// TODO. if queue instanceof Scope
 		this.update(queue);

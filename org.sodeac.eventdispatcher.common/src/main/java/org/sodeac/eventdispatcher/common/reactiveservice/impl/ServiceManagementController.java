@@ -15,8 +15,8 @@ import java.util.UUID;
 
 import org.osgi.service.component.annotations.Component;
 import org.sodeac.eventdispatcher.api.IQueueController;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
@@ -37,15 +37,15 @@ import com.google.common.collect.ImmutableMap;
 		IReactiveServiceDiscovery.SERVICE_PROPERTY__CONSUME_EVENTS_DISCOVER_SERVICE,
 	}
 )
-public class ServiceManagementController implements IQueueController, IOnQueueObserve, IOnQueueReverse, IOnQueueSignal, IOnQueuedEvent
+public class ServiceManagementController implements IQueueController, IOnQueueAttach, IOnQueueDetach, IOnQueueSignal, IOnQueuedEvent
 {
 	@Override
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
 	}
 
 	@Override
-	public void onQueueReverse(IQueue queue)
+	public void onQueueDetach(IQueue queue)
 	{
 	}
 

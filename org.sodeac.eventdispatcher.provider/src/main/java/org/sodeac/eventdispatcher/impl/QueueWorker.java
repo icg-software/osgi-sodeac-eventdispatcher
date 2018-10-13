@@ -21,7 +21,7 @@ import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
 import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IPeriodicQueueTask;
@@ -54,7 +54,7 @@ public class QueueWorker extends Thread
 	
 	private List<TaskContainer> dueTaskList = null;
 	private List<String> signalList = null;
-	private List<IOnQueueObserve> onQueueObserveList = null;
+	private List<IOnQueueAttach> onQueueAttachList = null;
 	
 	private volatile Long currentTimeOutTimeStamp = null;
 	private volatile TaskContainer currentRunningTask = null;
@@ -68,29 +68,29 @@ public class QueueWorker extends Thread
 		this.workerWrapper = new QueueWorkerWrapper(this);
 		this.dueTaskList = new ArrayList<TaskContainer>();
 		this.signalList = new ArrayList<String>();
-		this.onQueueObserveList = new ArrayList<IOnQueueObserve>();
+		this.onQueueAttachList = new ArrayList<IOnQueueAttach>();
 		super.setDaemon(true);
 		super.setName(QueueWorker.class.getSimpleName() + " " + this.eventQueue.getId());
 	}
 
-	private void checkQueueObserve()
+	private void checkQueueAttach()
 	{
 		try
 		{
-			if(! this.onQueueObserveList.isEmpty())
+			if(! this.onQueueAttachList.isEmpty())
 			{
-				this.onQueueObserveList.clear();
+				this.onQueueAttachList.clear();
 			}
-			eventQueue.fetchOnQueueObserveList(this.onQueueObserveList); // TODO mcl
-			if(this.onQueueObserveList.isEmpty())
+			eventQueue.fetchOnQueueAttachList(this.onQueueAttachList); // TODO mcl
+			if(this.onQueueAttachList.isEmpty())
 			{
 				return;
 			}
-			for(IOnQueueObserve onQueueObserve : this.onQueueObserveList)
+			for(IOnQueueAttach onQueueAttach : this.onQueueAttachList)
 			{
 				try
 				{
-					onQueueObserve.onQueueObserve(this.eventQueue);
+					onQueueAttach.onQueueAttach(this.eventQueue);
 				}
 				catch (Exception e) 
 				{
@@ -101,17 +101,18 @@ public class QueueWorker extends Thread
 					log(LogService.LOG_ERROR,"Exception on on-create() event controller",e);
 				}
 			}
-			this.onQueueObserveList.clear();
+			this.onQueueAttachList.clear();
 		}
 		catch (Exception e) 
 		{
-			this.onQueueObserveList.clear();
-			log(LogService.LOG_ERROR,"Exception while check queueObserve",e);
+			this.onQueueAttachList.clear();
+			log(LogService.LOG_ERROR,"Exception while check queueAttach"
+					+ "",e);
 		}
 		catch (Error e) 
 		{
-			this.onQueueObserveList.clear();
-			log(LogService.LOG_ERROR,"Exception while check queueObserve",e);
+			this.onQueueAttachList.clear();
+			log(LogService.LOG_ERROR,"Exception while check queueAttach",e);
 		}
 	}
 	@SuppressWarnings("unchecked")
@@ -127,7 +128,7 @@ public class QueueWorker extends Thread
 			
 			try
 			{
-				checkQueueObserve();
+				checkQueueAttach();
 			}
 			catch(Exception ex) {}
 			catch(Error ex) {}
@@ -148,7 +149,7 @@ public class QueueWorker extends Thread
 					{
 						try
 						{
-							checkQueueObserve();
+							checkQueueAttach();
 						}
 						catch(Exception ex) {}
 						catch(Error ex) {}
@@ -288,7 +289,7 @@ public class QueueWorker extends Thread
 	
 						try
 						{
-							checkQueueObserve();
+							checkQueueAttach();
 						}
 						catch(Exception ex) {}
 						catch(Error ex) {}
@@ -347,7 +348,7 @@ public class QueueWorker extends Thread
 	
 						try
 						{
-							checkQueueObserve();
+							checkQueueAttach();
 						}
 						catch(Exception ex) {}
 						catch(Error ex) {}
@@ -405,7 +406,7 @@ public class QueueWorker extends Thread
 
 					try
 					{
-						checkQueueObserve();
+						checkQueueAttach();
 					}
 					catch(Exception ex) {}
 					catch(Error ex) {}
@@ -446,7 +447,7 @@ public class QueueWorker extends Thread
 
 				try
 				{
-					checkQueueObserve();
+					checkQueueAttach();
 				}
 				catch(Exception ex) {}
 				catch(Error ex) {}
@@ -752,7 +753,7 @@ public class QueueWorker extends Thread
 					
 										try
 										{
-											checkQueueObserve();
+											checkQueueAttach();
 										}
 										catch(Exception ex) {}
 										catch(Error ex) {}
@@ -811,7 +812,7 @@ public class QueueWorker extends Thread
 					
 										try
 										{
-											checkQueueObserve();
+											checkQueueAttach();
 										}
 										catch(Exception ex) {}
 										catch(Error ex) {}
@@ -869,7 +870,7 @@ public class QueueWorker extends Thread
 
 									try
 									{
-										checkQueueObserve();
+										checkQueueAttach();
 									}
 									catch(Exception ex) {}
 									catch(Error ex) {}
@@ -987,7 +988,7 @@ public class QueueWorker extends Thread
 				
 				try
 				{
-					checkQueueObserve();
+					checkQueueAttach();
 				}
 				catch(Exception ex) {}
 				catch(Error ex) {}

@@ -17,8 +17,8 @@ public interface EventControllerMBean
 	public boolean isImplementsOnTaskDone();
 	public boolean isImplementsOnTaskError();
 	public boolean isImplementsOnTaskTimeout();
-	public boolean isImplementsOnQueueObserve();
-	public boolean isImplementsOnQueueReserve();
+	public boolean isImplementsOnQueueAttach();
+	public boolean isImplementsOnQueueDetach();
 	public boolean isImplementsOnQueueSignal();
 	public boolean isImplementsOnRemoveEvent();
 	public String getControllerClassName();

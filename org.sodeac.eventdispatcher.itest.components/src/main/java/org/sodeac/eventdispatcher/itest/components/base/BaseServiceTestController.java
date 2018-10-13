@@ -31,8 +31,8 @@ import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
 import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
@@ -59,7 +59,7 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 	}
 )
 
-public class BaseServiceTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnTaskDone,IOnTaskError,IOnTaskTimeout,IOnFiredEvent,IOnQueueObserve,IOnQueueReverse,IOnQueueSignal,IQueueService
+public class BaseServiceTestController extends AbstractBaseTestController implements EventHandler,IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnTaskDone,IOnTaskError,IOnTaskTimeout,IOnFiredEvent,IOnQueueAttach,IOnQueueDetach,IOnQueueSignal,IQueueService
 {
 	public static final String	SERVICE_ID			= "TestService";
 	public static final String 	QUEUE_ID 			= "baseservicetestqueue";
@@ -89,9 +89,9 @@ public class BaseServiceTestController extends AbstractBaseTestController implem
 		this.context = null;
 	}
 	
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
-		super.onQueueObserve(queue);
+		super.onQueueAttach(queue);
 		queue.getStatePropertyBlock().setProperty(EVENT_PROPERTY_LATCH, this.latch);
 	}
 	

@@ -25,8 +25,8 @@ import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
 import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
@@ -69,8 +69,8 @@ public class ControllerContainer
 	private volatile boolean implementsIOnTaskDone = false;
 	private volatile boolean implementsIOnTaskError = false;
 	private volatile boolean implementsIOnTaskTimeout = false;
-	private volatile boolean implementsIOnQueueObserve = false;
-	private volatile boolean implementsIOnQueueReverse = false;
+	private volatile boolean implementsIOnQueueAttach = false;
+	private volatile boolean implementsIOnQueueDetach = false;
 	private volatile boolean implementsIOnQueueSignal = false;
 	private volatile boolean implementsIOnScheduleEvent = false;
 	private volatile boolean implementsIOnScheduleEventList = false;
@@ -84,8 +84,8 @@ public class ControllerContainer
 			implementsIOnTaskDone = false;
 			implementsIOnTaskError = false;
 			implementsIOnTaskTimeout = false;
-			implementsIOnQueueObserve = false;
-			implementsIOnQueueReverse = false;
+			implementsIOnQueueAttach = false;
+			implementsIOnQueueDetach = false;
 			implementsIOnQueueSignal = false;
 			implementsIOnScheduleEvent = false;
 			implementsIOnScheduleEventList = false;
@@ -102,8 +102,8 @@ public class ControllerContainer
 			implementsIOnTaskDone = dynamicController.implementsOnTaskDone();
 			implementsIOnTaskError = dynamicController.implementsOnTaskError();
 			implementsIOnTaskTimeout = dynamicController.implementsOnTaskTimeout();
-			implementsIOnQueueObserve = dynamicController.implementsOnQueueObserve();
-			implementsIOnQueueReverse = dynamicController.implementsOnQueueReverse();
+			implementsIOnQueueAttach = dynamicController.implementsOnQueueAttach();
+			implementsIOnQueueDetach = dynamicController.implementsOnQueueDetach();
 			implementsIOnQueueSignal = dynamicController.implementsOnQueueSignal();
 			implementsIOnScheduleEvent = dynamicController.implementsOnQueuedEvent();
 			implementsIOnScheduleEventList = dynamicController.implementsOnQueuedEventList();
@@ -115,8 +115,8 @@ public class ControllerContainer
 			implementsIOnTaskDone = this.queueController instanceof IOnTaskDone;
 			implementsIOnTaskError = this.queueController instanceof IOnTaskError;
 			implementsIOnTaskTimeout = this.queueController instanceof IOnTaskTimeout;
-			implementsIOnQueueObserve = this.queueController instanceof IOnQueueObserve;
-			implementsIOnQueueReverse = this.queueController instanceof IOnQueueReverse;
+			implementsIOnQueueAttach = this.queueController instanceof IOnQueueAttach;
+			implementsIOnQueueDetach = this.queueController instanceof IOnQueueDetach;
 			implementsIOnQueueSignal = this.queueController instanceof IOnQueueSignal;
 			implementsIOnScheduleEvent = this.queueController instanceof IOnQueuedEvent;
 			implementsIOnScheduleEventList = this.queueController instanceof IOnQueuedEventList;
@@ -307,14 +307,14 @@ public class ControllerContainer
 		return implementsIOnTaskError;
 	}
 
-	public boolean isImplementingIOnQueueObserve()
+	public boolean isImplementingIOnQueueAttach()
 	{
-		return implementsIOnQueueObserve;
+		return implementsIOnQueueAttach;
 	}
 
-	public boolean isImplementingIOnQueueReverse()
+	public boolean isImplementingIOnQueueDetach()
 	{
-		return implementsIOnQueueReverse;
+		return implementsIOnQueueDetach;
 	}
 
 	public boolean isImplementingIOnQueueSignal()

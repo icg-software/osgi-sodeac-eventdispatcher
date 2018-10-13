@@ -31,8 +31,8 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IOnQueueObserve;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueAttach;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
@@ -45,7 +45,7 @@ import org.sodeac.eventdispatcher.common.directorywatcher.DirectoryWatcherConfig
 	configurationPid	= DirectoryWatcherQueueFactoryController.SERVICE_PID	, 
 	configurationPolicy	= ConfigurationPolicy.REQUIRE
 )
-public class DirectoryWatcherQueueFactoryController implements IQueueController, IOnQueueObserve, IOnQueueReverse, IOnQueuedEvent
+public class DirectoryWatcherQueueFactoryController implements IQueueController, IOnQueueAttach, IOnQueueDetach, IOnQueuedEvent
 {
 	public static final String SERVICE_PID = "org.sodeac.eventdispatcher.common.directorywatcher";
 	
@@ -55,7 +55,7 @@ public class DirectoryWatcherQueueFactoryController implements IQueueController,
 		@AttributeDefinition(name="dispatcher",description = "id of dispatcher (default:'default')" , defaultValue=IEventDispatcher.DEFAULT_DISPATCHER_ID, type=AttributeType.STRING, required=true)
 		String dispatcherid();
 		
-		@AttributeDefinition(name="queue",description = "queueid of observed queue" ,type=AttributeType.STRING, required=true)
+		@AttributeDefinition(name="queue",description = "queueid of attached queue" ,type=AttributeType.STRING, required=true)
 		String queueid();
 		
 		@AttributeDefinition(name="directory",description = "directory to monitored" ,type=AttributeType.STRING, required=true)
@@ -115,7 +115,7 @@ public class DirectoryWatcherQueueFactoryController implements IQueueController,
 	}
 
 	@Override
-	public void onQueueReverse(IQueue queue)
+	public void onQueueDetach(IQueue queue)
 	{
 		if(this.id == null)
 		{
@@ -129,7 +129,7 @@ public class DirectoryWatcherQueueFactoryController implements IQueueController,
 	}
 
 	@Override
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
 		DirectoryWatcherConfigurationAdapter directoryWatcherConfigurationAdapter = queue.getConfigurationPropertyBlock().getAdapter(DirectoryWatcherConfigurationAdapter.class, () -> new DirectoryWatcherConfigurationAdapter(queue));
 		

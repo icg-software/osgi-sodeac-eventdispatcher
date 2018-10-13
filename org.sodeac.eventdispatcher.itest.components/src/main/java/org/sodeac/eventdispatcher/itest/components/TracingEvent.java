@@ -17,7 +17,7 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 
 public class TracingEvent
 {
-	public static final int ON_QUEUE_OBSERVE = 1;
+	public static final int ON_QUEUE_ATTACH = 1;
 	public static final int ON_EVENT_SCHEDULED = 2;
 	public static final int ON_REMOVE_EVENT = 3;
 	public static final int ON_FIRE_EVENT = 4;
@@ -28,7 +28,7 @@ public class TracingEvent
 	
 	public static final int SEND_EVENT = 30;
 	
-	public static final int ON_QUEUE_REVERSE = 99;
+	public static final int ON_QUEUE_DETACH = 99;
 	
 	public TracingEvent(int methode,IQueue queue)
 	{

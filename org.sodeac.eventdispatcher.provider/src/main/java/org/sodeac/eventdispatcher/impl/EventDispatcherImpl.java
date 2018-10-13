@@ -51,7 +51,7 @@ import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnTaskStop;
 import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
-import org.sodeac.eventdispatcher.api.IOnQueueReverse;
+import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueComponentConfigurable;
@@ -94,14 +94,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private SpooledQueueWorkerScheduler spooledQueueWorkerScheduler;
 	
 	private List<ControllerContainer> controllerList = null;
-	private Map<IQueueController,ControllerContainer> controllerReverseIndex = null; 
+	private Map<IQueueController,ControllerContainer> controllerDetachIndex = null; 
 	private List<ScheduledController> controllerListScheduled = null;
 	private ReentrantReadWriteLock controllerListLock;
 	private ReadLock controllerListReadLock;
 	private WriteLock controllerListWriteLock;
 	
 	private List<ServiceContainer> serviceList = null;
-	private Map<IQueueService ,ServiceContainer> serviceReverseIndex = null; 
+	private Map<IQueueService ,ServiceContainer> serviceDetachIndex = null; 
 	private List<ScheduledService> serviceListScheduled = null;
 	private ReentrantReadWriteLock serviceListLock;
 	private ReadLock serviceListReadLock;
@@ -179,7 +179,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 		this.controllerList = new ArrayList<ControllerContainer>();
 		this.controllerListScheduled = new ArrayList<ScheduledController>();
-		this.controllerReverseIndex = new HashMap<IQueueController,ControllerContainer>();
+		this.controllerDetachIndex = new HashMap<IQueueController,ControllerContainer>();
 		this.controllerListLock = new ReentrantReadWriteLock(true);
 		this.controllerListReadLock = this.controllerListLock.readLock();
 		this.controllerListWriteLock = this.controllerListLock.writeLock();
@@ -200,7 +200,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		this.queueIsMissingLogIndexLock = new ReentrantLock();
 		
 		this.serviceList = new ArrayList<ServiceContainer>();
-		this.serviceReverseIndex = new HashMap<IQueueService ,ServiceContainer>();
+		this.serviceDetachIndex = new HashMap<IQueueService ,ServiceContainer>();
 		this.serviceListScheduled = new ArrayList<ScheduledService>();
 		this.serviceListLock = new ReentrantReadWriteLock(true);
 		this.serviceListReadLock = this.serviceListLock.readLock();
@@ -1056,13 +1056,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		controllerListWriteLock.lock();
 		try
 		{
-			controllerContainer = this.controllerReverseIndex.get(queueController);
+			controllerContainer = this.controllerDetachIndex.get(queueController);
 			
 			if(controllerContainer == null)
 			{
 				controllerContainer = new ControllerContainer(this,queueController,properties,boundByIdList, boundedByQueueConfigurationList, subscribeEventList);
 				
-				this.controllerReverseIndex.put(queueController,controllerContainer);
+				this.controllerDetachIndex.put(queueController,controllerContainer);
 				this.controllerList.add(controllerContainer);
 				
 				if(this.counterConfigurationSize != null)
@@ -1341,7 +1341,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			this.controllerListWriteLock.lock();
 			try
 			{
-				controllerContainer = this.controllerReverseIndex.get(queueController);
+				controllerContainer = this.controllerDetachIndex.get(queueController);
 				
 				if(controllerContainer == null)
 				{
@@ -1355,7 +1355,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 						this.counterConfigurationSize.dec();
 					}
 				}
-				this.controllerReverseIndex.remove(queueController);
+				this.controllerDetachIndex.remove(queueController);
 				this.configurationPropertyBindingRegistry.unregister(controllerContainer);
 			}
 			finally 
@@ -1857,7 +1857,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		serviceListWriteLock.lock();
 		try
 		{
-			serviceContainer = serviceReverseIndex.get(queueService);
+			serviceContainer = serviceDetachIndex.get(queueService);
 			
 			if(serviceContainer == null)
 			{
@@ -1866,7 +1866,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				serviceContainer.setProperties(properties);
 				
 				this.serviceList.add(serviceContainer);
-				this.serviceReverseIndex.put(queueService,serviceContainer);
+				this.serviceDetachIndex.put(queueService,serviceContainer);
 				this.configurationPropertyBindingRegistry.register(serviceContainer);
 			}
 			registerQueueService(serviceContainer);
@@ -1982,13 +1982,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			this.serviceListWriteLock.lock();
 			try
 			{
-				serviceContainer = this.serviceReverseIndex.get(queueService);
+				serviceContainer = this.serviceDetachIndex.get(queueService);
 				if(serviceContainer == null)
 				{
 					return;
 				}
 				
-				this.serviceReverseIndex.remove(queueService);
+				this.serviceDetachIndex.remove(queueService);
 				while(this.serviceList.remove(serviceContainer)) {}
 				
 				this.configurationPropertyBindingRegistry.unregister(serviceContainer);
@@ -2278,7 +2278,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		});
 	}
 	
-	public void executeOnQueueReverse(IOnQueueReverse onQueueReverse , IQueue queue)
+	public void executeOnQueueDetach(IOnQueueDetach onQueueDetach , IQueue queue)
 	{
 		try
 		{
@@ -2289,7 +2289,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				{
 					try
 					{
-						onQueueReverse.onQueueReverse(queue);
+						onQueueDetach.onQueueDetach(queue);
 					}
 					catch (Exception e) {}
 					return queue;

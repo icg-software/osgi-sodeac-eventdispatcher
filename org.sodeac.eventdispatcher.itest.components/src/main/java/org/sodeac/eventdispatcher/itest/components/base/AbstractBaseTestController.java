@@ -27,16 +27,16 @@ public class AbstractBaseTestController
 	protected TracingObject tracingObject = new TracingObject();
 	protected CountDownLatch latch = null;
 		
-	public void onQueueReverse(IQueue queue)
+	public void onQueueDetach(IQueue queue)
 	{
-		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_QUEUE_REVERSE,queue));
+		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_QUEUE_DETACH,queue));
 	}
 
-	public void onQueueObserve(IQueue queue)
+	public void onQueueAttach(IQueue queue)
 	{
 		queue.getStatePropertyBlock().setProperty(TracingObject.PROPERTY_KEY_TRACING_OBJECT, this.tracingObject);
 		
-		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_QUEUE_OBSERVE,queue));
+		this.tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_QUEUE_ATTACH,queue));
 	}
 
 	public void onRemovedEvent(IQueuedEvent event)
