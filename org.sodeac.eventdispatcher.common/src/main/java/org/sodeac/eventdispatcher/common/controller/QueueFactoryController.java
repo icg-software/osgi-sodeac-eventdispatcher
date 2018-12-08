@@ -141,7 +141,7 @@ public class QueueFactoryController implements IQueueController,IOnQueueAttach, 
 		
 		for(IQueue queue : queueCopy)
 		{
-			queue.getConfigurationPropertyBlock().setPropertySet((Map<String,Object>)this.properties,true);	
+			queue.getConfigurationPropertyBlock().setPropertyEntrySet(((Map<String,Object>)this.properties).entrySet(),true);	
 		}
 	}
 
@@ -175,7 +175,7 @@ public class QueueFactoryController implements IQueueController,IOnQueueAttach, 
 		{
 			return;
 		}
-		queue.getConfigurationPropertyBlock().setPropertySet((Map<String,Object>)this.properties,true);		
+		queue.getConfigurationPropertyBlock().setPropertyEntrySet(((Map<String,Object>)this.properties).entrySet(),true);		
 	}
 
 	@Override

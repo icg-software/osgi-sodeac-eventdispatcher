@@ -130,7 +130,7 @@ public class EventQueue implements EventQueueMBean
 		IPropertyBlock properties = this.queue.getConfigurationPropertyBlock();
 		info.append("Properties:\n");
 		{
-			for(String key : properties.getPropertyKeys())
+			for(String key : properties.getPropertyKeySet())
 			{
 				info.append("\t" + key + " :: " + properties.getProperty(key) + "\n");
 			}

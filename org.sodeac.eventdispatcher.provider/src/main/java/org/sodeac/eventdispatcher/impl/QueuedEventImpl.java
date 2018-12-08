@@ -10,11 +10,9 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,8 +33,6 @@ public class QueuedEventImpl implements IQueuedEvent
 	private ReentrantLock lock = null;
 	private volatile PropertyBlockImpl propertyBlock = null;
 	private volatile Map<String,Object> nativeProperties;
-	private List<String> emptyKeyList = null;
-	private Map<String, Object>  emptyProperties = null;
 	private long createTimeStamp;
 	private Node<QueuedEventImpl> node = null;
 	
@@ -87,8 +83,6 @@ public class QueuedEventImpl implements IQueuedEvent
 				if(this.propertyBlock == null)
 				{
 					this.propertyBlock =  (PropertyBlockImpl)queue.getDispatcher().createPropertyBlock();
-					this.emptyKeyList = null;
-					this.emptyProperties = null;
 				}
 			}
 			finally 
@@ -118,36 +112,13 @@ public class QueuedEventImpl implements IQueuedEvent
 	}
 
 	@Override
-	public List<String> getPropertyKeys()
+	public Set<String> getPropertyKeySet()
 	{
 		if(this.propertyBlock == null)
 		{
-			List<String> returnList = this.emptyKeyList;
-			if(returnList ==  null)
-			{
-				this.lock.lock();
-				try
-				{
-					if(this.propertyBlock == null)
-					{
-						if(this.emptyKeyList == null)
-						{
-							this.emptyKeyList = Collections.unmodifiableList(new ArrayList<String>());
-						}
-						returnList = this.emptyKeyList;
-					}
-				}
-				finally 
-				{
-					lock.unlock();
-				}
-			}
-			if(returnList != null)
-			{
-				return returnList;
-			}
+			return PropertyBlockImpl.EMPTY_KEYSET;
 		}
-		return this.propertyBlock.getPropertyKeys();
+		return this.propertyBlock.getPropertyKeySet();
 	}
 
 	@Override
@@ -155,30 +126,7 @@ public class QueuedEventImpl implements IQueuedEvent
 	{
 		if(this.propertyBlock == null)
 		{
-			Map<String,Object> returnIndex = this.emptyProperties;
-			if(returnIndex ==  null)
-			{
-				lock.lock();
-				try
-				{
-					if(this.propertyBlock == null)
-					{
-						if(this.emptyProperties == null)
-						{
-							this.emptyProperties = Collections.unmodifiableMap(new HashMap<String,Object>());
-						}
-						returnIndex = this.emptyProperties;
-					}
-				}
-				finally 
-				{
-					lock.unlock();
-				}
-			}
-			if(returnIndex != null)
-			{
-				return returnIndex;
-			}
+			return PropertyBlockImpl.EMPTY_PROPERTIES;
 		}
 		return this.propertyBlock.getProperties();
 	}
@@ -213,8 +161,6 @@ public class QueuedEventImpl implements IQueuedEvent
 					if(this.propertyBlock == null)
 					{
 						this.propertyBlock =  (PropertyBlockImpl)queue.getDispatcher().createPropertyBlock();
-						this.emptyKeyList = null;
-						this.emptyProperties = null;
 					}
 				}
 				finally 

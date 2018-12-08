@@ -21,12 +21,11 @@ import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
+import org.sodeac.eventdispatcher.api.IPropertyBlock.IMapBuilder;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.DiscoverReactiveServiceRequest;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveServiceDiscovery;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveServiceReference;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveServiceRegistrationAdapter;
-
-import com.google.common.collect.ImmutableMap;
 
 @Component
 (
@@ -92,12 +91,12 @@ public class ServiceManagementController implements IQueueController, IOnQueueAt
 				{
 					event.getQueue().sendEvent
 					(
-						IReactiveServiceDiscovery.EVENT_TOPIC_RESPONSE, ImmutableMap.<String, Object>builder()
+						IReactiveServiceDiscovery.EVENT_TOPIC_RESPONSE, IMapBuilder.<String, Object>newBuilderInstance()
 						
 							.put(IReactiveServiceDiscovery.EVENT_PROPERTY_REQUEST_ID,requestId)
 							.put(IReactiveServiceDiscovery.EVENT_PROPERTY_RESPONSE_OBJ,serviceReference)
 						
-						.build()
+						.buildImmutableMap()
 					);
 				}
 			}

@@ -126,7 +126,7 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 		List<IQueueTask> currentProcessedTaskList
 	)
 	{
-		if(! queue.getConfigurationPropertyBlock().getProperty(SERVICE_ID + ".run" , Boolean.class, false))
+		if(! queue.getConfigurationPropertyBlock().getPropertyOrDefault(SERVICE_ID + ".run" , Boolean.class, false))
 		{
 			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			return;
@@ -160,14 +160,14 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 			boolean filterDelete = CommonEventDispatcherHelper.getSwitchFromPropertyBlock(queue.getConfigurationPropertyBlock(), "eventtypefilter", "delete");
 			boolean filterModify = CommonEventDispatcherHelper.getSwitchFromPropertyBlock(queue.getConfigurationPropertyBlock(), "eventtypefilter", "modify");
 			
-			String fileNameFilter = queue.getConfigurationPropertyBlock().getProperty("filefilter", String.class, "");
+			String fileNameFilter = queue.getConfigurationPropertyBlock().getPropertyOrDefault("filefilter", String.class, "");
 			IQueue notifyQueue = queue.getConfigurationPropertyBlock().getProperty("notifyqueue",IQueue.class);
 			
 			watchService = FileSystems.getDefault().newWatchService();
 			queue.getStatePropertyBlock().setAdapter(WatchService.class, watchService);
 			path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE,StandardWatchEventKinds.ENTRY_MODIFY); // if path not exists: java.nio.file.NoSuchFileException
 			List<Event> list = new ArrayList<Event>();
-			while(queue.getConfigurationPropertyBlock().getProperty(SERVICE_ID + ".run" , Boolean.class, false))
+			while(queue.getConfigurationPropertyBlock().getPropertyOrDefault(SERVICE_ID + ".run" , Boolean.class, false))
 			{
 				try
 				{
@@ -269,7 +269,7 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 					}
 				}
 			}
-			if(! queue.getConfigurationPropertyBlock().getProperty(SERVICE_ID + ".run" , Boolean.class, false))
+			if(! queue.getConfigurationPropertyBlock().getPropertyOrDefault(SERVICE_ID + ".run" , Boolean.class, false))
 			{
 				taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
 				return;

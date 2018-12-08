@@ -21,6 +21,7 @@ import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
+import org.sodeac.eventdispatcher.api.IPropertyBlock.IMapBuilder;
 import org.sodeac.eventdispatcher.common.queueservice.ScopeSingleSyncCallServiceAdapter;
 import org.sodeac.eventdispatcher.common.queueservice.ScopeTimeoutAdapter;
 import org.sodeac.eventdispatcher.common.queueservice.TimeOutServiceAdapter;
@@ -30,7 +31,6 @@ import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveServiceRef
 import org.sodeac.eventdispatcher.common.reactiveservice.api.TimeOut;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 @Component
 (
@@ -55,12 +55,12 @@ public class ReactiveServiceDiscoveryScope implements IQueueController,IOnQueueA
 		// broadcast
 		queue.postEvent
 		(
-			IReactiveServiceDiscovery.EVENT_TOPIC_REQUEST, ImmutableMap.<String, Object>builder()
+			IReactiveServiceDiscovery.EVENT_TOPIC_REQUEST, IMapBuilder.<String, Object>newBuilderInstance()
 			
 				.put(IReactiveServiceDiscovery.EVENT_PROPERTY_REQUEST_ID,((IQueueSessionScope)queue).getScopeId())
 				.put(IReactiveServiceDiscovery.EVENT_PROPERTY_REQUEST_OBJ,queue.getConfigurationPropertyBlock().getAdapter(DiscoverReactiveServiceRequest.class))
 			
-			.build()
+			.buildImmutableMap()
 		);
 	}
 

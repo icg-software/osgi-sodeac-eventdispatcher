@@ -10,8 +10,11 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -37,13 +40,13 @@ public interface IPropertyBlock
 	/**
 	 * register a set of properties
 	 * 
-	 * @param propertySet with new values
+	 * @param propertyEntrySet with new values
 	 * @param ignoreIfEquals switch to skip updates, if old value equals new value 
 	 * 
 	 * @return a map of previously property registered
 	 * @throws PropertyIsLockedException
 	 */
-	public Map<String,Object> setPropertySet(Map<String,Object> propertySet, boolean ignoreIfEquals) throws PropertyIsLockedException;
+	public Map<String,Object> setPropertyEntrySet(Set<Entry<String,Object>> propertyEntrySet, boolean ignoreIfEquals) throws PropertyIsLockedException;
 	
 	/**
 	 * getter for registered property with associated {@code key}
@@ -73,18 +76,18 @@ public interface IPropertyBlock
 	 * 
 	 * @return the property with specified key, or {@code defaultValue} if property does not exists
 	 */
-	public <T> T getProperty(String key, Class<T> resultClass, T defaultValue);
+	public <T> T getPropertyOrDefault(String key, Class<T> resultClass, T defaultValue);
 	
 	/**
 	 * typed getter for registered property with associated {@code key}
 	 * 
 	 * @param key the key whose associated property is to be returned
 	 * @param resultClass the type of property
-	 * @param propertyFactoryIfNotExists factory to create property value if not exists , and store with specified key 
+	 * @param propertySupplierIfNotExists factory to create property value if not exists , and store with specified key 
 	 * 
 	 * @return the property with specified key
 	 */
-	public default <T> T getProperty(String key, Class<T> resultClass, Supplier<T> propertyFactoryIfNotExists)
+	public default <T> T getPropertyOrSupply(String key, Class<T> resultClass, Supplier<T> propertySupplierIfNotExists)
 	{
 		final Conplier<T> valueContainer = new Conplier<T>()
 		{
@@ -108,7 +111,7 @@ public interface IPropertyBlock
 		{
 			@SuppressWarnings("unchecked")
 			@Override
-			public void handle(IPropertyBlock propertyBlock)
+			public void accept(IPropertyBlock propertyBlock)
 			{
 				if(propertyBlock.containsKey(key))
 				{
@@ -116,7 +119,7 @@ public interface IPropertyBlock
 				}
 				else
 				{
-					valueContainer.accept(propertyFactoryIfNotExists.get());
+					valueContainer.accept(propertySupplierIfNotExists.get());
 					propertyBlock.setProperty(key, valueContainer.get());
 				}
 			}
@@ -133,7 +136,8 @@ public interface IPropertyBlock
 	 * 
 	 * @return the property with specified key, or {@code defaultValue} if property does not exists
 	 */
-	public String getNonEmptyStringProperty(String key, String defaultValue);
+	public String getPropertyOrDefaultAsString(String key, String defaultValue);
+	
 	/**
 	 * remove registered property with associated {@code key}
 	 * 
@@ -152,11 +156,11 @@ public interface IPropertyBlock
 	public Map<String, Object> getProperties();
 	
 	/**
-	 * returns an immutable  {@link java.util.List} of all registered property keys
+	 * returns an immutable  {@link java.util.Set} of all registered property keys
 	 * 
 	 * @return
 	 */
-	public List<String> getPropertyKeys();
+	public Set<String> getPropertyKeySet();
 	
 	/**
 	 * Returns true if this propertyblock contains no entries
@@ -215,7 +219,7 @@ public interface IPropertyBlock
 	 */
 	public default <T> T getAdapter(Class<T> adapterClass, Supplier<T> adapterFactoryIfNotExists)
 	{
-		return getProperty(adapterClass.getCanonicalName(), adapterClass, adapterFactoryIfNotExists);
+		return getPropertyOrSupply(adapterClass.getCanonicalName(), adapterClass, adapterFactoryIfNotExists);
 	}
 	
 	/**
@@ -246,4 +250,73 @@ public interface IPropertyBlock
 	public IPropertyBlockOperationResult operate(IPropertyBlockOperationHandler operationHandler);
 	
 	public interface Conplier<T> extends Supplier<T>,Consumer<T>{}
+	
+	/**
+	 * helper to build a map in static way
+	 * 
+	 * @author Sebastian Palarus
+	 *
+	 */
+	public static interface IMapBuilder<K,V>
+	{
+		/**
+		 * put key-value pair to map
+		 * 
+		 * @param key key with which the specified value is to be associated
+		 * @param value value to be associated with the specified key
+		 * 
+		 * @return builder
+		 */
+		public IMapBuilder<K,V> put(K key, V value);
+		
+		/**
+		 * put all mapping to map
+		 * 
+		 * @param m mappings to be stored in this map
+		 * @return builder
+		 */
+		public IMapBuilder<K,V> putAll(Map<? extends K, ? extends V> m);
+		
+		/**
+		 * create immutable map
+		 * 
+		 * @return immutableMap
+		 */
+		public Map<K,V> buildImmutableMap();
+		
+		/**
+		 * creates builder to build a map
+		 * 
+		 * @return builder to build a map
+		 */
+		public static <K, V> IMapBuilder<K,V> newBuilderInstance()
+		{
+			IMapBuilder<K, V> builder = new IMapBuilder<K, V>()
+			{
+				Map<K,V> map = new HashMap<K,V>();
+				
+				@Override
+				public IMapBuilder<K, V> put(K key, V value)
+				{
+					map.put(key, value);
+					return this;
+				}
+				
+				@Override
+				public IMapBuilder<K,V> putAll(Map<? extends K, ? extends V> m)
+				{
+					this.map.putAll(m);
+					return this;
+				}
+				
+				@Override
+				public Map<K, V> buildImmutableMap()
+				{
+					return Collections.unmodifiableMap(map);
+				}
+			};
+			
+			return builder;
+		}
+	}
 }

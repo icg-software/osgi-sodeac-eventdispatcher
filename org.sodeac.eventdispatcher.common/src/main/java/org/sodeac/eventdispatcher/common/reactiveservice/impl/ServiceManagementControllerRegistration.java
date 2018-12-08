@@ -227,7 +227,7 @@ public class ServiceManagementControllerRegistration
 			{
 				
 				@Override
-				public void handle(IPropertyBlock propertyBlock)
+				public void accept(IPropertyBlock propertyBlock)
 				{
 					if(propertyBlock.getAdapter(IReactiveServiceRegistrationAdapter.class) == null)
 					{

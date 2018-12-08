@@ -28,7 +28,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import org.osgi.framework.Filter;
 import org.osgi.service.event.Event;
 import org.osgi.service.log.LogService;
-import org.sodeac.multichainlist.LinkageDefinition;
 import org.sodeac.multichainlist.MultiChainList;
 import org.sodeac.multichainlist.Partition;
 import org.sodeac.multichainlist.Node;
@@ -39,7 +38,6 @@ import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueue.ILinkageDefinitionDispatcherBuilder;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IGauge;
 import org.sodeac.eventdispatcher.api.ILinkageDefinitionDispatcher;
@@ -132,13 +130,13 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.configurationPropertyBlock = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
 		if(configurationProperties != null)
 		{
-			this.configurationPropertyBlock.setPropertySet(configurationProperties, false);
+			this.configurationPropertyBlock.setPropertyEntrySet(configurationProperties.entrySet(), false);
 		}
 		
 		this.statePropertyBlock = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
 		if(stateProperties != null)
 		{
-			this.statePropertyBlock.setPropertySet(stateProperties,false);
+			this.statePropertyBlock.setPropertyEntrySet(stateProperties.entrySet(),false);
 		}
 		
 		this.metrics.registerGauge(new IGauge<Long>()

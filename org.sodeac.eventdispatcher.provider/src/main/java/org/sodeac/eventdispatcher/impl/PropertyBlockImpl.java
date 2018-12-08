@@ -13,9 +13,11 @@ package org.sodeac.eventdispatcher.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -48,13 +50,13 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	}
 	
 	public static final Map<String,Object> EMPTY_PROPERTIES = Collections.unmodifiableMap(new HashMap<String,Object>());
-	public static final List<String> EMPTY_KEYLIST = Collections.unmodifiableList(new ArrayList<String>());
+	public static final Set<String> EMPTY_KEYSET = Collections.unmodifiableSet(new HashSet<String>());
 	
 	private List<IPropertyBlockModifyListener> modifyListenerList = null;
 	
 	private Map<String,Object> properties;
 	private Map<String,Object> propertiesCopy;
-	private List<String> keyList;
+	private Set<String> keySet;
 	
 	private ReentrantReadWriteLock propertiesLock;
 	private ReadLock propertiesReadLock;
@@ -92,7 +94,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			}
 			this.properties.put(key, value);
 			this.propertiesCopy = null;
-			this.keyList = null;
+			this.keySet = null;
 			if((this.modifyListenerList != null) && (!modifyListenerList.isEmpty()))
 			{
 				listenerList = new ArrayList<IPropertyBlockModifyListener>(this.modifyListenerList);
@@ -135,14 +137,14 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	}
 	
 	@Override
-	public Map<String, Object> setPropertySet(Map<String, Object> propertySet, boolean ignoreIfEquals)
+	public Map<String, Object> setPropertyEntrySet(Set<Entry<String,Object>> propertyEntrySet, boolean ignoreIfEquals)
 	{
-		if(propertySet == null)
+		if(propertyEntrySet == null)
 		{
 			return EMPTY_PROPERTIES;
 		}
 		
-		if(propertySet.isEmpty())
+		if(propertyEntrySet.isEmpty())
 		{
 			return EMPTY_PROPERTIES;
 		}
@@ -156,11 +158,11 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		{
 			if(this.lockedProperties != null)
 			{
-				for(String key : propertySet.keySet())
+				for(Entry<String,Object> entry : propertyEntrySet)
 				{
-					if(this.lockedProperties.get(key) != null)
+					if(this.lockedProperties.get(entry.getKey()) != null)
 					{
-						throw new PropertyIsLockedException("writable access to \"" + key + "\" denied by lock");
+						throw new PropertyIsLockedException("writable access to \"" + entry.getKey() + "\" denied by lock");
 					}
 				}
 			}
@@ -176,7 +178,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			Object newValue;
 			boolean update;
 			
-			for(Entry<String,Object> propertyEntry : propertySet.entrySet())
+			for(Entry<String,Object> propertyEntry : propertyEntrySet)
 			{
 				if(this.properties.containsKey(propertyEntry.getKey()))
 				{
@@ -228,7 +230,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			if (modifyList != null)
 			{
 				this.propertiesCopy = null;
-				this.keyList = null;
+				this.keySet = null;
 				listenerList = this.modifyListenerList;
 			}
 		}
@@ -334,7 +336,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			
 			this.properties.remove(key);
 			this.propertiesCopy = null;
-			this.keyList = null;
+			this.keySet = null;
 			if((this.modifyListenerList != null) && (!modifyListenerList.isEmpty()))
 			{
 				listenerList = new ArrayList<IPropertyBlockModifyListener>(this.modifyListenerList);
@@ -378,21 +380,21 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	}
 
 	@Override
-	public List<String> getPropertyKeys()
+	public Set<String> getPropertyKeySet()
 	{
 		if(this.properties == null)
 		{
-			return EMPTY_KEYLIST;
+			return EMPTY_KEYSET;
 		}
 		
 		try
 		{
 			propertiesReadLock.lock();
-			if(this.keyList == null)
+			if(this.keySet == null)
 			{
-				this.keyList = Collections.unmodifiableList(new ArrayList<String>(this.properties.keySet()));
+				this.keySet = Collections.unmodifiableSet(this.properties.keySet());
 			}
-			return this.keyList;
+			return this.keySet;
 		}
 		finally 
 		{
@@ -474,7 +476,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 				modifyList.add(new PropertyBlockModifyItem(IPropertyBlockModifyListener.ModifyType.REMOVE, oldEntry.getKey(), oldEntry.getValue(), null));
 			}
 			
-			this.keyList = null;
+			this.keySet = null;
 			this.properties.clear();
 			this.propertiesCopy = null;
 		}
@@ -571,7 +573,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 				this.modifyListenerList.clear();
 				this.modifyListenerList = null;
 			}
-			this.keyList = null;
+			this.keySet = null;
 			this.properties =  null;
 			this.propertiesCopy = null;
 		}
@@ -636,7 +638,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T getProperty(String key,Class<T> resultClass, T defaultValue)
+	public <T> T getPropertyOrDefault(String key,Class<T> resultClass, T defaultValue)
 	{
 		T typedValue = defaultValue;
 		Object current = getProperty(key);
@@ -652,7 +654,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	}
 	
 	@Override
-	public String getNonEmptyStringProperty(String key, String defaultValue)
+	public String getPropertyOrDefaultAsString(String key, String defaultValue)
 	{
 		String stringValue = defaultValue;
 		Object current = getProperty(key);
@@ -770,7 +772,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		propertiesWriteLock.lock();
 		try
 		{
-			operationHandler.handle(wrapper);
+			operationHandler.accept(wrapper);
 			
 			if((wrapper.modifyList != null) && (!wrapper.modifyList.isEmpty()) && (!((this.modifyListenerList == null) || this.modifyListenerList.isEmpty())))
 			{
@@ -854,7 +856,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			}
 			PropertyBlockImpl.this.properties.put(key, value);
 			PropertyBlockImpl.this.propertiesCopy = null;
-			PropertyBlockImpl.this.keyList = null;
+			PropertyBlockImpl.this.keySet = null;
 			if(this.modifyList == null)
 			{
 				this.modifyList = new ArrayList<PropertyBlockModifyItem>();
@@ -865,21 +867,21 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		}
 
 		@Override
-		public Map<String, Object> setPropertySet(Map<String, Object> propertySet, boolean ignoreIfEquals) throws PropertyIsLockedException
+		public Map<String,Object> setPropertyEntrySet(Set<Entry<String,Object>> propertyEntrySet, boolean ignoreIfEquals) throws PropertyIsLockedException
 		{
 			checkValid();
 			
-			if(propertySet == null)
+			if(propertyEntrySet == null)
 			{
 				return EMPTY_PROPERTIES;
 			}
 			
-			if(propertySet.isEmpty())
+			if(propertyEntrySet.isEmpty())
 			{
 				return EMPTY_PROPERTIES;
 			}
 			Map<String,Object> oldValue = new HashMap<String,Object>();
-			for(Entry<String, Object> entry : propertySet.entrySet())
+			for(Entry<String, Object> entry : propertyEntrySet)
 			{
 				oldValue.put(entry.getKey(),this.setProperty(entry.getKey(), entry.getValue()));
 			}
@@ -913,7 +915,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public <T> T getProperty(String key, Class<T> resultClass, T defaultValue)
+		public <T> T getPropertyOrDefault(String key, Class<T> resultClass, T defaultValue)
 		{
 			checkValid();
 			
@@ -931,7 +933,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		}
 
 		@Override
-		public String getNonEmptyStringProperty(String key, String defaultValue)
+		public String getPropertyOrDefaultAsString(String key, String defaultValue)
 		{
 			checkValid();
 			
@@ -982,7 +984,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 				
 			PropertyBlockImpl.this.properties.remove(key);
 			PropertyBlockImpl.this.propertiesCopy = null;
-			PropertyBlockImpl.this.keyList = null;
+			PropertyBlockImpl.this.keySet = null;
 			
 			if(this.modifyList == null)
 			{
@@ -1017,20 +1019,20 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		}
 
 		@Override
-		public List<String> getPropertyKeys()
+		public Set<String> getPropertyKeySet()
 		{
 			checkValid();
 			
 			if(PropertyBlockImpl.this.properties == null)
 			{
-				return EMPTY_KEYLIST;
+				return EMPTY_KEYSET;
 			}
 			
-			if(PropertyBlockImpl.this.keyList == null)
+			if(PropertyBlockImpl.this.keySet == null)
 			{
-				PropertyBlockImpl.this.keyList = Collections.unmodifiableList(new ArrayList<String>(PropertyBlockImpl.this.properties.keySet()));
+				PropertyBlockImpl.this.keySet = Collections.unmodifiableSet(PropertyBlockImpl.this.properties.keySet());
 			}
-			return PropertyBlockImpl.this.keyList;
+			return PropertyBlockImpl.this.keySet;
 		}
 
 		@Override
@@ -1091,7 +1093,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 				
 			}
 				
-			PropertyBlockImpl.this.keyList = null;
+			PropertyBlockImpl.this.keySet = null;
 			PropertyBlockImpl.this.properties.clear();
 			PropertyBlockImpl.this.propertiesCopy = null;
 			
@@ -1133,7 +1135,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		{
 			checkValid();
 			
-			operationHandler.handle(this);
+			operationHandler.accept(this);
 			
 			if(this.modifyList == null)
 			{

@@ -1035,18 +1035,18 @@ public class BaseContainerTest extends AbstractTest
 		IPropertyBlock propertyBlock = this.eventDispatcher.createPropertyBlock();
 		
 		assertEquals("size of propertyBlockItems should be empty", 0, propertyBlock.getProperties().size());
-		assertEquals("size of propertyBlockItems should be empty", 0, propertyBlock.getPropertyKeys().size());
+		assertEquals("size of propertyBlockItems should be empty", 0, propertyBlock.getPropertyKeySet().size());
 		
 		propertyBlock.setProperty("key1", "value1");
 		propertyBlock.setProperty("key2", "value2");
 		
 		assertEquals("size of propertyBlockItems should have correct size", 2, propertyBlock.getProperties().size());
-		assertEquals("size of propertyBlockItemsKeys should have correct size", 2, propertyBlock.getPropertyKeys().size());
+		assertEquals("size of propertyBlockItemsKeys should have correct size", 2, propertyBlock.getPropertyKeySet().size());
 		
 		boolean foundKey1 = false;
 		boolean foundKey2 = false;
 		
-		for(String key : propertyBlock.getPropertyKeys())
+		for(String key : propertyBlock.getPropertyKeySet())
 		{
 			if(key.equals("key1"))
 			{
@@ -1069,11 +1069,11 @@ public class BaseContainerTest extends AbstractTest
 		propertyBlock.removeProperty("key1");
 		
 		assertEquals("size of propertyBlockItems should have correct size", 1, propertyBlock.getProperties().size());
-		assertEquals("size of propertyBlockItemsKeys should have correct size", 1, propertyBlock.getPropertyKeys().size());
+		assertEquals("size of propertyBlockItemsKeys should have correct size", 1, propertyBlock.getPropertyKeySet().size());
 		
 		foundKey2 = false;
 		
-		for(String key : propertyBlock.getPropertyKeys())
+		for(String key : propertyBlock.getPropertyKeySet())
 		{
 			assertFalse("key1 should not be found",key.equals("key1"));
 			if(key.equals("key2"))
@@ -1092,10 +1092,10 @@ public class BaseContainerTest extends AbstractTest
 		propertyBlock.clear();
 		
 		assertEquals("size of propertyBlockItems should have correct size", 0, propertyBlock.getProperties().size());
-		assertEquals("size of propertyBlockItemsKeys should have correct size", 0, propertyBlock.getPropertyKeys().size());
+		assertEquals("size of propertyBlockItemsKeys should have correct size", 0, propertyBlock.getPropertyKeySet().size());
 		
 		
-		for(String key : propertyBlock.getPropertyKeys())
+		for(String key : propertyBlock.getPropertyKeySet())
 		{
 			assertFalse("key1 should not be found",key.equals("key1"));
 			assertFalse("key2 should not be found",key.equals("key2"));

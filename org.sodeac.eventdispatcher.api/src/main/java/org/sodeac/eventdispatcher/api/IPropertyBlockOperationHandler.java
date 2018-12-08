@@ -10,18 +10,20 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+import java.util.function.Consumer;
+
 /**
  * An operation handler for complex editing a property block in atomic way.
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IPropertyBlockOperationHandler
+public interface IPropertyBlockOperationHandler extends Consumer<IPropertyBlock>
 {
 	/**
 	 * Edit property block in locked mode. Use {@code propertyBlock}  to read or edit block.
 	 * 
 	 * @param propertyBlock wrapper to origin blocked property block.
 	 */
-	public void handle(IPropertyBlock propertyBlock);
+	public void accept(IPropertyBlock propertyBlock);
 }

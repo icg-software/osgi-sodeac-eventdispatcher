@@ -12,6 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.osgi.service.event.Event;
 
@@ -60,11 +61,11 @@ public interface IQueuedEvent
 	public Object getProperty(String key);
 	
 	/**
-	 * get list of all property-keys for {@link IQueuedEvent}
+	 * get aset of all property-keys for {@link IQueuedEvent}
 	 * 
-	 * @return list of all property-keys for {@link IQueuedEvent}
+	 * @return set of all property-keys for {@link IQueuedEvent}
 	 */
-	public List<String> getPropertyKeys();
+	public Set<String> getPropertyKeySet();
 	
 	/**
 	 * get immutable deep copy of property-keys {@link IQueuedEvent}
