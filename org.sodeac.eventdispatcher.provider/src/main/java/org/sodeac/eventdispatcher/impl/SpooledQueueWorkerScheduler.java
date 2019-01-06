@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.impl;
 
+import org.sodeac.multichainlist.ChainView;
 import org.sodeac.multichainlist.MultiChainList;
 import org.sodeac.multichainlist.Node;
 import org.sodeac.multichainlist.Snapshot;
@@ -26,6 +27,7 @@ public class SpooledQueueWorkerScheduler extends Thread
 		this.eventDispatcher = eventDispatcher;
 		
 		this.scheduledList = new MultiChainList<SpooledQueueWorker>();
+		this.scheduledChain = scheduledList.createChainView(null);
 		
 		super.setDaemon(true);
 		super.setName(SpooledQueueWorkerScheduler.class.getSimpleName() + " " + eventDispatcher.getId());
@@ -38,11 +40,12 @@ public class SpooledQueueWorkerScheduler extends Thread
 	
 	private Object waitMonitor = new Object();
 	private MultiChainList<SpooledQueueWorker> scheduledList = null;
+	private ChainView<SpooledQueueWorker> scheduledChain = null;
 	
 	protected SpooledQueueWorker scheduleQueueWorker(QueueImpl queue, long wakeUpTime)
 	{
 		SpooledQueueWorker spooledQueueWorker = new SpooledQueueWorker(queue, wakeUpTime);
-		scheduledList.append(spooledQueueWorker);
+		scheduledList.defaultLinker().append(spooledQueueWorker);
 		
 		synchronized (this.waitMonitor)
 		{
@@ -90,7 +93,7 @@ public class SpooledQueueWorkerScheduler extends Thread
 			
 			try
 			{
-				Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createImmutableSnapshot(null, null);
+				Snapshot<SpooledQueueWorker> snapshot = this.scheduledChain.createImmutableSnapshot();
 				try
 				{
 					for(Node<SpooledQueueWorker> workerNode : snapshot.nodeIterable())
@@ -98,18 +101,18 @@ public class SpooledQueueWorkerScheduler extends Thread
 						worker = workerNode.getElement();
 						if(worker == null)
 						{
-							workerNode.unlink(snapshot.getChainName());
+							workerNode.unlinkFromChain(snapshot.getChainName());
 							continue;
 						}
 						if(! worker.isValid())
 						{
-							workerNode.unlink(snapshot.getChainName());							
+							workerNode.unlinkFromChain(snapshot.getChainName());							
 							continue;
 						}
 						if(now >= worker.getWakeupTime())
 						{
 							worker.getQueue().notifyOrCreateWorker(worker.getWakeupTime());
-							workerNode.unlink(snapshot.getChainName());
+							workerNode.unlinkFromChain(snapshot.getChainName());
 							continue;
 						}
 						if(minWakeUpTimestamp < 0)
@@ -179,12 +182,12 @@ public class SpooledQueueWorkerScheduler extends Thread
 				log(LogService.LOG_ERROR,"Error while run SpooledQueueWorkerScheduler",e);
 			}
 		}
-		Snapshot<SpooledQueueWorker> snapshot = this.scheduledList.createImmutableSnapshot(null, null); // TODO clearAlll
+		Snapshot<SpooledQueueWorker> snapshot = this.scheduledChain.createImmutableSnapshot(); // TODO clearAlll
 		try
 		{
 			for(Node<SpooledQueueWorker> workerNode : snapshot.nodeIterable())
 			{
-				workerNode.unlink(snapshot.getChainName());
+				workerNode.unlinkFromChain(snapshot.getChainName());
 			}
 		}
 		finally 

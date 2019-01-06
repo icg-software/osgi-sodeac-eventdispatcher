@@ -28,8 +28,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import org.osgi.framework.Filter;
 import org.osgi.service.event.Event;
 import org.osgi.service.log.LogService;
+import org.sodeac.multichainlist.ChainView;
 import org.sodeac.multichainlist.MultiChainList;
-import org.sodeac.multichainlist.Partition;
 import org.sodeac.multichainlist.Node;
 import org.sodeac.multichainlist.Snapshot;
 
@@ -83,16 +83,24 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.serviceListWriteLock = this.serviceListLock.writeLock();
 		
 		this.eventQueue = new MultiChainList<>();
-		this.mainPartitionEventQueue = this.eventQueue.getPartition(null);
+		this.chainEventQueue = this.eventQueue.createChainView(null,this.eventQueue.getPartition(null));
+		this.eventQueue.lockDefaultLinker();
+		this.chainEventQueue.lockDefaultLinker();
 		
 		this.newEventQueue = new MultiChainList<>();
-		this.mainPartitionNewEventQueue = this.newEventQueue.getPartition(null);
-				
+		this.chainNewEventQueue = this.newEventQueue.createChainView(null,this.newEventQueue.getPartition(null));
+		this.newEventQueue.lockDefaultLinker();
+		this.chainNewEventQueue.lockDefaultLinker();
+		
 		this.removedEventQueue = new MultiChainList<>();
-		this.mainPartitionRemovedEventQueue = this.removedEventQueue.getPartition(null);
+		this.chainRemovedEventQueue = this.removedEventQueue.createChainView(null,this.removedEventQueue.getPartition(null));
+		this.removedEventQueue.lockDefaultLinker();
+		this.chainRemovedEventQueue.lockDefaultLinker();
 		
 		this.fireEventQueue = new MultiChainList<>();
-		this.mainPartitionFireEventQueue = this.fireEventQueue.getPartition(null);
+		this.chainFireEventQueue = this.fireEventQueue.createChainView(null,this.fireEventQueue.getPartition(null));
+		this.fireEventQueue.lockDefaultLinker();
+		this.chainFireEventQueue.lockDefaultLinker();
 		
 		this.eventListLock = new ReentrantReadWriteLock(true);
 		this.eventListReadLock = this.eventListLock.readLock();
@@ -227,16 +235,16 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected WriteLock eventListWriteLock;
 	
 	protected MultiChainList<QueuedEventImpl> eventQueue = null;
-	protected Partition<QueuedEventImpl> mainPartitionEventQueue = null;
+	protected ChainView<QueuedEventImpl> chainEventQueue = null;
 	
 	protected MultiChainList<QueuedEventImpl> newEventQueue = null;
-	protected Partition<QueuedEventImpl> mainPartitionNewEventQueue = null;
+	protected ChainView<QueuedEventImpl> chainNewEventQueue = null;
 	
 	protected MultiChainList<QueuedEventImpl> removedEventQueue = null;
-	protected Partition<QueuedEventImpl> mainPartitionRemovedEventQueue = null;
+	protected ChainView<QueuedEventImpl> chainRemovedEventQueue = null;
 	
 	protected MultiChainList<Event> fireEventQueue = null;
-	protected Partition<Event> mainPartitionFireEventQueue = null;
+	protected ChainView<Event> chainFireEventQueue = null;
 	
 	protected List<TaskContainer> taskList = null;
 	protected Map<String,TaskContainer> taskIndex = null;
@@ -303,7 +311,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 			queuedEvent = new QueuedEventImpl(event,this);
 			queuedEvent.setScheduleResultObject(resultImpl);
-			queuedEvent.setNode(this.eventQueue.append(queuedEvent));
+			queuedEvent.setNode(this.eventQueue.defaultLinker().append(queuedEvent));
 		}
 		finally 
 		{
@@ -315,7 +323,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			newScheduledListUpdate = true; 
-			this.newEventQueue.append(queuedEvent);
+			this.newEventQueue.defaultLinker().append(queuedEvent);
 		}
 		finally 
 		{
@@ -354,7 +362,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				queuedEvent.setScheduleResultObject(resultImpl);
 				queuedEventList.add(queuedEvent);
 			}
-			Node<QueuedEventImpl>[] nodes = eventQueue.append(queuedEventList);
+			Node<QueuedEventImpl>[] nodes = eventQueue.defaultLinker().appendAll(queuedEventList);
 			for(int i = 0; i < nodes.length; i++)
 			{
 				queuedEventList.get(i).setNode(nodes[i]);
@@ -371,7 +379,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			newScheduledListUpdate = true;
 			for(QueuedEventImpl queuedEvent : queuedEventList)
 			{
-				this.newEventQueue.append(queuedEvent);
+				this.newEventQueue.defaultLinker().append(queuedEvent);
 			}
 		}
 		finally 
@@ -1557,7 +1565,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			return null;
 		}
 		
-		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createImmutableSnapshot(null, null);
+		Snapshot<QueuedEventImpl> snapshot = this.chainEventQueue.createImmutableSnapshot();
 		try
 		{
 			for(IQueuedEvent queuedEvent : snapshot)
@@ -1588,7 +1596,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	{
 		boolean match = true;
 		List<IQueuedEvent> queryList = new ArrayList<>();
-		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createImmutableSnapshot(null, null);
+		Snapshot<QueuedEventImpl> snapshot = this.chainEventQueue.createImmutableSnapshot();
 		try
 		{
 			for(IQueuedEvent queuedEvent : snapshot)
@@ -1689,11 +1697,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	{
 		if(Thread.currentThread() == this.queueWorker)
 		{
-			Snapshot snaphot = (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshot();
+			Snapshot snaphot = (Snapshot)this.eventQueue.createChainView(chainName).createImmutableSnapshot();
 			snapshotsByWorkerThread.add(snaphot);
 			return snaphot;
 		}
-		return (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshot();
+		return (Snapshot)this.eventQueue.createChainView(chainName).createImmutableSnapshot();
 	}
 
 	@Override
@@ -1701,11 +1709,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	{
 		if(Thread.currentThread() == this.queueWorker)
 		{
-			Snapshot snaphot = (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshotPoll();
+			Snapshot snaphot = (Snapshot)this.eventQueue.createChainView(chainName).createImmutableSnapshotPoll();
 			snapshotsByWorkerThread.add(snaphot);
 			return snaphot;
 		}
-		return (Snapshot)this.eventQueue.chain(chainName).createImmutableSnapshotPoll();
+		return (Snapshot)this.eventQueue.createChainView(chainName).createImmutableSnapshotPoll();
 	}
 	
 	public void closeWorkerSnapshots()
@@ -1745,7 +1753,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 		
 		QueuedEventImpl removed = null;
-		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createImmutableSnapshot(null, null);
+		Snapshot<QueuedEventImpl> snapshot = this.chainEventQueue.createImmutableSnapshot();
 		
 		try
 		{
@@ -1753,7 +1761,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				if(uuid.equals(event.getUUID()))
 				{
-					event.getNode().unlinkAllChains();
+					event.getNode().unlinkFromAllChains();
 					removed = event;
 					break;
 				}
@@ -1779,7 +1787,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			removedEventListUpdate = true;
-			this.removedEventQueue.append(removed);
+			this.removedEventQueue.defaultLinker().append(removed);
 		}
 		finally 
 		{
@@ -1806,7 +1814,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 		boolean removed = false;
 		List<QueuedEventImpl> removeEventList = new ArrayList<QueuedEventImpl>(uuidList.size());
-		Snapshot<QueuedEventImpl> snapshot = this.eventQueue.createImmutableSnapshot(null, null);
+		Snapshot<QueuedEventImpl> snapshot = this.chainEventQueue.createImmutableSnapshot();
 		try
 		{
 			for(QueuedEventImpl event : snapshot)
@@ -1824,7 +1832,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 					if(uuid.equals(event.getUUID()))
 					{
 						removed = true;
-						event.getNode().unlinkAllChains();
+						event.getNode().unlinkFromAllChains();
 						removeEventList.add(event);
 					}
 				}
@@ -1852,7 +1860,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			removedEventListUpdate = true;
 			for(QueuedEventImpl event : removeEventList)
 			{
-				this.removedEventQueue.append(event);
+				this.removedEventQueue.defaultLinker().append(event);
 			}
 		}
 		finally 
@@ -2082,11 +2090,24 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}
 		catch (Exception e) {}
 		
+
+		try
+		{
+			chainEventQueue.dispose();
+		}
+		catch (Exception e) { log(LogService.LOG_ERROR, "dispose event queue", e);}
+		
 		try
 		{
 			eventQueue.dispose();
 		}
 		catch (Exception e) { log(LogService.LOG_ERROR, "dispose event queue", e);}
+		
+		try
+		{
+			chainNewEventQueue.dispose();
+		}
+		catch (Exception e) {log(LogService.LOG_ERROR, "dispose new event queue", e);}
 		
 		try
 		{
@@ -2096,9 +2117,21 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		try
 		{
+			chainRemovedEventQueue.dispose();
+		}
+		catch (Exception e) {log(LogService.LOG_ERROR, "dispose removed event queue", e);}
+		
+		try
+		{
 			removedEventQueue.dispose();
 		}
 		catch (Exception e) {log(LogService.LOG_ERROR, "dispose removed event queue", e);}
+		
+		try
+		{
+			chainFireEventQueue.dispose();
+		}
+		catch (Exception e) {log(LogService.LOG_ERROR, "dispose fire vent queue", e);}
 		
 		try
 		{
@@ -2210,7 +2243,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			newScheduledListUpdate = false;
-			return this.newEventQueue.createImmutableSnapshotPoll(null, null);
+			return this.chainNewEventQueue.createImmutableSnapshotPoll();
 		}
 		finally 
 		{
@@ -2229,7 +2262,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			removedEventListUpdate = false;
-			return this.removedEventQueue.createImmutableSnapshotPoll(null, null);
+			return this.chainRemovedEventQueue.createImmutableSnapshotPoll();
 		}
 		finally 
 		{
@@ -2248,7 +2281,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			firedEventListUpdate = false;
-			return this.fireEventQueue.createImmutableSnapshotPoll(null, null);
+			return this.chainFireEventQueue.createImmutableSnapshotPoll();
 		}
 		finally 
 		{
@@ -2288,7 +2321,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			try
 			{
 				firedEventListUpdate = true;
-				this.fireEventQueue.append(event);
+				this.fireEventQueue.defaultLinker().append(event);
 			}
 			finally 
 			{
@@ -2319,7 +2352,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		try
 		{
 			firedEventListUpdate = true;
-			this.fireEventQueue.append(event);
+			this.fireEventQueue.defaultLinker().append(event);
 		}
 		finally 
 		{
@@ -2438,15 +2471,15 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				return false;
 			}
 			
-			if(this.mainPartitionNewEventQueue.getSize(null) > 0)
+			if(this.chainNewEventQueue.getSize() > 0)
 			{
 				return false;
 			}
-			if(this.mainPartitionRemovedEventQueue.getSize(null) > 0)
+			if(this.chainRemovedEventQueue.getSize() > 0)
 			{
 				return false;
 			}
-			if(this.mainPartitionFireEventQueue.getSize(null) > 0)
+			if(this.chainFireEventQueue.getSize() > 0)
 			{
 				return false;
 			}
@@ -2504,15 +2537,15 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				return false;
 			}
-			if(this.mainPartitionNewEventQueue.getSize(null) > 0)
+			if(this.chainNewEventQueue.getSize() > 0)
 			{
 				return false;
 			}
-			if(this.mainPartitionRemovedEventQueue.getSize(null) > 0)
+			if(this.chainRemovedEventQueue.getSize() > 0)
 			{
 				return false;
 			}
-			if(this.mainPartitionFireEventQueue.getSize(null) > 0)
+			if(this.chainFireEventQueue.getSize() > 0)
 			{
 				return false;
 			}

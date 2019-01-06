@@ -9,6 +9,8 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.impl.QueueImpl.LinkageDefinitionDispatcherBuilder.AddLinkageDefinition;
 import org.sodeac.multichainlist.IListEventHandler;
 import org.sodeac.multichainlist.LinkageDefinition;
+import org.sodeac.multichainlist.Linker;
+import org.sodeac.multichainlist.MultiChainList;
 import org.sodeac.multichainlist.Partition.LinkMode;
 
 public class LinkageDefinitionDispatcherImpl implements IListEventHandler<IQueuedEvent>
@@ -26,28 +28,19 @@ public class LinkageDefinitionDispatcherImpl implements IListEventHandler<IQueue
 	}
 
 	@Override
-	public List<LinkageDefinition<IQueuedEvent>> onCreateNodeList
-	(
-		Collection<IQueuedEvent> elements,
-		List<LinkageDefinition<IQueuedEvent>> linkageDefinitions, LinkMode linkMode
-	)
+	public Linker<IQueuedEvent>.LinkageDefinitionContainer onCreateNodes(MultiChainList<IQueuedEvent> multiChainList, Collection<IQueuedEvent> elements, Linker<IQueuedEvent>.LinkageDefinitionContainer linkageDefinitionContainer, LinkMode linkMode)
 	{
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<LinkageDefinition<IQueuedEvent>> onCreateNode
-	(
-		IQueuedEvent element,
-		List<LinkageDefinition<IQueuedEvent>> linkageDefinitions, LinkMode linkMode
-	)
+	public void onDisposeNode(MultiChainList<IQueuedEvent> multiChainList, IQueuedEvent element)
 	{
 		// TODO Auto-generated method stub
-		return null;
+		
 	}
 
-	@Override
-	public void onClearNode(IQueuedEvent element){}
+	
 
 }
