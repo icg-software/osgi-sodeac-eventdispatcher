@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Sebastian Palarus
+ * Copyright (c) 2018, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
@@ -37,9 +38,9 @@ import org.sodeac.eventdispatcher.api.IQueuedEvent;
 	service={IQueueController.class,EventHandler.class,IQueueService.class},
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_ID+"="+ ReReScheduleJobInWorkTestService1.QUEUE_ID,
-		IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL+"=5000",
-		IQueueService.PROPERTY_SERVICE_ID+"=" + ReReScheduleJobInWorkTestService1.SERVICE_ID,
+		EventDispatcherConstants.PROPERTY_QUEUE_ID+"="+ ReReScheduleJobInWorkTestService1.QUEUE_ID,
+		EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL+"=5000",
+		EventDispatcherConstants.PROPERTY_SERVICE_ID+"=" + ReReScheduleJobInWorkTestService1.SERVICE_ID,
 		EventConstants.EVENT_TOPIC+"=" + ReReScheduleJobInWorkTestService1.SHARED_OBJECT_EVENT,
 		EventConstants.EVENT_TOPIC+"=" + ReReScheduleJobInWorkTestService1.DATA_VALUE_EVENT
 	}

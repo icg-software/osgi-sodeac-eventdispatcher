@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Sebastian Palarus
+ * Copyright (c) 2018, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -28,12 +28,11 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.sodeac.eventdispatcher.api.IQueueController;
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IPropertyBlockOperationHandler;
-import org.sodeac.eventdispatcher.api.IPropertyBlockOperationResult;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveService;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.IReactiveServiceRegistrationAdapter;
@@ -140,7 +139,7 @@ public class ServiceManagementControllerRegistration
 			registration.registrationController = new RegistrationController(registration);
 			
 			Dictionary<String, Object> properties = new Hashtable<String, Object>();
-			properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, registration.serviceQueueId);
+			properties.put(EventDispatcherConstants.PROPERTY_QUEUE_ID, registration.serviceQueueId);
 			registration.controllerServiceRegistration = this.context.getBundleContext().registerService(IQueueController.class, registration.registrationController, properties);
 			
 			this.services.add(registration);

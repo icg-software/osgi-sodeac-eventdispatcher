@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -67,13 +67,14 @@ import org.sodeac.eventdispatcher.api.QueueComponentConfiguration.BoundedByQueue
 import org.sodeac.eventdispatcher.api.QueueComponentConfiguration.BoundedByQueueId;
 import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.EventType;
 import org.sodeac.eventdispatcher.api.ICounter;
 import org.sodeac.eventdispatcher.api.IQueueController;
 
 import com.codahale.metrics.MetricRegistry;
 
-@Component(name="EventDispatcherProvider" ,service=IEventDispatcher.class,property={IEventDispatcher.PROPERTY_ID + "=" + IEventDispatcher.DEFAULT_DISPATCHER_ID})
+@Component(name="EventDispatcherProvider" ,service=IEventDispatcher.class,property={EventDispatcherConstants.PROPERTY_ID + "=" + EventDispatcherConstants.DEFAULT_DISPATCHER_ID})
 public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDispatcher
 {
 	private Map<String,QueueImpl> queueIndex;
@@ -109,7 +110,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	
 	private PropertyBlockImpl propertyBlock;
 	
-	private String id = IEventDispatcher.DEFAULT_DISPATCHER_ID;
+	private String id = EventDispatcherConstants.DEFAULT_DISPATCHER_ID;
 	
 	private volatile ComponentContext context = null;
 	private volatile boolean activated = false;
@@ -383,9 +384,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			this.context = context;
 			
-			if((properties.get(IEventDispatcher.PROPERTY_ID) != null) && (properties.get(IEventDispatcher.PROPERTY_ID).toString().length() > 0))
+			if((properties.get(EventDispatcherConstants.PROPERTY_ID) != null) && (properties.get(EventDispatcherConstants.PROPERTY_ID).toString().length() > 0))
 			{
-				this.id = properties.get(IEventDispatcher.PROPERTY_ID).toString();
+				this.id = properties.get(EventDispatcherConstants.PROPERTY_ID).toString();
 			}
 			
 			this.queueIndexReadLock.lock();
@@ -822,22 +823,22 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				List<QueueComponentConfiguration> controllerConfigurationList = configurable.configureQueueController();
 				
-				String eventDispatcherId = IEventDispatcher.DEFAULT_DISPATCHER_ID;
+				String eventDispatcherId = EventDispatcherConstants.DEFAULT_DISPATCHER_ID;
 				if
 				(
-					(properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID) != null) && 
-					(properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID) instanceof String) && 
-					(!((String)properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID)).isEmpty())
+					(properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID) != null) && 
+					(properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID) instanceof String) && 
+					(!((String)properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID)).isEmpty())
 				)
 				{
-					eventDispatcherId = (String)properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID);
+					eventDispatcherId = (String)properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID);
 				}
 				
 				List<String> queueIdList = getQueueIdsFromServiceProperties(properties);
 				List<String> queueConfigurationFilterList = getQueueConfigurationFilterListFromServiceProperties(properties);
 				Boolean dispableMetrics = getDisableMetricsFromServiceProperties(properties);
-				String name = properties.get(IQueueController.PROPERTY_JMX_NAME) instanceof String ? (String)properties.get(IQueueController.PROPERTY_JMX_NAME) : null;
-				String category = properties.get(IQueueController.PROPERTY_JMX_CATEGORY) instanceof String ? (String)properties.get(IQueueController.PROPERTY_JMX_CATEGORY) : null;
+				String name = properties.get(EventDispatcherConstants.PROPERTY_JMX_NAME) instanceof String ? (String)properties.get(EventDispatcherConstants.PROPERTY_JMX_NAME) : null;
+				String category = properties.get(EventDispatcherConstants.PROPERTY_JMX_CATEGORY) instanceof String ? (String)properties.get(EventDispatcherConstants.PROPERTY_JMX_CATEGORY) : null;
 				if(queueIdList != null)
 				{
 					for(String queueId : queueIdList)
@@ -882,11 +883,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					}
 				}
 				
-				if(properties.get(IQueueController.PROPERTY_CONSUME_EVENT_TOPIC) != null)
+				if(properties.get(EventDispatcherConstants.PROPERTY_CONSUME_EVENT_TOPIC) != null)
 				{
-					if(properties.get(IQueueController.PROPERTY_CONSUME_EVENT_TOPIC) instanceof String)
+					if(properties.get(EventDispatcherConstants.PROPERTY_CONSUME_EVENT_TOPIC) instanceof String)
 					{
-						String topic = (String)properties.get(IQueueController.PROPERTY_CONSUME_EVENT_TOPIC);
+						String topic = (String)properties.get(EventDispatcherConstants.PROPERTY_CONSUME_EVENT_TOPIC);
 						if(! topic.isEmpty())
 						{
 							controllerConfigurationList.add(new QueueComponentConfiguration.SubscribeEvent(topic,null,EventType.PublishedByEventAdmin));
@@ -895,9 +896,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					else
 					{
 						List<String> topicList = new ArrayList<String>();
-						if(properties.get(IQueueController.PROPERTY_CONSUME_EVENT_TOPIC) instanceof List)
+						if(properties.get(EventDispatcherConstants.PROPERTY_CONSUME_EVENT_TOPIC) instanceof List)
 						{
-							for(Object item : (List<?>)properties.get(IQueueController.PROPERTY_CONSUME_EVENT_TOPIC))
+							for(Object item : (List<?>)properties.get(EventDispatcherConstants.PROPERTY_CONSUME_EVENT_TOPIC))
 							{
 								if(item == null)
 								{
@@ -916,9 +917,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 							}
 						}
 						
-						if(properties.get(IQueueController.PROPERTY_CONSUME_EVENT_TOPIC) instanceof String[])
+						if(properties.get(EventDispatcherConstants.PROPERTY_CONSUME_EVENT_TOPIC) instanceof String[])
 						{
-							for(Object item : (String[])properties.get(IQueueController.PROPERTY_CONSUME_EVENT_TOPIC))
+							for(Object item : (String[])properties.get(EventDispatcherConstants.PROPERTY_CONSUME_EVENT_TOPIC))
 							{
 								if(item == null)
 								{
@@ -1622,22 +1623,22 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				List<QueueComponentConfiguration> serviceConfigurationList = configurable.configureQueueService();
 				
-				String eventDispatcherId = IEventDispatcher.DEFAULT_DISPATCHER_ID;
+				String eventDispatcherId = EventDispatcherConstants.DEFAULT_DISPATCHER_ID;
 				if
 				(
-					(properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID) != null) && 
-					(properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID) instanceof String) && 
-					(!((String)properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID)).isEmpty())
+					(properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID) != null) && 
+					(properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID) instanceof String) && 
+					(!((String)properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID)).isEmpty())
 				)
 				{
-					eventDispatcherId = (String)properties.get(IEventDispatcher.PROPERTY_DISPATCHER_ID);
+					eventDispatcherId = (String)properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID);
 				}
 				
 				List<String> queueIdList = getQueueIdsFromServiceProperties(properties);
 				List<String> queueConfigurationFilterList = getQueueConfigurationFilterListFromServiceProperties(properties);
 				Boolean dispableMetrics = getDisableMetricsFromServiceProperties(properties);
-				String name = properties.get(IQueueController.PROPERTY_JMX_NAME) instanceof String ? (String)properties.get(IQueueController.PROPERTY_JMX_NAME) : null;
-				String category = properties.get(IQueueController.PROPERTY_JMX_CATEGORY) instanceof String ? (String)properties.get(IQueueController.PROPERTY_JMX_CATEGORY) : null;
+				String name = properties.get(EventDispatcherConstants.PROPERTY_JMX_NAME) instanceof String ? (String)properties.get(EventDispatcherConstants.PROPERTY_JMX_NAME) : null;
+				String category = properties.get(EventDispatcherConstants.PROPERTY_JMX_CATEGORY) instanceof String ? (String)properties.get(EventDispatcherConstants.PROPERTY_JMX_CATEGORY) : null;
 				if(queueIdList != null)
 				{
 					for(String queueId : queueIdList)
@@ -1690,7 +1691,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				try
 				{
-					serviceId = (String)properties.get(IQueueService.PROPERTY_SERVICE_ID);
+					serviceId = (String)properties.get(EventDispatcherConstants.PROPERTY_SERVICE_ID);
 				}
 				catch (Exception e) 
 				{
@@ -1699,7 +1700,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				try
 				{
-					startDelayMS = getMillis(properties.get(IQueueService.PROPERTY_START_DELAY_MS),startDelayMS);
+					startDelayMS = getMillis(properties.get(EventDispatcherConstants.PROPERTY_START_DELAY_MS),startDelayMS);
 				}
 				catch (Exception e) 
 				{
@@ -1708,7 +1709,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				try
 				{
-					timeOutMS = getMillis(properties.get(IQueueService.PROPERTY_TIMEOUT_MS),timeOutMS);
+					timeOutMS = getMillis(properties.get(EventDispatcherConstants.PROPERTY_TIMEOUT_MS),timeOutMS);
 				}
 				catch (Exception e) 
 				{
@@ -1717,7 +1718,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				try
 				{
-					hbTimeOutMS = getMillis(properties.get(IQueueService.PROPERTY_HB_TIMEOUT_MS),hbTimeOutMS);
+					hbTimeOutMS = getMillis(properties.get(EventDispatcherConstants.PROPERTY_HB_TIMEOUT_MS),hbTimeOutMS);
 				}
 				catch (Exception e) 
 				{
@@ -1727,7 +1728,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				
 				try
 				{
-					periodicRepetitionInterval = getMillis(properties.get(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL),periodicRepetitionInterval);
+					periodicRepetitionInterval = getMillis(properties.get(EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL),periodicRepetitionInterval);
 				}
 				catch (Exception e)
 				{
@@ -2443,18 +2444,18 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private List<String> getQueueIdsFromServiceProperties(Map<String,?> properties)
 	{
 		List<String> queueIdList = null;
-		if(properties.get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof String)
+		if(properties.get(EventDispatcherConstants.PROPERTY_QUEUE_ID) instanceof String)
 		{
 			queueIdList = new ArrayList<String>();
-			queueIdList.add((String)properties.get(IEventDispatcher.PROPERTY_QUEUE_ID));
+			queueIdList.add((String)properties.get(EventDispatcherConstants.PROPERTY_QUEUE_ID));
 		}
-		else if(properties.get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof String[])
+		else if(properties.get(EventDispatcherConstants.PROPERTY_QUEUE_ID) instanceof String[])
 		{
-			queueIdList = new ArrayList<String>(Arrays.asList((String[])properties.get(IEventDispatcher.PROPERTY_QUEUE_ID)));
+			queueIdList = new ArrayList<String>(Arrays.asList((String[])properties.get(EventDispatcherConstants.PROPERTY_QUEUE_ID)));
 		}
-		else if(properties.get(IEventDispatcher.PROPERTY_QUEUE_ID) instanceof Collection<?>)
+		else if(properties.get(EventDispatcherConstants.PROPERTY_QUEUE_ID) instanceof Collection<?>)
 		{
-			queueIdList = new ArrayList<String>((Collection<String>)properties.get(IEventDispatcher.PROPERTY_QUEUE_ID));
+			queueIdList = new ArrayList<String>((Collection<String>)properties.get(EventDispatcherConstants.PROPERTY_QUEUE_ID));
 		}
 		
 		return queueIdList;
@@ -2464,25 +2465,25 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private List<String> getQueueConfigurationFilterListFromServiceProperties(Map<String,?> properties)
 	{
 		List<String> queueConfigurationFilterList = null;
-		if(properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String)
+		if(properties.get(EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER) instanceof String)
 		{
 			queueConfigurationFilterList = new ArrayList<String>();
-			queueConfigurationFilterList.add((String)properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
+			queueConfigurationFilterList.add((String)properties.get(EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER));
 		}
-		else if(properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof String[])
+		else if(properties.get(EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER) instanceof String[])
 		{
-			queueConfigurationFilterList = new ArrayList<String>(Arrays.asList((String[])properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER)));
+			queueConfigurationFilterList = new ArrayList<String>(Arrays.asList((String[])properties.get(EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER)));
 		}
-		else if(properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER) instanceof Collection<?>)
+		else if(properties.get(EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER) instanceof Collection<?>)
 		{
-			queueConfigurationFilterList = new ArrayList<String>((Collection<String>)properties.get(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER));
+			queueConfigurationFilterList = new ArrayList<String>((Collection<String>)properties.get(EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER));
 		}
 		return queueConfigurationFilterList;
 	}
 	
 	private Boolean getDisableMetricsFromServiceProperties(Map<String,?> properties)
 	{
-		Object disableMetricsProperty = properties.get(IQueueController.PROPERTY_DISABLE_METRICS);
+		Object disableMetricsProperty = properties.get(EventDispatcherConstants.PROPERTY_DISABLE_METRICS);
 		if(disableMetricsProperty != null)
 		{
 			if(disableMetricsProperty instanceof Boolean)

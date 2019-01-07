@@ -21,15 +21,6 @@ import java.util.List;
 public interface IQueueTask
 {
 	
-	public static final String PROPERTY_KEY_TASK_ID 				= "TASK_ID"				;
-	public static final String PROPERTY_KEY_EXECUTION_TIMESTAMP 	= "EXECUTION_TIMESTAMP"	;
-	public static final String PROPERTY_KEY_TIMEOUT_VALUE 			= "TIMEOUT_VALUE"		;
-	public static final String PROPERTY_KEY_HEARTBEAT_TIMEOUT 		= "HEARTBEAT_TIMEOUT "	;
-	public static final String PROPERTY_KEY_THROWED_EXCEPTION		= "THROWED_EXCEPTION"	;
-	
-	
-	public static final long DEFAULT_TIMEOUT = 1080 * 1080;
-	
 	/**
 	 * invoked onetime at initialization of this task
 	 * 

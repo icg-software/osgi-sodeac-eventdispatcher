@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
@@ -50,9 +51,9 @@ import org.sodeac.eventdispatcher.itest.components.TracingEvent;
 	service={IQueueController.class,EventHandler.class,IQueueService.class},
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_ID+"="+BaseServiceTestController.QUEUE_ID,
-		IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL+"="+ BaseServiceTestController.PRI,
-		IQueueService.PROPERTY_SERVICE_ID+"=" + BaseServiceTestController.SERVICE_ID,
+		EventDispatcherConstants.PROPERTY_QUEUE_ID+"="+BaseServiceTestController.QUEUE_ID,
+		EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL+"="+ BaseServiceTestController.PRI,
+		EventDispatcherConstants.PROPERTY_SERVICE_ID+"=" + BaseServiceTestController.SERVICE_ID,
 		EventConstants.EVENT_TOPIC+"=" + BaseServiceTestController.RESCHEDULE_EVENT1,
 		EventConstants.EVENT_TOPIC+"=" + BaseServiceTestController.RESCHEDULE_EVENT2,
 		EventConstants.EVENT_TOPIC+"=" + BaseServiceTestController.RESCHEDULE_EVENT3

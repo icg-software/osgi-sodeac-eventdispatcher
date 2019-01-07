@@ -16,13 +16,13 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.EventAdmin;
 import org.sodeac.eventdispatcher.api.IQueueController;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
 import org.sodeac.eventdispatcher.itest.components.scope.ScopeTestSimpleManagementController;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -96,9 +96,9 @@ public class HotDeployTest extends AbstractTest
 		
 		
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
-		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "hotdeployservicetest");
-		properties.put(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
-		properties.put(IQueueService.PROPERTY_SERVICE_ID, "hotdeployservice");
+		properties.put(EventDispatcherConstants.PROPERTY_QUEUE_ID, "hotdeployservicetest");
+		properties.put(EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
+		properties.put(EventDispatcherConstants.PROPERTY_SERVICE_ID, "hotdeployservice");
 		ServiceRegistration<IQueueController> regController = bundleContext.registerService(IQueueController.class, service, properties);
 		ServiceRegistration<IQueueService> regService = bundleContext.registerService(IQueueService.class, service, properties);
 		
@@ -160,9 +160,9 @@ public class HotDeployTest extends AbstractTest
 		
 		
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
-		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "hotdeployservicetest");
-		properties.put(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
-		properties.put(IQueueService.PROPERTY_SERVICE_ID, "hotdeployservice");
+		properties.put(EventDispatcherConstants.PROPERTY_QUEUE_ID, "hotdeployservicetest");
+		properties.put(EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
+		properties.put(EventDispatcherConstants.PROPERTY_SERVICE_ID, "hotdeployservice");
 		ServiceRegistration<IQueueService> regService = bundleContext.registerService(IQueueService.class, service, properties);
 		ServiceRegistration<IQueueController> regController = bundleContext.registerService(IQueueController.class, service, properties);
 		try
@@ -222,9 +222,9 @@ public class HotDeployTest extends AbstractTest
 		
 		
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
-		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "hotdeployservicetest");
-		properties.put(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
-		properties.put(IQueueService.PROPERTY_SERVICE_ID, "hotdeployservice");
+		properties.put(EventDispatcherConstants.PROPERTY_QUEUE_ID, "hotdeployservicetest");
+		properties.put(EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
+		properties.put(EventDispatcherConstants.PROPERTY_SERVICE_ID, "hotdeployservice");
 		ServiceRegistration<IQueueService> regService = bundleContext.registerService(IQueueService.class, service, properties);
 		ServiceRegistration<IQueueController> regController = bundleContext.registerService(IQueueController.class, service, properties);
 		try
@@ -285,9 +285,9 @@ public class HotDeployTest extends AbstractTest
 		
 		
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
-		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "hotdeployservicetest");
-		properties.put(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
-		properties.put(IQueueService.PROPERTY_SERVICE_ID, "hotdeployservice");
+		properties.put(EventDispatcherConstants.PROPERTY_QUEUE_ID, "hotdeployservicetest");
+		properties.put(EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL, "3000");
+		properties.put(EventDispatcherConstants.PROPERTY_SERVICE_ID, "hotdeployservice");
 		ServiceRegistration<IQueueController> regController = bundleContext.registerService(IQueueController.class, service, properties);
 		ServiceRegistration<IQueueService> regService = bundleContext.registerService(IQueueService.class, service, properties);
 		

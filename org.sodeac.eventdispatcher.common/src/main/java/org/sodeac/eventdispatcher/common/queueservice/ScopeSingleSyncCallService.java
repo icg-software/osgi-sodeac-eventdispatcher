@@ -1,9 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2019 Sebastian Palarus
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v2.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v20.html
+ *
+ * Contributors:
+ *     Sebastian Palarus - initial API and implementation
+ *******************************************************************************/
 package org.sodeac.eventdispatcher.common.queueservice;
 
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
@@ -17,9 +27,9 @@ import org.sodeac.eventdispatcher.api.IQueueSessionScope;
 	service=IQueueService.class,
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER+"="+"(org.sodeac.eventdispatcher.common.queueservice.ScopeSingleSyncCallServiceAdapter=*)",
-		IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL+"= 108000",
-		IQueueService.PROPERTY_SERVICE_ID+"=" + ScopeSingleSyncCallService.SERVICE_ID
+		EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER+"="+"(org.sodeac.eventdispatcher.common.queueservice.ScopeSingleSyncCallServiceAdapter=*)",
+		EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL+"= 108000",
+		EventDispatcherConstants.PROPERTY_SERVICE_ID+"=" + ScopeSingleSyncCallService.SERVICE_ID
 	}
 )
 public class ScopeSingleSyncCallService implements IQueueService

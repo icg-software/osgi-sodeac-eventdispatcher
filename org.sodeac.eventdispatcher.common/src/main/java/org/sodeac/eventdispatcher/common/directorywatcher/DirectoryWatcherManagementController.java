@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -26,15 +26,13 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.LogService;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IDescriptionProvider;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.IQueueSessionScope;
-import org.sodeac.eventdispatcher.api.IQueuedEvent;
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
-import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IStateInfoProvider;
 import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
@@ -45,7 +43,7 @@ import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
 	service				= IQueueController.class					,
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER+"="+"("+DirectoryWatcherConfigurationAdapter.ADAPTER_CLASS + "=*)",
+		EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER+"="+"("+DirectoryWatcherConfigurationAdapter.ADAPTER_CLASS + "=*)",
 	}
 )
 public class DirectoryWatcherManagementController implements IQueueController,IOnQueueAttach,IOnQueueDetach,IOnQueueSignal,IDescriptionProvider,IStateInfoProvider
@@ -190,7 +188,7 @@ public class DirectoryWatcherManagementController implements IQueueController,IO
 				
 				configurationProperties.put("eventtopic", watcherConfiguration.getEventtopic());
 				configurationProperties.put("notifyqueue", watcherConfiguration.getWatchEventNotifyQueue());
-				configurationProperties.put(IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER, DirectoryWatcherServiceController.SERVICE_ID);
+				configurationProperties.put(EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER, DirectoryWatcherServiceController.SERVICE_ID);
 				
 				queue.createSessionScope
 				(

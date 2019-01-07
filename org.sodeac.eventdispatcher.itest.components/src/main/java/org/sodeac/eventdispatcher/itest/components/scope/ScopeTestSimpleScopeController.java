@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.sodeac.eventdispatcher.api.IQueueController;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
@@ -37,7 +38,7 @@ import org.sodeac.eventdispatcher.itest.components.base.AbstractBaseTestControll
 	service={IQueueController.class},
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER+"="+"("+IEventDispatcher.PROPERTY_QUEUE_TYPE + "=" + ScopeTestSimpleManagementController.SCOPE_TYPE + ")",
+		EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER+"="+"("+EventDispatcherConstants.PROPERTY_QUEUE_TYPE + "=" + ScopeTestSimpleManagementController.SCOPE_TYPE + ")",
 	}
 )
 public class ScopeTestSimpleScopeController extends AbstractBaseTestController implements IQueueController,IOnQueuedEvent,IOnRemovedEvent,IOnTaskDone,IOnTaskError,IOnTaskTimeout,IOnFiredEvent,IOnQueueAttach,IOnQueueDetach,IOnQueueSignal

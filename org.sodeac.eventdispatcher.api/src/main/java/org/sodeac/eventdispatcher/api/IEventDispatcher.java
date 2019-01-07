@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -24,13 +24,6 @@ import org.osgi.service.event.Event;
  */
 public interface IEventDispatcher
 {
-	public static final String PROPERTY_ID = "id";
-	public static final String PROPERTY_QUEUE_ID = "queueid";
-	public static final String PROPERTY_QUEUE_MATCH_FILTER = "queueconfigurationmatchfilter";
-	public static final String PROPERTY_QUEUE_TYPE = "queuetype";
-	public static final String PROPERTY_DISPATCHER_ID = "dispatcherid";
-	public static final String DEFAULT_DISPATCHER_ID = "default";
-	
 	/**
 	 * queue an osgi event to addressed queue
 	 * 

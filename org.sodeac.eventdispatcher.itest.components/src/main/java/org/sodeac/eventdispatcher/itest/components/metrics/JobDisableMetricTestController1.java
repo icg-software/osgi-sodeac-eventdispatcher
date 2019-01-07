@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,7 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 
 @Component
@@ -26,9 +27,9 @@ import org.sodeac.eventdispatcher.api.IEventDispatcher;
 	service={IQueueController.class,EventHandler.class},
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_ID+"="+JobDisableMetricTestController1.QUEUE_ID,
+		EventDispatcherConstants.PROPERTY_QUEUE_ID+"="+JobDisableMetricTestController1.QUEUE_ID,
 		EventConstants.EVENT_TOPIC+"=" + JobDisableMetricTestController1.RUN_EVENT,
-		IQueueController.PROPERTY_DISABLE_METRICS+"=true"
+		EventDispatcherConstants.PROPERTY_DISABLE_METRICS+"=true"
 	}
 )
 public class JobDisableMetricTestController1 extends JobMetricTestController

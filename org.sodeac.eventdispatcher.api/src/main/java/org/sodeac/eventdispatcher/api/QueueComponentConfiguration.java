@@ -32,7 +32,7 @@ public abstract class QueueComponentConfiguration implements Serializable
 		super();
 	}
 	
-	private String dispatcherId = IEventDispatcher.DEFAULT_DISPATCHER_ID;
+	private String dispatcherId = EventDispatcherConstants.DEFAULT_DISPATCHER_ID;
 	private String name =  null;
 	private String category = null;
 	private MetricsRequirement queueMetricsRequirement = MetricsRequirement.PreferMetrics;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.sodeac.eventdispatcher.api.IQueueController;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
@@ -128,7 +129,7 @@ public class MetricTest extends AbstractTest
 		// register new controller
 		
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
-		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "test123");
+		properties.put(EventDispatcherConstants.PROPERTY_QUEUE_ID, "test123");
 		ServiceRegistration<IQueueController> reg = bundleContext.registerService(IQueueController.class, new IQueueController(){}, properties);
 	
 	
@@ -164,7 +165,7 @@ public class MetricTest extends AbstractTest
 		// register new controller
 		
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
-		properties.put(IEventDispatcher.PROPERTY_QUEUE_ID, "test123");
+		properties.put(EventDispatcherConstants.PROPERTY_QUEUE_ID, "test123");
 		ServiceRegistration<IQueueController> reg = bundleContext.registerService(IQueueController.class, new IQueueController(){}, properties);
 	
 	

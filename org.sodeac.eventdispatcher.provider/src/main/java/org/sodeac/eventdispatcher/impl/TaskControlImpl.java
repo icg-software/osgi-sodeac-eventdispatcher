@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -13,15 +13,15 @@ package org.sodeac.eventdispatcher.impl;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.sodeac.eventdispatcher.api.ITaskControl;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
-import org.sodeac.eventdispatcher.api.IQueueTask;
 
 public class TaskControlImpl implements ITaskControl
 {
 	private volatile boolean done = false;
 	private volatile boolean inTimeOut = false;
 	private volatile long executionTimeStamp = 0L;
-	private volatile long timeOutValue = IQueueTask.DEFAULT_TIMEOUT;
+	private volatile long timeOutValue = EventDispatcherConstants.DEFAULT_TIMEOUT;
 	private volatile long heartBeatTimeOut = -1;
 	
 	private volatile boolean stopTaskOnTimeout = false;
@@ -39,9 +39,9 @@ public class TaskControlImpl implements ITaskControl
 		this.executionTimeStamp = System.currentTimeMillis();
 		this.taskPropertyBlock = taskPropertyBlock;
 		
-		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
-		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
-		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
+		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
+		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
 		
 		this.executionTimestampLock = new ReentrantLock();
 	}
@@ -131,7 +131,7 @@ public class TaskControlImpl implements ITaskControl
 			{
 				this.executionTimeStamp = executionTimeStamp;
 				this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.WORKER;
-				this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+				this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
 				
 				if(inRun)
 				{
@@ -167,7 +167,7 @@ public class TaskControlImpl implements ITaskControl
 			
 			this.executionTimeStamp = executionTimeStamp;
 			this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.PERODIC;
-			this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+			this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
 		}
 		finally 
 		{
@@ -182,7 +182,7 @@ public class TaskControlImpl implements ITaskControl
 		{
 			this.executionTimeStamp = executionTimeStamp;
 			this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.SCHEDULE;
-			this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+			this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
 		}
 		finally 
 		{
@@ -207,7 +207,7 @@ public class TaskControlImpl implements ITaskControl
 			{
 				this.executionTimeStamp = executionTimeStamp;
 				this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.RESCHEDULE;
-				this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);	
+				this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);	
 			}
 		}
 		finally 
@@ -227,7 +227,7 @@ public class TaskControlImpl implements ITaskControl
 	{
 		long old = this.timeOutValue;
 		this.timeOutValue = timeOut;
-		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
+		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
 		return old;
 	}
 	
@@ -241,7 +241,7 @@ public class TaskControlImpl implements ITaskControl
 	{
 		long old =  this.heartBeatTimeOut;
 		this.heartBeatTimeOut = heartBeatTimeOut;
-		this.taskPropertyBlock.setProperty(IQueueTask.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
+		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
 		return old;
 	}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Sebastian Palarus
+ * Copyright (c) 2018, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,7 @@ import java.util.UUID;
 
 import org.osgi.service.component.annotations.Component;
 import org.sodeac.eventdispatcher.api.IQueueController;
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
@@ -44,9 +44,9 @@ import com.google.common.collect.ImmutableMap;
 	service= {IReactiveServiceDiscovery.class,IQueueController.class},
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_ID+"="+IReactiveServiceDiscovery.QUEUE_ID,
-		IEventDispatcher.PROPERTY_DISPATCHER_ID+"=" +IEventDispatcher.DEFAULT_DISPATCHER_ID,
-		IQueueController.PROPERTY_CONSUME_EVENT_TOPIC+"=" + IReactiveServiceDiscovery.EVENT_TOPIC_RESPONSE,
+		EventDispatcherConstants.PROPERTY_QUEUE_ID+"="+IReactiveServiceDiscovery.QUEUE_ID,
+		EventDispatcherConstants.PROPERTY_DISPATCHER_ID+"=" + EventDispatcherConstants.DEFAULT_DISPATCHER_ID,
+		EventDispatcherConstants.PROPERTY_CONSUME_EVENT_TOPIC+"=" + IReactiveServiceDiscovery.EVENT_TOPIC_RESPONSE,
 	}
 )
 public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueueController,IOnQueuedEvent,IOnQueueAttach, IOnQueueDetach
@@ -57,7 +57,7 @@ public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueu
 	@Override
 	public void onQueueAttach(IQueue queue)
 	{
-		if(queue.getDispatcher().getId().equals(IEventDispatcher.DEFAULT_DISPATCHER_ID) && queue.getId().equals(QUEUE_ID))
+		if(queue.getDispatcher().getId().equals(EventDispatcherConstants.DEFAULT_DISPATCHER_ID) && queue.getId().equals(QUEUE_ID))
 		{
 			// cache and cacheloader
 			LoadingCache<CacheableRequest, List<IReactiveServiceReference>> serviceCache = CacheBuilder.newBuilder()

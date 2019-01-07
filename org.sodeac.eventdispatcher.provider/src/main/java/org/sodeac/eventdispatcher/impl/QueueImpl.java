@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -38,6 +38,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IGauge;
 import org.sodeac.eventdispatcher.api.ILinkageDefinitionDispatcher;
@@ -895,11 +896,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 			if(configuration.getPeriodicRepetitionIntervalMS() < 0L)
 			{
-				servicePropertyBlock.removeProperty(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL);
+				servicePropertyBlock.removeProperty(EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL);
 			}
 			else
 			{
-				servicePropertyBlock.setProperty(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL, configuration.getPeriodicRepetitionIntervalMS());
+				servicePropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL, configuration.getPeriodicRepetitionIntervalMS());
 			}
 			
 			this.scheduleTask(serviceId, queueService, servicePropertyBlock, System.currentTimeMillis() + delay, timeout, hbtimeout);
@@ -1363,7 +1364,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			
 			taskControl.setStopOnTimeOutFlag(stopOnTimeOut);
 			
-			propertyBlock.setProperty(IQueueTask.PROPERTY_KEY_TASK_ID, id);
+			propertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_TASK_ID, id);
 			
 			taskContainer.setId(id);
 			taskContainer.setTask(task);

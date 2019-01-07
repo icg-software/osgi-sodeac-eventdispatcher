@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -36,7 +36,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.sodeac.eventdispatcher.api.IQueueController;
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
@@ -54,10 +54,10 @@ import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
 	service				=  {IQueueController.class,IQueueService.class}		,
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER+"=("+IEventDispatcher.PROPERTY_QUEUE_MATCH_FILTER + "=" + DirectoryWatcherServiceController.SERVICE_ID + ")",
-		IQueueService.PROPERTY_SERVICE_ID + "=" + DirectoryWatcherServiceController.SERVICE_ID,
-		IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL + "=0",
-		IQueueService.PROPERTY_TIMEOUT_MS + "=" + (1000L * 3600L * 24L * 365L * 1080L), 
+		EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER+"=("+EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER + "=" + DirectoryWatcherServiceController.SERVICE_ID + ")",
+		EventDispatcherConstants.PROPERTY_SERVICE_ID + "=" + DirectoryWatcherServiceController.SERVICE_ID,
+		EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL + "=0",
+		EventDispatcherConstants.PROPERTY_TIMEOUT_MS + "=" + (1000L * 3600L * 24L * 365L * 1080L), 
 	}
 )
 public class DirectoryWatcherServiceController implements IQueueController, IOnTaskError, IOnQueueAttach, IOnQueueDetach, IQueueService

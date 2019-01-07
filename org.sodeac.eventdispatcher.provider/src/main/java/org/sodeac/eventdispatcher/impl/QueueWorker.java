@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IPeriodicQueueTask;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnQueuedEventList;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
@@ -505,9 +506,9 @@ public class QueueWorker extends Thread
 									
 									try
 									{
-										if(dueTask.getPropertyBlock().getProperty(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL) != null)
+										if(dueTask.getPropertyBlock().getProperty(EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL) != null)
 										{
-											Object pri = dueTask.getPropertyBlock().getProperty(IQueueService.PROPERTY_PERIODIC_REPETITION_INTERVAL);
+											Object pri = dueTask.getPropertyBlock().getProperty(EventDispatcherConstants.PROPERTY_PERIODIC_REPETITION_INTERVAL);
 											if(pri instanceof String)
 											{
 												periodicRepetitionInterval = Long.parseLong(((String)pri).trim());
@@ -548,7 +549,7 @@ public class QueueWorker extends Thread
 								dueTask.getTask().run(eventQueue, dueTask.getMetrics(), dueTask.getPropertyBlock(), dueTask.getTaskControl() ,currentProcessedTaskList);
 								
 								dueTask.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_FINISHED_TIMESTAMP, System.currentTimeMillis());
-								dueTask.getPropertyBlock().setProperty(IQueueTask.PROPERTY_KEY_THROWED_EXCEPTION, null);
+								dueTask.getPropertyBlock().setProperty(EventDispatcherConstants.PROPERTY_KEY_THROWED_EXCEPTION, null);
 								
 								if(timerContextTask != null)
 								{
@@ -583,7 +584,7 @@ public class QueueWorker extends Thread
 								this.currentTimeOutTimeStamp = null;
 								this.currentRunningTask = null;
 								
-								runningTask.getPropertyBlock().setProperty(IQueueTask.PROPERTY_KEY_THROWED_EXCEPTION, e);
+								runningTask.getPropertyBlock().setProperty(EventDispatcherConstants.PROPERTY_KEY_THROWED_EXCEPTION, e);
 								log(LogService.LOG_ERROR,"Exception while process task " + dueTask,e);
 								if(timerContextTask != null)
 								{
@@ -659,7 +660,7 @@ public class QueueWorker extends Thread
 								this.currentRunningTask = null;
 								
 								Exception exc = new Exception(e.getMessage(),e);
-								runningTask.getPropertyBlock().setProperty(IQueueTask.PROPERTY_KEY_THROWED_EXCEPTION, exc);
+								runningTask.getPropertyBlock().setProperty(EventDispatcherConstants.PROPERTY_KEY_THROWED_EXCEPTION, exc);
 								log(LogService.LOG_ERROR,"Error while process task " + dueTask,e);
 								if(timerContextTask != null)
 								{

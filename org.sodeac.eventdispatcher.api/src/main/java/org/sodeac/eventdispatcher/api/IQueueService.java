@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -17,12 +17,5 @@ package org.sodeac.eventdispatcher.api;
  *
  */
 public interface IQueueService extends IQueueTask, IQueueComponent
-{
-	public static final String PROPERTY_QUEUE_ID 						= IEventDispatcher.PROPERTY_QUEUE_ID;
-	
-	public static final String PROPERTY_SERVICE_ID 						= "serviceid";
-	public static final String PROPERTY_TIMEOUT_MS 						= "servicetimeout";
-	public static final String PROPERTY_HB_TIMEOUT_MS 					= "serviceheartbeattimeout";
-	public static final String PROPERTY_START_DELAY_MS 					= "servicestartdelay";
-	public static final String PROPERTY_PERIODIC_REPETITION_INTERVAL 	= "serviceperiodicrepetitioninterval"; 
+{ 
 }

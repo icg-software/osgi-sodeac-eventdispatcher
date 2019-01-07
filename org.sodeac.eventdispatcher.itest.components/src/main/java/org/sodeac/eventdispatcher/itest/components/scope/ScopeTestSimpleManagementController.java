@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
@@ -42,7 +43,7 @@ import org.sodeac.eventdispatcher.itest.components.base.AbstractBaseTestControll
 	service={IQueueController.class,EventHandler.class},
 	property=
 	{
-		IEventDispatcher.PROPERTY_QUEUE_ID+"="+ScopeTestSimpleManagementController.QUEUE_ID,
+		EventDispatcherConstants.PROPERTY_QUEUE_ID+"="+ScopeTestSimpleManagementController.QUEUE_ID,
 		EventConstants.EVENT_TOPIC+"=" + ScopeTestSimpleManagementController.REQUEST_EVENT_SCOPE_CREATE,
 		EventConstants.EVENT_TOPIC+"=" + ScopeTestSimpleManagementController.REQUEST_EVENT_SCOPE_REQUEST1,
 		EventConstants.EVENT_TOPIC+"=" + ScopeTestSimpleManagementController.REQUEST_EVENT_SCOPE_REQUEST2,
@@ -82,7 +83,7 @@ public class ScopeTestSimpleManagementController extends AbstractBaseTestControl
 			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getSessionScopes().size());
 			
 			Map<String,Object> scopeConfiguration = new HashMap<String,Object>();
-			scopeConfiguration.put(IEventDispatcher.PROPERTY_QUEUE_TYPE, SCOPE_TYPE);
+			scopeConfiguration.put(EventDispatcherConstants.PROPERTY_QUEUE_TYPE, SCOPE_TYPE);
 			event.getQueue().createSessionScope(scopeId, "TestScope", null, scopeConfiguration, null, false,false);
 			
 			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getSessionScopes().size());

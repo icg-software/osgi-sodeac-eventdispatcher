@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Sebastian Palarus
+ * Copyright (c) 2018, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
 import org.osgi.service.log.LogService;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleCounter;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleEventDispatcher;
@@ -224,15 +225,15 @@ public class EventDispatcher implements EventDispatcherMBean
 				MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 				
 				String name  = eventController.getClass().getSimpleName();
-				if((properties.get(IQueueController.PROPERTY_JMX_NAME) != null) && (! properties.get(IQueueController.PROPERTY_JMX_NAME).toString().isEmpty()))
+				if((properties.get(EventDispatcherConstants.PROPERTY_JMX_NAME) != null) && (! properties.get(EventDispatcherConstants.PROPERTY_JMX_NAME).toString().isEmpty()))
 				{
-					name = properties.get(IQueueController.PROPERTY_JMX_NAME).toString();
+					name = properties.get(EventDispatcherConstants.PROPERTY_JMX_NAME).toString();
 				}
 				
 				String category = null;
-				if((properties.get(IQueueController.PROPERTY_JMX_CATEGORY) != null) && (! properties.get(IQueueController.PROPERTY_JMX_CATEGORY).toString().isEmpty()))
+				if((properties.get(EventDispatcherConstants.PROPERTY_JMX_CATEGORY) != null) && (! properties.get(EventDispatcherConstants.PROPERTY_JMX_CATEGORY).toString().isEmpty()))
 				{
-					category = properties.get(IQueueController.PROPERTY_JMX_CATEGORY).toString();
+					category = properties.get(EventDispatcherConstants.PROPERTY_JMX_CATEGORY).toString();
 				}
 	
 				int counter = 2;

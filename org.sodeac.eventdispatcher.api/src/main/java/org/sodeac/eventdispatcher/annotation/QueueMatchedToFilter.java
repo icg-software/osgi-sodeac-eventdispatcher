@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Sebastian Palarus
+ * Copyright (c) 2018, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -18,7 +18,7 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.MetricsRequirement;
 import org.sodeac.eventdispatcher.api.PrivateQueueWorkerRequirement;
 
@@ -30,7 +30,7 @@ import org.sodeac.eventdispatcher.api.PrivateQueueWorkerRequirement;
 public @interface QueueMatchedToFilter
 {
 	String value();
-	String dispatcherId() default IEventDispatcher.DEFAULT_DISPATCHER_ID;
+	String dispatcherId() default EventDispatcherConstants.DEFAULT_DISPATCHER_ID;
 	String name() default "";
 	String category() default "";
 	MetricsRequirement queueMetricRequirement() default MetricsRequirement.RequireMetrics;

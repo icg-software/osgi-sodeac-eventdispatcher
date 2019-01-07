@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Sebastian Palarus
+ * Copyright (c) 2018, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -26,7 +26,7 @@ import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.AttributeType;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.sodeac.eventdispatcher.api.IQueueController;
-import org.sodeac.eventdispatcher.api.IEventDispatcher;
+import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IQueue;
@@ -51,7 +51,7 @@ public class QueueFactoryController implements IQueueController,IOnQueueAttach, 
 	@ObjectClassDefinition(name=SERVICE_PID, description="",factoryPid=QueueFactoryController.SERVICE_PID)
 	interface Config
 	{
-		@AttributeDefinition(name="dispatcher",description = "id of dispatcher (default:'default')" , defaultValue=IEventDispatcher.DEFAULT_DISPATCHER_ID, type=AttributeType.STRING, required=true)
+		@AttributeDefinition(name="dispatcher",description = "id of dispatcher (default:'default')" , defaultValue=EventDispatcherConstants.DEFAULT_DISPATCHER_ID, type=AttributeType.STRING, required=true)
 		String dispatcherid();
 		
 		@AttributeDefinition(name="queueid",description = "queueid of attached / created queue" ,type=AttributeType.STRING, required=true)
