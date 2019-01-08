@@ -2796,14 +2796,14 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 
 	@Override
-	public List<IQueueSessionScope> getSessionScopes()
+	public List<IQueueSessionScope> getChildScopes()
 	{
 		return this.queueScopeListCopy;
 	}
 
 
 	@Override
-	public List<IQueueSessionScope> getSessionScopes(Filter filter)
+	public List<IQueueSessionScope> getChildScopes(Filter filter)
 	{
 		List<IQueueSessionScope> copyList = this.queueScopeListCopy;
 		if(copyList.isEmpty())
@@ -2866,7 +2866,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 
 	@Override
-	public IQueueSessionScope getSessionScope(UUID scopeId)
+	public IQueueSessionScope getChildScope(UUID scopeId)
 	{
 		this.queueScopeListReadLock.lock();
 		try
@@ -3040,5 +3040,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			String partitionName;
 		}
 		
+	}
+
+	@Override
+	public IQueue getGlobalScope()
+	{
+		return this;
 	}
 }

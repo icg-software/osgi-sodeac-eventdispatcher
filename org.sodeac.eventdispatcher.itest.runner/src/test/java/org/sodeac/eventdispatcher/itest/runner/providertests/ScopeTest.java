@@ -124,7 +124,7 @@ public class ScopeTest extends AbstractTest
 		}
 		catch (Exception e) {}
 		
-		IQueueSessionScope scope = queue.getSessionScope(scopeId);
+		IQueueSessionScope scope = queue.getChildScope(scopeId);
 		assertNotNull("scope shoult be not null",scope);
 		
 		try

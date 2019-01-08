@@ -21,12 +21,6 @@ import java.util.UUID;
  */
 public interface IQueueSessionScope extends IQueue
 {
-	/**
-	 * returns global scope. global scope is a session creates this scope
-	 *
-	 * @return global scope
-	 */
-	public IQueue getGlobalScope();
 	
 	/**
 	 * getter for scope id. ScopeId is unique key (by global session) addressed this scope
@@ -42,12 +36,6 @@ public interface IQueueSessionScope extends IQueue
 	 */
 	public IQueueSessionScope getParentScope();
 	
-	/**
-	 * getter for child scope list. The child scopes list is defined by virtual tree structure.
-	 * 
-	 * @return immutable list of child scopes
-	 */
-	public List<IQueueSessionScope> getChildScopes();
 	/**
 	 * getter for scope name
 	 * 

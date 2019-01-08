@@ -80,30 +80,30 @@ public class ScopeTestSimpleManagementController extends AbstractBaseTestControl
 			super.latch = (CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_LATCH);
 			UUID scopeId = (UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID);
 			
-			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getSessionScopes().size());
+			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getChildScopes().size());
 			
 			Map<String,Object> scopeConfiguration = new HashMap<String,Object>();
 			scopeConfiguration.put(EventDispatcherConstants.PROPERTY_QUEUE_TYPE, SCOPE_TYPE);
 			event.getQueue().createSessionScope(scopeId, "TestScope", null, scopeConfiguration, null, false,false);
 			
-			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getSessionScopes().size());
+			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getChildScopes().size());
 			
 			((CountDownLatch)event.getNativeEventProperties().get(EVENT_PROPERTY_WORKLATCH)).countDown();
 		}
 		
 		if(event.getEvent().getTopic().equals(REQUEST_EVENT_SCOPE_REQUEST1))
 		{
-			event.getQueue().getSessionScope((UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID)).queueEvent(event.getEvent());
+			event.getQueue().getChildScope((UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID)).queueEvent(event.getEvent());
 		}
 		
 		if(event.getEvent().getTopic().equals(REQUEST_EVENT_SCOPE_REQUEST2))
 		{
-			event.getQueue().getSessionScope((UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID)).queueEvent(event.getEvent());
+			event.getQueue().getChildScope((UUID)event.getNativeEventProperties().get(EVENT_PROPERTY_SCOPEID)).queueEvent(event.getEvent());
 		}
 		
 		if(event.getEvent().getTopic().equals(REQUEST_EVENT_SCOPE_SIZE))
 		{
-			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getSessionScopes().size());
+			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getChildScopes().size());
 		}
 	}
 }

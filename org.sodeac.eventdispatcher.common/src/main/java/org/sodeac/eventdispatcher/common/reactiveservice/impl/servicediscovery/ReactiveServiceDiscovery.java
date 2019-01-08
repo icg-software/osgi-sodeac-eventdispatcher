@@ -153,7 +153,7 @@ public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueu
 			{
 				return;
 			}
-			IQueueSessionScope scope = this.managementQueue.getSessionScope(scopeId);
+			IQueueSessionScope scope = this.managementQueue.getChildScope(scopeId);
 			if(scope == null)
 			{
 				return;

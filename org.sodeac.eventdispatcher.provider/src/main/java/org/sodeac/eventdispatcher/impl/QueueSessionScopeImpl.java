@@ -66,7 +66,7 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 	@Override
 	public IQueueSessionScope getParentScope()
 	{
-		return this.parentScopeId == null ? null : this.parent.getSessionScope(this.parentScopeId);
+		return this.parentScopeId == null ? null : this.parent.getChildScope(this.parentScopeId);
 	}
 
 	@Override
@@ -106,17 +106,11 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 		return null; // TODO
 	}
 
+
 	@Override
-	public List<IQueueSessionScope> getSessionScopes()
+	public List<IQueueSessionScope> getChildScopes(Filter filter)
 	{
 		return null; // TODO
-	}
-
-
-	@Override
-	public List<IQueueSessionScope> getSessionScopes(Filter filter)
-	{
-		return null; // TDOD
 	}
 
 }

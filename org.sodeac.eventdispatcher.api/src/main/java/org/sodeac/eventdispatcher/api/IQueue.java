@@ -280,6 +280,13 @@ public interface IQueue
 	public boolean isMetricsEnabled();
 	
 	/**
+	 * returns global scope. global scope is a session creates this scope
+	 *
+	 * @return global scope
+	 */
+	public IQueue getGlobalScope();
+	
+	/**
 	 * create {@link IQueueSessionScope} for {@link IQueue}. Does not work, if this queue is already a session scope.
 	 * 
 	 * @param scopeId unique id of scope (unique by queue) or null for auto-generation
@@ -294,18 +301,18 @@ public interface IQueue
 	 */
 	public IQueueSessionScope createSessionScope(UUID scopeId,String scopeName, IQueueSessionScope parentScope, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices);
 	
-	@Deprecated
+	/*@Deprecated
 	public default IQueueSessionScope createSessionScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices)
 	{
 		return createSessionScope(scopeId, scopeName, null, configurationProperties, stateProperties, adoptContoller, adoptServices);
-	}
+	}*/
 	
 	/**
-	 * returns scopelist of queue
+	 * getter for child scope list. The child scopes list is defined by virtual tree structure.
 	 * 
-	 * @return scopelist of queue
+	 * @return immutable list of child scopes
 	 */
-	public List<IQueueSessionScope> getSessionScopes();
+	public List<IQueueSessionScope> getChildScopes();
 	
 	/**
 	 * returns scopelist of queue with positiv match result for {@code filter}
@@ -314,7 +321,7 @@ public interface IQueue
 	 * 
 	 * @return scopelist of queue with positiv match result for {@code filter}
 	 */
-	public List<IQueueSessionScope> getSessionScopes(Filter filter);
+	public List<IQueueSessionScope> getChildScopes(Filter filter);
 	
 	
 	/**
@@ -324,7 +331,7 @@ public interface IQueue
 	 * 
 	 * @return  scope with given {@code scopeId} or null, if scope not found
 	 */
-	public IQueueSessionScope getSessionScope(UUID scopeId);
+	public IQueueSessionScope getChildScope(UUID scopeId);
 	
 	/**
 	 * register a linkage definition dispatcher

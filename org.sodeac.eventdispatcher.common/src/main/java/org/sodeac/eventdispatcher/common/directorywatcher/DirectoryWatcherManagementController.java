@@ -132,7 +132,7 @@ public class DirectoryWatcherManagementController implements IQueueController,IO
 		private void remove(UUID id)
 		{
 			registeredServiceController.remove(id);
-			IQueueSessionScope scope = queue.getSessionScope(id);
+			IQueueSessionScope scope = queue.getChildScope(id);
 			if(scope != null)
 			{
 				try
