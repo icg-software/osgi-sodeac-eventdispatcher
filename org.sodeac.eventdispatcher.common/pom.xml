@@ -8,7 +8,6 @@
   <properties>
     <!-- bundle.version>${project.version}</bundle.version-->
     <bundle.version>0.9.11</bundle.version>
-    <guava.version>14.0.0</guava.version>
   </properties>
   
   <parent>
@@ -28,12 +27,6 @@
 	    <artifactId>json-simple</artifactId>
 	    <version>1.1.1</version>
 	</dependency>
-	<dependency>
-	    <groupId>com.google.guava</groupId>
-	    <artifactId>guava</artifactId>
-	    <version>14.0</version>
-	    <!-- version>25.1-jre</version-->
-	</dependency>
   </dependencies>
   
   <build>
@@ -52,7 +45,6 @@
           	<Import-Package>
             	org.sodeac.eventdispatcher.api;version="0.9.11",
             	org.sodeac.multichainlist;version="1.0.0",
-            	com.google.common.*;version="${guava.version}",
             	*
             </Import-Package>
             <Export-Package>
@@ -63,7 +55,6 @@
             	org.sodeac.eventdispatcher.common.queueservice;version="${bundle.version}",
             	org.sodeac.eventdispatcher.common.reactiveservice.api*;version="${bundle.version}"
             </Export-Package>
-            <Private-Package>org.sodeac.eventdispatcher.common.reactiveservice.impl*</Private-Package>
           </instructions>
           <source>1.8</source>
           <target>1.8</target>
