@@ -58,7 +58,7 @@ public interface IQueueChildScope extends IQueue
 	 * 
 	 * @return new scope, or null, if scope already exists
 	 */
-	public default IQueueChildScope createSessionScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties)
+	public default IQueueChildScope createChildScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties)
 	{
 		return getGlobalScope().createChildScope(scopeId, scopeName, this, configurationProperties, stateProperties, false, false);
 	}
