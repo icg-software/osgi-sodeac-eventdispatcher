@@ -10,10 +10,12 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 
 import org.osgi.framework.Filter;
 import org.osgi.service.event.Event;
@@ -36,6 +38,23 @@ public interface IQueue
 	 */
 	public String getId();
 	
+	/**
+	 * queue an osgi event
+	 * 
+	 * @param event osgi-event to queue
+	 * 
+	 * @throws QueueIsFullException
+	 */
+	public void queueEvent(Event event) throws QueueIsFullException;
+	
+	/**
+	 * queue a collection of osgi events
+	 * 
+	 * @param eventList list of osgi-events to queue
+	 * 
+	 * @throws QueueIsFullException
+	 */
+	public void queueEvents(Collection<Event> events) throws QueueIsFullException;
 	
 	/**
 	 * queue an osgi event
@@ -45,7 +64,7 @@ public interface IQueue
 	 * @return Future of {@link IQueueEventResult}
 	 * @throws QueueIsFullException
 	 */
-	public Future<IQueueEventResult> queueEvent(Event event) throws QueueIsFullException;
+	public Future<IQueueEventResult> queueEventWithResult(Event event) throws QueueIsFullException;
 	
 	/**
 	 * queue a list of osgi events
@@ -55,7 +74,9 @@ public interface IQueue
 	 * @return Future of {@link IQueueEventResult}
 	 * @throws QueueIsFullException
 	 */
-	public Future<IQueueEventResult> queueEventList(List<Event> eventList) throws QueueIsFullException;
+	public Future<IQueueEventResult> queueEventsWithResult(Collection<Event> events) throws QueueIsFullException;
+	
+	// TODO queueEvents without result
 	
 	/**
 	 * getter for configuration propertyblock of queue
@@ -131,6 +152,54 @@ public interface IQueue
 	 * @return snapshot for chain
 	 */
 	public Snapshot<IQueuedEvent> getEventSnapshotPoll(String chainName);
+	
+	/**
+	 * register an adapter 
+	 * 
+	 * @param adapterClass type of adapter
+	 * @param adapter implementation of adapter
+	 * @throws PropertyIsLockedException
+	 */
+	public default <T> void setAdapter(Class<T> adapterClass, T adapter) throws PropertyIsLockedException
+	{
+		getConfigurationPropertyBlock().setAdapter(adapterClass, adapter);
+	}
+	
+	/**
+	 * get registered adapter
+	 * 
+	 * @param adapterClass type of adapter
+	 * 
+	 * @return registered adapter with specified adapterClass
+	 */
+	public default <T> T getAdapter(Class<T> adapterClass)
+	{
+		return getConfigurationPropertyBlock().getAdapter(adapterClass);
+	}
+	
+	/**
+	 * get registered adapter
+	 * 
+	 * @param adapterClass type of adapter
+	 * @param adapterFactoryIfNotExists factory to create adapter if not exists , and store with specified key 
+	 * 
+	 * @return registered adapter with specified adapterClass
+	 */
+	public default <T> T getAdapter(Class<T> adapterClass, Supplier<T> adapterFactoryIfNotExists)
+	{
+		return getConfigurationPropertyBlock().getAdapter(adapterClass, adapterFactoryIfNotExists);
+	}
+	
+	/**
+	 * remove registered adapter
+	 * 
+	 * @param adapterClass type of adapter
+	 * @throws PropertyIsLockedException
+	 */
+	public default <T> void removeAdapter(Class<T> adapterClass) throws PropertyIsLockedException
+	{
+		getConfigurationPropertyBlock().removeAdapter(adapterClass);
+	}
 	
 	/**
 	 * remove list of {@link IQueuedEvent}s queued  with one of {@code uuid}s
@@ -271,7 +340,7 @@ public interface IQueue
 	 * 
 	 * @param enabled enable metrics capabilities if true, otherwise disable metrics capabilities
 	 */
-	public void  setQueueMetricsEnabled(boolean enabled);
+	public void setQueueMetricsEnabled(boolean enabled);
 	
 	/**
 	 * 
@@ -287,7 +356,23 @@ public interface IQueue
 	public IQueue getGlobalScope();
 	
 	/**
-	 * create {@link IQueueSessionScope} for {@link IQueue}. Does not work, if this queue is already a session scope.
+	 * create {@link IQueueChildScope} for {@link IQueue}
+	 * 
+	 * @param scopeId unique id of scope (unique by queue) or null for auto-generation
+	 * @param scopeName human readable name of scope (nullable)
+	 * @param parentScope parent scope to define tree structure for scopes
+	 * @param configurationProperties blue print for configuration propertyblock of new scope (nullable)
+	 * @param stateProperties blue print for state propertyblock of new scope (nullable)
+	 * 
+	 * @return new scope, or null, if scope already exists
+	 */
+	public default IQueueChildScope createChildSessionScope(UUID scopeId,String scopeName, IQueueChildScope parentScope, Map<String,Object> configurationProperties, Map<String,Object> stateProperties)
+	{
+		return this.createChildScope(scopeId, scopeName, parentScope, configurationProperties, stateProperties, false, false);
+	}
+	
+	/**
+	 * create {@link IQueueChildScope} for {@link IQueue}
 	 * 
 	 * @param scopeId unique id of scope (unique by queue) or null for auto-generation
 	 * @param scopeName human readable name of scope (nullable)
@@ -299,7 +384,7 @@ public interface IQueue
 	 * 
 	 * @return new scope, or null, if scope already exists
 	 */
-	public IQueueSessionScope createSessionScope(UUID scopeId,String scopeName, IQueueSessionScope parentScope, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices);
+	public IQueueChildScope createChildScope(UUID scopeId,String scopeName, IQueueChildScope parentScope, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices);
 	
 	/*@Deprecated
 	public default IQueueSessionScope createSessionScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties, boolean adoptContoller, boolean adoptServices)
@@ -312,7 +397,7 @@ public interface IQueue
 	 * 
 	 * @return immutable list of child scopes
 	 */
-	public List<IQueueSessionScope> getChildScopes();
+	public List<IQueueChildScope> getChildScopes();
 	
 	/**
 	 * returns scopelist of queue with positiv match result for {@code filter}
@@ -321,7 +406,7 @@ public interface IQueue
 	 * 
 	 * @return scopelist of queue with positiv match result for {@code filter}
 	 */
-	public List<IQueueSessionScope> getChildScopes(Filter filter);
+	public List<IQueueChildScope> getChildScopes(Filter filter);
 	
 	
 	/**
@@ -331,37 +416,5 @@ public interface IQueue
 	 * 
 	 * @return  scope with given {@code scopeId} or null, if scope not found
 	 */
-	public IQueueSessionScope getChildScope(UUID scopeId);
-	
-	/**
-	 * register a linkage definition dispatcher
-	 * 
-	 * @param dispatcherId id of linkage definition dispatcher to unregister dispatcher later
-	 * 
-	 * @return linkage definition dispatcher builder
-	 */
-	public ILinkageDefinitionDispatcherBuilder registerLinkageDefinitionDispatcher(String linkageDefinitionDispatcherId);
-	
-	/**
-	 * unregister a linkage definition dispatcher
-	 * 
-	 * @param dispatcherId id of linkage definition dispatcher to unregister
-	 */
-	public void unregisterLinkageDefinitionDispatcher(String linkageDefinitionDispatcherId);
-	
-	/**
-	 * Builder to register LinkageDefinitionDispatcher
-	 * 
-	 * @author Sebastian Palarus
-	 *
-	 */
-	public interface ILinkageDefinitionDispatcherBuilder extends ILinkageDefinitionDispatcher
-	{
-		/**
-		 * register LinkageDefinitionDispatcher
-		 * 
-		 * @return queue
-		 */
-		public IQueue build();
-	}
+	public IQueueChildScope getChildScope(UUID scopeId);
 }

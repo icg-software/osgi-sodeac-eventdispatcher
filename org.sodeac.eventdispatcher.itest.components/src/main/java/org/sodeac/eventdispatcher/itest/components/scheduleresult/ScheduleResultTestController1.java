@@ -58,7 +58,7 @@ public class ScheduleResultTestController1 implements EventHandler, IQueueContro
 		try
 		{
 			Map<String,Object> bridge = (Map<String,Object>)event.getProperty(PROPERTY_BRIDGE);
-			Future<IQueueEventResult> resultFuture = dispatcher.queueEvent(QUEUE_ID, event);
+			Future<IQueueEventResult> resultFuture = dispatcher.getQueue(QUEUE_ID).queueEventWithResult( event);
 			bridge.put(PROPERTY_FUTURE, resultFuture);
 			
 		}

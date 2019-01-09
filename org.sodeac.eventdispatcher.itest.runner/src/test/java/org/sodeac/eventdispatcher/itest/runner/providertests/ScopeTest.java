@@ -20,7 +20,7 @@ import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueTask;
-import org.sodeac.eventdispatcher.api.IQueueSessionScope;
+import org.sodeac.eventdispatcher.api.IQueueChildScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
@@ -124,7 +124,7 @@ public class ScopeTest extends AbstractTest
 		}
 		catch (Exception e) {}
 		
-		IQueueSessionScope scope = queue.getChildScope(scopeId);
+		IQueueChildScope scope = queue.getChildScope(scopeId);
 		assertNotNull("scope shoult be not null",scope);
 		
 		try

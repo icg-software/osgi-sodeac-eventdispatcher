@@ -28,7 +28,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
-import org.sodeac.eventdispatcher.api.IQueueSessionScope;
+import org.sodeac.eventdispatcher.api.IQueueChildScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.components.base.AbstractBaseTestController;
 
@@ -60,7 +60,7 @@ public class ScopeTestSimpleScopeController extends AbstractBaseTestController i
 		
 		if(event.getEvent().getTopic().equals(ScopeTestSimpleManagementController.REQUEST_EVENT_SCOPE_REQUEST2))
 		{
-			((IQueueSessionScope)event.getQueue()).dispose();
+			((IQueueChildScope)event.getQueue()).dispose();
 			((CountDownLatch)event.getNativeEventProperties().get(ScopeTestSimpleManagementController.EVENT_PROPERTY_WORKLATCH)).countDown();
 			return;
 		}

@@ -57,7 +57,7 @@ import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueComponentConfigurable;
 import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueService;
-import org.sodeac.eventdispatcher.api.IQueueSessionScope;
+import org.sodeac.eventdispatcher.api.IQueueChildScope;
 import org.sodeac.eventdispatcher.api.IQueueEventResult;
 import org.sodeac.eventdispatcher.api.ITimer;
 import org.sodeac.eventdispatcher.api.MetricsRequirement;
@@ -214,19 +214,19 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public Future<IQueueEventResult> queueEvent(String queueId, Event event)
+	public void queueEvent(String queueId, Event event)
 	{
 		osgiLifecycleReadLock.lock();
 		try
 		{
 			if(this.context == null)
 			{
-				return null;
+				return;
 			}
 			
 			if(! activated)
 			{
-				return null;
+				return;
 			}
 			
 			QueueImpl queue = null;
@@ -263,7 +263,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				throw new QueueNotFoundException(queueId);
 			}
 			
-			return queue.queueEvent(event);
+			queue.queueEvent(event);
 		}
 		finally 
 		{
@@ -272,19 +272,19 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public Future<IQueueEventResult> queueEventList(String queueId, List<Event> eventList)
+	public void queueEventList(String queueId, List<Event> eventList)
 	{
 		osgiLifecycleReadLock.lock();
 		try
 		{
 			if(this.context == null)
 			{
-				return null;
+				return ;
 			}
 			
 			if(! activated)
 			{
-				return null;
+				return;
 			}
 			
 			QueueImpl queue = null;
@@ -320,8 +320,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				}
 				throw new QueueNotFoundException(queueId);
 			}
-			
-			return queue.queueEventList(eventList);
+		
 		}
 		finally 
 		{
@@ -1514,7 +1513,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			return;
 		}
 		
-		if(queue instanceof IQueueSessionScope)
+		if(queue instanceof IQueueChildScope)
 		{
 			return;
 		}

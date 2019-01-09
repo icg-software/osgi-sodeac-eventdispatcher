@@ -19,7 +19,7 @@ import java.util.UUID;
  * @author Sebastian Palarus
  *
  */
-public interface IQueueSessionScope extends IQueue
+public interface IQueueChildScope extends IQueue
 {
 	
 	/**
@@ -34,7 +34,7 @@ public interface IQueueSessionScope extends IQueue
 	 * 
 	 * @return parentScope or null
 	 */
-	public IQueueSessionScope getParentScope();
+	public IQueueChildScope getParentScope();
 	
 	/**
 	 * getter for scope name
@@ -49,7 +49,7 @@ public interface IQueueSessionScope extends IQueue
 	public void dispose();
 	
 	/**
-	 * creates a {@link IQueueSessionScope} in global scope ({@link IQueue}) with this scope as parent scope.
+	 * creates a {@link IQueueChildScope} in global scope ({@link IQueue}) with this scope as parent scope.
 	 * 
 	 * @param scopeId unique id of scope (unique by queue) or null for auto-generation
 	 * @param scopeName human readable name of scope (nullable)
@@ -58,9 +58,9 @@ public interface IQueueSessionScope extends IQueue
 	 * 
 	 * @return new scope, or null, if scope already exists
 	 */
-	public default IQueueSessionScope createSessionScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties)
+	public default IQueueChildScope createSessionScope(UUID scopeId,String scopeName, Map<String,Object> configurationProperties, Map<String,Object> stateProperties)
 	{
-		return getGlobalScope().createSessionScope(scopeId, scopeName, this, configurationProperties, stateProperties, false, false);
+		return getGlobalScope().createChildScope(scopeId, scopeName, this, configurationProperties, stateProperties, false, false);
 	}
 	
 }

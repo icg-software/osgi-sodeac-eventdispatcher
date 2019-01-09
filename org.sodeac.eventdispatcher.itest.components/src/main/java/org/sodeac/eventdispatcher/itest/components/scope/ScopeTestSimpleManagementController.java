@@ -84,7 +84,7 @@ public class ScopeTestSimpleManagementController extends AbstractBaseTestControl
 			
 			Map<String,Object> scopeConfiguration = new HashMap<String,Object>();
 			scopeConfiguration.put(EventDispatcherConstants.PROPERTY_QUEUE_TYPE, SCOPE_TYPE);
-			event.getQueue().createSessionScope(scopeId, "TestScope", null, scopeConfiguration, null, false,false);
+			event.getQueue().createChildScope(scopeId, "TestScope", null, scopeConfiguration, null, false,false);
 			
 			event.getQueue().signal(SCOPE_SIGNAL_SCOPESIZE + event.getQueue().getChildScopes().size());
 			

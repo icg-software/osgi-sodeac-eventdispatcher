@@ -19,7 +19,7 @@ import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueSessionScope;
+import org.sodeac.eventdispatcher.api.IQueueChildScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.IPropertyBlock.IMapBuilder;
 import org.sodeac.eventdispatcher.common.queueservice.ScopeSingleSyncCallServiceAdapter;
@@ -57,7 +57,7 @@ public class ReactiveServiceDiscoveryScope implements IQueueController,IOnQueueA
 		(
 			IReactiveServiceDiscovery.EVENT_TOPIC_REQUEST, IMapBuilder.<String, Object>newBuilderInstance()
 			
-				.put(IReactiveServiceDiscovery.EVENT_PROPERTY_REQUEST_ID,((IQueueSessionScope)queue).getScopeId())
+				.put(IReactiveServiceDiscovery.EVENT_PROPERTY_REQUEST_ID,((IQueueChildScope)queue).getScopeId())
 				.put(IReactiveServiceDiscovery.EVENT_PROPERTY_REQUEST_OBJ,queue.getConfigurationPropertyBlock().getAdapter(DiscoverReactiveServiceRequest.class))
 			
 			.buildImmutableMap()
@@ -84,7 +84,7 @@ public class ReactiveServiceDiscoveryScope implements IQueueController,IOnQueueA
 			{
 				return;
 			}
-			if(! scopeId.equals(((IQueueSessionScope)event.getQueue()).getScopeId()))
+			if(! scopeId.equals(((IQueueChildScope)event.getQueue()).getScopeId()))
 			{
 				return;
 			}

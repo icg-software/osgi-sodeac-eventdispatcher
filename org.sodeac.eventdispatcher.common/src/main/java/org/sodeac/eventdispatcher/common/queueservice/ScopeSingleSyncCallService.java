@@ -20,7 +20,7 @@ import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueService;
-import org.sodeac.eventdispatcher.api.IQueueSessionScope;
+import org.sodeac.eventdispatcher.api.IQueueChildScope;
 
 @Component
 (
@@ -55,7 +55,7 @@ public class ScopeSingleSyncCallService implements IQueueService
 			try
 			{
 				adapter.getExchanger().exchange(value);
-				((IQueueSessionScope)queue).dispose();
+				((IQueueChildScope)queue).dispose();
 			}
 			catch (Exception e) 
 			{}

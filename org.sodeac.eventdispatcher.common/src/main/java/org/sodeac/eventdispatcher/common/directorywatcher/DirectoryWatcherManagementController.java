@@ -29,7 +29,7 @@ import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IDescriptionProvider;
 import org.sodeac.eventdispatcher.api.IQueueController;
-import org.sodeac.eventdispatcher.api.IQueueSessionScope;
+import org.sodeac.eventdispatcher.api.IQueueChildScope;
 import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
@@ -132,7 +132,7 @@ public class DirectoryWatcherManagementController implements IQueueController,IO
 		private void remove(UUID id)
 		{
 			registeredServiceController.remove(id);
-			IQueueSessionScope scope = queue.getChildScope(id);
+			IQueueChildScope scope = queue.getChildScope(id);
 			if(scope != null)
 			{
 				try
@@ -190,7 +190,7 @@ public class DirectoryWatcherManagementController implements IQueueController,IO
 				configurationProperties.put("notifyqueue", watcherConfiguration.getWatchEventNotifyQueue());
 				configurationProperties.put(EventDispatcherConstants.PROPERTY_QUEUE_MATCH_FILTER, DirectoryWatcherServiceController.SERVICE_ID);
 				
-				queue.createSessionScope
+				queue.createChildScope
 				(
 					watcherConfiguration.getId(), 
 					"DirectoryWatcher " + watcherConfiguration.getId().toString(), 

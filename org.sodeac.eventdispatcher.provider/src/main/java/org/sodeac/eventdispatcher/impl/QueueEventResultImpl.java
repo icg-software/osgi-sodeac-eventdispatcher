@@ -24,7 +24,7 @@ public class QueueEventResultImpl implements IQueueEventResult
 	private 			CountDownLatch 		countDownLatch 				= null;
 	private volatile 	boolean 			processingIsFinished 		= false; 
 	
-	private volatile 	boolean 			queued 					= false;
+	private volatile 	boolean 			queued 						= false;
 	private volatile 	List<Throwable> 	errorList 					= null;
 	private volatile 	Object 				detailResultObject 			= null;
 	private volatile 	List<Object> 		detailResultObjectList 		= null;

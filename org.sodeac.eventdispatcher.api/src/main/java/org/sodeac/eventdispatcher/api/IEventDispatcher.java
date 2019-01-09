@@ -31,11 +31,10 @@ public interface IEventDispatcher
 	 * @param event osgi-event to schedule to {@link IQueue} 
 	 * 
 	 * 
-	 * @return Future of {@link IQueueEventResult}
 	 * @throws QueueNotFoundException
 	 * @throws QueueIsFullException
 	 */
-	public Future<IQueueEventResult> queueEvent(String queueId,Event event) throws QueueNotFoundException, QueueIsFullException;
+	public void queueEvent(String queueId,Event event) throws QueueNotFoundException, QueueIsFullException;
 	
 	/**
 	 * queue a list of osgi events to addressed queue
@@ -44,11 +43,10 @@ public interface IEventDispatcher
 	 * @param eventList list of osgi-events to schedule to {@link IQueue} 
 	 * 
 	 * 
-	 * @return Future of {@link IQueueEventResult}
 	 * @throws QueueNotFoundException
 	 * @throws QueueIsFullException
 	 */
-	public Future<IQueueEventResult> queueEventList(String queueId,List<Event> eventList) throws QueueNotFoundException, QueueIsFullException;
+	public void queueEventList(String queueId,List<Event> eventList) throws QueueNotFoundException, QueueIsFullException;
 	
 	/**
 	 * factory-methode creating instance of {@link IPropertyBlock} 

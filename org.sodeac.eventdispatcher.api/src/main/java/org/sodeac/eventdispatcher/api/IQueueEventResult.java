@@ -83,4 +83,13 @@ public interface IQueueEventResult
 	 */
 	public void addDetailResultObjectList(Object detailResultObject);
 	
+	/**
+	 * Returns if this object is an dummy object (add event by queueEvent and not by queueEventWithResult)
+	 * 
+	 * @return true, if this object is an dummy object , otherwise false
+	 */
+	public default boolean isDummy()
+	{
+		return false;
+	}
 }

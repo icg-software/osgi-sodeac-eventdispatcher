@@ -11,6 +11,7 @@
 package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -41,9 +42,8 @@ import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.IGauge;
-import org.sodeac.eventdispatcher.api.ILinkageDefinitionDispatcher;
 import org.sodeac.eventdispatcher.api.IQueueTask;
-import org.sodeac.eventdispatcher.api.IQueueSessionScope;
+import org.sodeac.eventdispatcher.api.IQueueChildScope;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueueEventResult;
@@ -123,7 +123,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		this.queueScopeList = new ArrayList<QueueSessionScopeImpl>();
 		this.queueScopeIndex = new HashMap<UUID,QueueSessionScopeImpl>();
-		this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueSessionScope>());
+		this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueChildScope>());
 		this.queueScopeListLock = new ReentrantReadWriteLock(true);
 		this.queueScopeListReadLock = this.queueScopeListLock.readLock();
 		this.queueScopeListWriteLock = this.queueScopeListLock.writeLock();
@@ -131,6 +131,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.consumeEventHandlerListLock = new ReentrantReadWriteLock();
 		this.consumeEventHandlerListWriteLock = consumeEventHandlerListLock.writeLock();
 		this.consumeEventHandlerListReadLock = consumeEventHandlerListLock.readLock();
+		
+		this.dummyQueueResult = new DummyQueueEventResult();
 		
 		PropertyBlockImpl qualityValues = (PropertyBlockImpl)eventDispatcher.createPropertyBlock();
 		qualityValues.setProperty(IMetrics.QUALITY_VALUE_CREATED, System.currentTimeMillis());
@@ -205,7 +207,6 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.queueConfigurationModifyListener = new QueueConfigurationModifyListener(this);
 		this.configurationPropertyBlock.addModifyListener(this.queueConfigurationModifyListener);
 		
-		this.linkageDefinitionDispatcherIndex = new HashMap<String,LinkageDefinitionDispatcherImpl>();
 		this.snapshotsByWorkerThread = new LinkedList<Snapshot<IQueuedEvent>>();
 	}
 	
@@ -282,7 +283,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	protected List<QueueSessionScopeImpl> queueScopeList;
 	protected Map<UUID,QueueSessionScopeImpl> queueScopeIndex;
-	protected volatile List<IQueueSessionScope> queueScopeListCopy = null;
+	protected volatile List<IQueueChildScope> queueScopeListCopy = null;
 	protected ReentrantReadWriteLock queueScopeListLock;
 	protected ReadLock queueScopeListReadLock;
 	protected WriteLock queueScopeListWriteLock;
@@ -293,13 +294,112 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	private ReadLock consumeEventHandlerListReadLock;
 	private WriteLock consumeEventHandlerListWriteLock;
 	
-	protected QueueImpl parent = null;
+	private DummyQueueEventResult dummyQueueResult = null;
 	
-	protected Map<String,LinkageDefinitionDispatcherImpl> linkageDefinitionDispatcherIndex = null;
+	protected QueueImpl parent = null;
 	protected LinkedList<Snapshot<IQueuedEvent>> snapshotsByWorkerThread;
 	
 	@Override
-	public Future<IQueueEventResult> queueEvent(Event event)
+	public void queueEvent(Event event)
+	{
+		QueuedEventImpl queuedEvent = null;
+		eventListWriteLock.lock();
+		try
+		{
+			if(this.eventListLimit <= this.eventQueue.getNodeSize())
+			{
+				throw new QueueIsFullException(this.queueId, this.eventListLimit);
+			}
+			queuedEvent = new QueuedEventImpl(event,this);
+			queuedEvent.setScheduleResultObject(dummyQueueResult);
+			queuedEvent.setNode(this.eventQueue.defaultLinker().append(queuedEvent));
+		}
+		finally 
+		{
+			eventListWriteLock.unlock();
+		}
+		
+		
+		this.genericQueueSpoolLock.lock();
+		try
+		{
+			newScheduledListUpdate = true; 
+			this.newEventQueue.defaultLinker().append(queuedEvent);
+		}
+		finally 
+		{
+			this.genericQueueSpoolLock.unlock();
+		}
+		
+		try
+		{
+			getMetrics().meter(IMetrics.METRICS_SCHEDULE_EVENT).mark();
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric counter", e);
+		}
+		
+		this.notifyOrCreateWorker(-1);
+		
+	}
+	
+	@Override
+	public void queueEvents(Collection<Event> events)
+	{
+		List<QueuedEventImpl> queuedEventList = new ArrayList<QueuedEventImpl>(events.size());
+		eventListWriteLock.lock();
+		try
+		{
+			if(this.eventListLimit < ((eventQueue.getNodeSize()) + events.size()))
+			{
+				throw new QueueIsFullException(this.queueId, this.eventListLimit);
+			}
+			for(Event event : events)
+			{
+				QueuedEventImpl queuedEvent = new QueuedEventImpl(event,this);
+				queuedEvent.setScheduleResultObject(dummyQueueResult);
+				queuedEventList.add(queuedEvent);
+			}
+			Node<QueuedEventImpl>[] nodes = eventQueue.defaultLinker().appendAll(queuedEventList);
+			for(int i = 0; i < nodes.length; i++)
+			{
+				queuedEventList.get(i).setNode(nodes[i]);
+			}
+		}
+		finally 
+		{
+			eventListWriteLock.unlock();
+		}
+		
+		this.genericQueueSpoolLock.lock();
+		try
+		{
+			newScheduledListUpdate = true;
+			for(QueuedEventImpl queuedEvent : queuedEventList)
+			{
+				this.newEventQueue.defaultLinker().append(queuedEvent);
+			}
+		}
+		finally 
+		{
+			this.genericQueueSpoolLock.unlock();
+		}
+		
+		try
+		{
+			getMetrics().meter(IMetrics.METRICS_SCHEDULE_EVENT).mark(events.size());
+		}
+		catch(Exception e)
+		{
+			log(LogService.LOG_ERROR, "mark metric counter", e);
+		}
+		
+		this.notifyOrCreateWorker(-1);
+	}
+	
+	@Override
+	public Future<IQueueEventResult> queueEventWithResult(Event event)
 	{
 		QueuedEventImpl queuedEvent = null;
 		QueueEventResultImpl resultImpl = new QueueEventResultImpl();
@@ -346,18 +446,18 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 	
 	@Override
-	public Future<IQueueEventResult> queueEventList(List<Event> eventList)
+	public Future<IQueueEventResult> queueEventsWithResult(Collection<Event> events)
 	{
-		List<QueuedEventImpl> queuedEventList = new ArrayList<QueuedEventImpl>(eventList.size());
+		List<QueuedEventImpl> queuedEventList = new ArrayList<QueuedEventImpl>(events.size());
 		QueueEventResultImpl resultImpl = new QueueEventResultImpl();
 		eventListWriteLock.lock();
 		try
 		{
-			if(this.eventListLimit < ((eventQueue.getNodeSize()) + eventList.size()))
+			if(this.eventListLimit < ((eventQueue.getNodeSize()) + events.size()))
 			{
 				throw new QueueIsFullException(this.queueId, this.eventListLimit);
 			}
-			for(Event event : eventList)
+			for(Event event : events)
 			{
 				QueuedEventImpl queuedEvent = new QueuedEventImpl(event,this);
 				queuedEvent.setScheduleResultObject(resultImpl);
@@ -390,7 +490,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		try
 		{
-			getMetrics().meter(IMetrics.METRICS_SCHEDULE_EVENT).mark(eventList.size());
+			getMetrics().meter(IMetrics.METRICS_SCHEDULE_EVENT).mark(events.size());
 		}
 		catch(Exception e)
 		{
@@ -401,6 +501,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		
 		return this.eventDispatcher.createFutureOfScheduleResult(resultImpl);
 	}
+	
 	
 	// Controller
 	
@@ -2151,11 +2252,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			UUID scopeId = scope.getScopeId();
 			if(scopeId != null)
 			{
-				List<IQueueSessionScope> copyList = this.queueScopeListCopy;
+				List<IQueueChildScope> copyList = this.queueScopeListCopy;
 				if(!((copyList == null) || copyList.isEmpty()))
 				{
 					QueueSessionScopeImpl scopeTest;
-					for(IQueueSessionScope copyItem : copyList)
+					for(IQueueChildScope copyItem : copyList)
 					{
 						scopeTest = (QueueSessionScopeImpl)copyItem;
 						if(scopeId.equals(scopeTest.getParentScopeId()))
@@ -2172,7 +2273,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			}
 			this.queueScopeIndex.remove(scope.getScopeId());
 			while(this.queueScopeList.remove(scope)){}
-			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueSessionScope>(this.queueScopeList));
+			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueChildScope>(this.queueScopeList));
 		}
 		finally 
 		{
@@ -2738,7 +2839,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 
 	@Override
-	public IQueueSessionScope createSessionScope(UUID scopeId, String scopeName, IQueueSessionScope parentScope, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller, boolean adoptServices)
+	public IQueueChildScope createChildScope(UUID scopeId, String scopeName, IQueueChildScope parentScope, Map<String, Object> configurationProperties, Map<String, Object> stateProperties, boolean adoptContoller, boolean adoptServices)
 	{
 		if(disposed)
 		{
@@ -2778,7 +2879,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			newScope = new QueueSessionScopeImpl(scopeId,parentScopeId,this, scopeName,adoptContoller,adoptServices,configurationProperties,stateProperties);
 			
 			this.queueScopeList.add(newScope);
-			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueSessionScope>(this.queueScopeList));
+			this.queueScopeListCopy = Collections.unmodifiableList(new ArrayList<IQueueChildScope>(this.queueScopeList));
 			this.queueScopeIndex.put(scopeId, newScope);
 		}
 		finally 
@@ -2796,16 +2897,16 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 
 
 	@Override
-	public List<IQueueSessionScope> getChildScopes()
+	public List<IQueueChildScope> getChildScopes()
 	{
 		return this.queueScopeListCopy;
 	}
 
 
 	@Override
-	public List<IQueueSessionScope> getChildScopes(Filter filter)
+	public List<IQueueChildScope> getChildScopes(Filter filter)
 	{
-		List<IQueueSessionScope> copyList = this.queueScopeListCopy;
+		List<IQueueChildScope> copyList = this.queueScopeListCopy;
 		if(copyList.isEmpty())
 		{
 			return copyList;
@@ -2814,8 +2915,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		{
 			return copyList;
 		}
-		List<IQueueSessionScope> filterList = new ArrayList<IQueueSessionScope>();
-		for(IQueueSessionScope scope : copyList)
+		List<IQueueChildScope> filterList = new ArrayList<IQueueChildScope>();
+		for(IQueueChildScope scope : copyList)
 		{
 			if(scope.getConfigurationPropertyBlock().isEmpty())
 			{
@@ -2836,15 +2937,15 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		return Collections.unmodifiableList(filterList);
 	}
 	
-	protected List<IQueueSessionScope> getChildSessionScopes(UUID parentScopeId)
+	protected List<IQueueChildScope> getChildSessionScopes(UUID parentScopeId)
 	{
-		List<IQueueSessionScope> copyList = this.queueScopeListCopy;
+		List<IQueueChildScope> copyList = this.queueScopeListCopy;
 		if(copyList.isEmpty())
 		{
 			return copyList;
 		}
-		List<IQueueSessionScope> filterList = new ArrayList<IQueueSessionScope>();
-		for(IQueueSessionScope scope : copyList)
+		List<IQueueChildScope> filterList = new ArrayList<IQueueChildScope>();
+		for(IQueueChildScope scope : copyList)
 		{
 			UUID currentParentScopeId = ((QueueSessionScopeImpl)scope).getParentScopeId();
 			if((parentScopeId == null) && (currentParentScopeId == null))
@@ -2866,7 +2967,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 
 	@Override
-	public IQueueSessionScope getChildScope(UUID scopeId)
+	public IQueueChildScope getChildScope(UUID scopeId)
 	{
 		this.queueScopeListReadLock.lock();
 		try
@@ -2946,98 +3047,6 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		finally 
 		{
 			consumeEventHandlerListReadLock.unlock();
-		}
-		
-	}
-	
-	@Override
-	public ILinkageDefinitionDispatcherBuilder registerLinkageDefinitionDispatcher(String linkageDefinitionDispatcherId)
-	{
-		if(linkageDefinitionDispatcherId == null)
-		{
-			return null;
-		}
-		if(linkageDefinitionDispatcherId.isEmpty())
-		{
-			return null;
-		}
-		return new LinkageDefinitionDispatcherBuilder(linkageDefinitionDispatcherId);
-	}
-
-	@Override
-	public void unregisterLinkageDefinitionDispatcher(String linkageDefinitionDispatcherId)
-	{
-		this.linkageDefinitionDispatcherIndex.remove(linkageDefinitionDispatcherId);
-	}
-
-	public class LinkageDefinitionDispatcherBuilder implements ILinkageDefinitionDispatcherBuilder
-	{
-		private String linkageDefinitionDispatcherId;
-		private LinkedList<Filter> filterList;
-		private LinkedList<AddLinkageDefinition> addLinkageDefinitionList;
-		private LinkedList<String> removeLinkageDefinitionList;
-		
-		public LinkageDefinitionDispatcherBuilder(String linkageDefinitionDispatcherId)
-		{
-			super();
-			
-			this.linkageDefinitionDispatcherId = linkageDefinitionDispatcherId;
-			this.filterList = new LinkedList<Filter>();
-			this.addLinkageDefinitionList = new LinkedList<AddLinkageDefinition>();
-			this.removeLinkageDefinitionList = new LinkedList<String>();
-		}
-
-		@Override
-		public ILinkageDefinitionDispatcher onMatchFilter(Filter filter)
-		{
-			if(filter != null)
-			{
-				this.filterList.add(filter);
-			}
-			return this;
-		}
-		
-		@Override
-		public ILinkageDefinitionDispatcher addLinkageDefinition(String chainName, String partitionName)
-		{
-			this.addLinkageDefinitionList.add(new AddLinkageDefinition(chainName, partitionName));
-			return this;
-		}
-		
-		@Override
-		public ILinkageDefinitionDispatcher removeLinkageDefinition(String chainName)
-		{
-			this.removeLinkageDefinitionList.add(chainName);
-			return this;
-		}
-
-		@Override
-		public IQueue build()
-		{
-			if((this.removeLinkageDefinitionList.isEmpty() && (this.addLinkageDefinitionList.isEmpty())) || this.filterList.isEmpty() || QueueImpl.this.linkageDefinitionDispatcherIndex.containsKey(linkageDefinitionDispatcherId))
-			{
-				this.removeLinkageDefinitionList.clear();
-				this.addLinkageDefinitionList.clear();
-				this.filterList.clear();
-				
-				return QueueImpl.this;
-			}
-			
-			QueueImpl.this.linkageDefinitionDispatcherIndex.put(linkageDefinitionDispatcherId, new LinkageDefinitionDispatcherImpl(filterList, addLinkageDefinitionList, removeLinkageDefinitionList));
-			
-			return QueueImpl.this;
-		}
-		
-		protected class AddLinkageDefinition
-		{
-			private AddLinkageDefinition(String chainName,String partitionName)
-			{
-				super();
-				this.chainName = chainName;
-				this.partitionName = partitionName;
-			}
-			String chainName;
-			String partitionName;
 		}
 		
 	}

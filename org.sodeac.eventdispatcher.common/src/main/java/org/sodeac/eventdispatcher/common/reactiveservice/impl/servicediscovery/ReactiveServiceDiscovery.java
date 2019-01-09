@@ -25,7 +25,7 @@ import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueSessionScope;
+import org.sodeac.eventdispatcher.api.IQueueChildScope;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.common.queueservice.ScopeSingleSyncCallServiceAdapter;
 import org.sodeac.eventdispatcher.common.reactiveservice.api.DiscoverReactiveServiceRequest;
@@ -106,7 +106,7 @@ public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueu
 		ScopeSingleSyncCallServiceAdapter<List<IReactiveServiceReference>> scopeCallAdapter = new ScopeSingleSyncCallServiceAdapter<>(7, TimeUnit.SECONDS);
 		DiscoverReactiveServiceRequest discoverServerRequest = cacheableRequest.getServiceRequest();
 		
-		managementQueue.createSessionScope
+		managementQueue.createChildScope
 		(
 			scopeId, 
 			"discover service " + scopeId, 
@@ -153,7 +153,7 @@ public class ReactiveServiceDiscovery implements IReactiveServiceDiscovery,IQueu
 			{
 				return;
 			}
-			IQueueSessionScope scope = this.managementQueue.getChildScope(scopeId);
+			IQueueChildScope scope = this.managementQueue.getChildScope(scopeId);
 			if(scope == null)
 			{
 				return;

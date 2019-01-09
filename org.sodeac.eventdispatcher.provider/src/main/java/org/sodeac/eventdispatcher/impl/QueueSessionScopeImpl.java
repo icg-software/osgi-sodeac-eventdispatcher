@@ -18,9 +18,9 @@ import java.util.UUID;
 
 import org.osgi.framework.Filter;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueSessionScope;
+import org.sodeac.eventdispatcher.api.IQueueChildScope;
 
-public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionScope
+public class QueueSessionScopeImpl extends QueueImpl implements IQueueChildScope
 {
 	private UUID scopeId;
 	private UUID parentScopeId;
@@ -64,17 +64,17 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 	}
 	
 	@Override
-	public IQueueSessionScope getParentScope()
+	public IQueueChildScope getParentScope()
 	{
 		return this.parentScopeId == null ? null : this.parent.getChildScope(this.parentScopeId);
 	}
 
 	@Override
-	public List<IQueueSessionScope> getChildScopes()
+	public List<IQueueChildScope> getChildScopes()
 	{
 		if(this.parentScopeId == null)
 		{
-			return Collections.unmodifiableList(new ArrayList<IQueueSessionScope>());
+			return Collections.unmodifiableList(new ArrayList<IQueueChildScope>());
 		}
 		return parent.getChildSessionScopes(this.parentScopeId);
 	}
@@ -101,14 +101,14 @@ public class QueueSessionScopeImpl extends QueueImpl implements IQueueSessionSco
 		super.dispose();
 	}
 
-	public IQueueSessionScope createScope(String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
+	public IQueueChildScope createScope(String scopeName, Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
 		return null; // TODO
 	}
 
 
 	@Override
-	public List<IQueueSessionScope> getChildScopes(Filter filter)
+	public List<IQueueChildScope> getChildScopes(Filter filter)
 	{
 		return null; // TODO
 	}

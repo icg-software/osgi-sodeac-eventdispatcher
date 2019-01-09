@@ -11,9 +11,9 @@
 package org.sodeac.eventdispatcher.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.osgi.service.event.Event;
@@ -120,7 +120,7 @@ public class QueueWorker extends Thread
 	@Override
 	public void run()
 	{
-		Map<IQueueEventResult,IQueueEventResult> scheduledResultIndex = new HashMap<IQueueEventResult,IQueueEventResult>();
+		Set<IQueueEventResult> scheduledResultSet = new HashSet<IQueueEventResult>();
 		org.sodeac.multichainlist.Snapshot<? extends IQueuedEvent> newEventsSnapshot;
 		org.sodeac.multichainlist.Snapshot<? extends IQueuedEvent> removedEventsSnapshot;
 		org.sodeac.multichainlist.Snapshot<Event> firedEventsSnapshot;
@@ -158,12 +158,12 @@ public class QueueWorker extends Thread
 						boolean singleProcess = false;
 						boolean listProcess = false;
 							
-						scheduledResultIndex.clear();
+						scheduledResultSet.clear();
 						for(IQueuedEvent event : newEventsSnapshot)
 						{
 							try
 							{
-								scheduledResultIndex.put(event.getScheduleResultObject(), event.getScheduleResultObject());
+								scheduledResultSet.add(event.getScheduleResultObject());
 							}
 							catch (Exception ie) {}
 						}
@@ -197,7 +197,7 @@ public class QueueWorker extends Thread
 								}
 								catch (Exception e) 
 								{
-									for(IQueueEventResult scheduleResult : scheduledResultIndex.keySet())
+									for(IQueueEventResult scheduleResult : scheduledResultSet)
 									{
 										try
 										{
@@ -237,7 +237,7 @@ public class QueueWorker extends Thread
 								}
 							}
 						}
-						for(IQueueEventResult scheduleResult : scheduledResultIndex.keySet())
+						for(IQueueEventResult scheduleResult : scheduledResultSet)
 						{
 							try
 							{
@@ -267,7 +267,7 @@ public class QueueWorker extends Thread
 						{
 							newEventsSnapshot = null;
 						}
-						scheduledResultIndex.clear();
+						scheduledResultSet.clear();
 					}
 				}
 			}
