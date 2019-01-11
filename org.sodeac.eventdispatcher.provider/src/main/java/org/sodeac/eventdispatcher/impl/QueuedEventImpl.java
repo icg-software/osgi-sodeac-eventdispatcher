@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.osgi.service.event.Event;
+import org.sodeac.multichainlist.Linker;
 import org.sodeac.multichainlist.Node;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
@@ -30,18 +31,17 @@ public class QueuedEventImpl implements IQueuedEvent
 	private Event event = null;
 	private String uuid = null;
 	
-	private ReentrantLock lock = null;
 	private volatile PropertyBlockImpl propertyBlock = null;
 	private volatile Map<String,Object> nativeProperties;
 	private long createTimeStamp;
 	private Node<QueuedEventImpl> node = null;
+	private Linker<QueuedEventImpl> linker = null;
 	
 	public QueuedEventImpl(Event event,QueueImpl queue)
 	{
 		super();
 		this.event = event;
 		this.queue = queue;
-		this.lock = new ReentrantLock();
 		this.uuid = UUID.randomUUID().toString();
 		this.createTimeStamp = System.currentTimeMillis();
 	}
@@ -77,6 +77,7 @@ public class QueuedEventImpl implements IQueuedEvent
 	{
 		if(this.propertyBlock == null)
 		{
+			ReentrantLock lock = this.queue.getSharedEventLock();
 			lock.lock();
 			try
 			{
@@ -155,6 +156,7 @@ public class QueuedEventImpl implements IQueuedEvent
 		{
 			if(this.propertyBlock == null)
 			{
+				ReentrantLock lock = this.queue.getSharedEventLock();
 				lock.lock();
 				try
 				{
@@ -173,6 +175,16 @@ public class QueuedEventImpl implements IQueuedEvent
 		return IQueuedEvent.super.getAdapter(adapterClass);
 	}
 
+	public Linker<QueuedEventImpl> getLinker()
+	{
+		return linker;
+	}
+
+	public void setLinker(Linker<QueuedEventImpl> linker)
+	{
+		this.linker = linker;
+	}
+
 	@Override
 	public IQueue getQueue()
 	{
@@ -185,4 +197,12 @@ public class QueuedEventImpl implements IQueuedEvent
 		return this.createTimeStamp;
 	}
 
+	@Override
+	public void removeFromQueue()
+	{
+		if(queue != null)
+		{
+			queue.removeEvent(this);
+		}
+	}
 }

@@ -103,10 +103,7 @@ public interface IQueuedEvent
 	/**
 	 * remove event from parent queue
 	 */
-	public default void removeFromQueue()
-	{
-		getQueue().removeEvent(getUUID());
-	}
+	public void removeFromQueue();
 	
 	/**
 	 * get create-timestamp

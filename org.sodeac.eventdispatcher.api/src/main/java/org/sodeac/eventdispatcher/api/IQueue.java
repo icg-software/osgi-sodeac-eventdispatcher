@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -417,4 +417,17 @@ public interface IQueue
 	 * @return  scope with given {@code scopeId} or null, if scope not found
 	 */
 	public IQueueChildScope getChildScope(UUID scopeId);
+	
+	
+	/**
+	 * Enables rule with specified ruleId
+	 * @param ruleId id of rule to enable
+	 */
+	public void enableRule(String ruleId);
+	
+	/**
+	 * Disable rule with specified ruleId
+	 * @param ruleId id of rule to disable
+	 */
+	public void disableRule(String ruleId);
 }

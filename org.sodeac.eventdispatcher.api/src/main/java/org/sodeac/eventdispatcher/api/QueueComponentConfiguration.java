@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Sebastian Palarus
+ * Copyright (c) 2018, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,11 @@
 package org.sodeac.eventdispatcher.api;
 
 import java.io.Serializable;
+import java.util.Objects;
+import java.util.function.Predicate;
+
+import org.osgi.service.event.Event;
+import org.sodeac.multichainlist.LinkerBuilder;
 
 public abstract class QueueComponentConfiguration implements Serializable
 {
@@ -701,4 +706,158 @@ public abstract class QueueComponentConfiguration implements Serializable
 		}
 	}
 	
+	/**
+	 * 
+	 * @author Sebastian Palarus
+	 *
+	 */
+	public static class RunTaskOnQueuedInChainRuleConfiguration extends QueueComponentConfiguration
+	{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 3838680301290863139L;
+		
+		private String ruleId = null;
+		private String chain = null; 
+		private IQueueTask task = null;
+		private Predicate<IQueuedEvent> eventPredicate = null;
+
+		public RunTaskOnQueuedInChainRuleConfiguration(String ruleId, String chain, IQueueTask task)
+		{
+			super();
+			
+			Objects.requireNonNull(task,"task is null");
+			Objects.requireNonNull(ruleId,"ruleid is null");
+			if(ruleId.isEmpty())
+			{
+				throw new RuntimeException("ruleid is empty");
+			}
+			this.ruleId = ruleId;
+			this.chain = chain;
+			this.task = task;
+		}
+
+		public Predicate<IQueuedEvent> getEventPredicate()
+		{
+			return eventPredicate;
+		}
+
+		public RunTaskOnQueuedInChainRuleConfiguration setEventPredicate(Predicate<IQueuedEvent> eventPredicate)
+		{
+			this.eventPredicate = eventPredicate;
+			return this;
+		}
+
+		public String getRuleId()
+		{
+			return ruleId;
+		}
+
+		public String getChain()
+		{
+			return chain;
+		}
+
+		public IQueueTask getTask()
+		{
+			return task;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public Class<? extends IQueueComponent>[] getScopes()
+		{
+			return new Class[] {IQueueController.class,IQueueService.class};
+		}
+
+		@Override
+		public RunTaskOnQueuedInChainRuleConfiguration copy()
+		{
+			return new RunTaskOnQueuedInChainRuleConfiguration(this.ruleId, this.chain, this.task).setEventPredicate(this.eventPredicate);
+		}
+		
+	}
+	
+	/**
+	 * Configuration to define the destination chains for queued events
+	 * 
+	 * @author Sebastian Palarus
+	 *
+	 */
+	public static class ChainDispatcherRuleConfiguration extends QueueComponentConfiguration
+	{	
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 9166813733404434531L;
+		
+		private String ruleId = null;
+		private Predicate<Event> eventPredicate = null;
+		private LinkerBuilder linksToAdd  = null;
+		private LinkerBuilder linksToRemove  = null;
+
+		public ChainDispatcherRuleConfiguration(String ruleId, Predicate<Event> eventPredicate)
+		{
+			super();
+			Objects.requireNonNull(ruleId,"ruleid is null");
+			Objects.requireNonNull(eventPredicate,"predicate is null");
+			if(ruleId.isEmpty())
+			{
+				throw new RuntimeException("ruleid is empty");
+			}
+			this.ruleId = ruleId;
+			this.eventPredicate = eventPredicate;
+		}
+		
+		public ChainDispatcherRuleConfiguration setLinksToAdd(LinkerBuilder linkerBuilder)
+		{
+			if(linkerBuilder != null)
+			{
+				this.linksToAdd = linkerBuilder;
+			}
+			return this;
+		}
+		
+		public ChainDispatcherRuleConfiguration setLinksToRemove(LinkerBuilder linkerBuilder)
+		{
+			if(linkerBuilder != null)
+			{
+				this.linksToRemove = linkerBuilder;
+			}
+			return this;
+		}
+
+		public LinkerBuilder getLinksToAdd()
+		{
+			return linksToAdd;
+		}
+
+		public LinkerBuilder getLinksToRemove()
+		{
+			return linksToRemove;
+		}
+
+		public String getRuleId()
+		{
+			return ruleId;
+		}
+
+		public Predicate<Event> getEventPredicate()
+		{
+			return eventPredicate;
+		}
+
+		@SuppressWarnings("unchecked")
+		public Class<? extends IQueueComponent>[] getScopes()
+		{
+			return new Class[] {IQueueController.class,IQueueService.class};
+		}
+
+		@Override
+		public ChainDispatcherRuleConfiguration copy()
+		{
+			return new ChainDispatcherRuleConfiguration(this.ruleId,this.eventPredicate).setLinksToAdd(this.linksToAdd).setLinksToRemove(this.linksToRemove);
+		}
+	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -38,14 +38,27 @@ import org.sodeac.xuri.ldapfilter.Attribute;
 import org.sodeac.xuri.ldapfilter.AttributeLinker;
 import org.sodeac.xuri.ldapfilter.IFilterItem;
 import org.sodeac.xuri.ldapfilter.LDAPFilterDecodingHandler;
+
 public class ControllerContainer
 {
-	public ControllerContainer(EventDispatcherImpl dispatcher,IQueueController queueController, Map<String, ?> properties, List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList, List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList, List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList)
+	public ControllerContainer
+	(
+		EventDispatcherImpl dispatcher,
+		IQueueController queueController, 
+		Map<String, ?> properties, 
+		List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList, 
+		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList, 
+		List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList,
+		List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList,
+		List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList
+	)
 	{
 		super();
 		this.boundedByQueueConfigurationList = boundedByQueueConfigurationList;
 		this.boundByIdList = boundByIdList;
 		this.subscribeEventList = subscribeEventList;
+		this.chainDispatcherRuleConfigurationList = chainDispatcherRuleConfigurationList;
+		this.runTaskOnQueuedInChainRuleConfigurationList = runTaskOnQueuedInChainRuleConfigurationList;
 		this.dispatcher = dispatcher;
 		this.queueController = queueController;
 		this.properties = properties;
@@ -59,6 +72,8 @@ public class ControllerContainer
 	private List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList = null;
 	private List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
 	private List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList = null;
+	private List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList = null;
+	private List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
 	
 	private volatile boolean registered = false;
 	
@@ -340,6 +355,16 @@ public class ControllerContainer
 	public boolean isImplementingIOnTaskTimeout()
 	{
 		return implementsIOnTaskTimeout;
+	}
+
+	public List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> getChainDispatcherRuleConfigurationList()
+	{
+		return chainDispatcherRuleConfigurationList;
+	}
+
+	public List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> getRunTaskOnQueuedInChainRuleConfigurationList()
+	{
+		return runTaskOnQueuedInChainRuleConfigurationList;
 	}
 	
 }

@@ -616,6 +616,14 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public IMeter meter(String... names)
 	{
+		if(! this.enabled)
+		{	
+			if(this.disabledMeter != null)
+			{
+				return this.disabledMeter;
+			}
+		}
+		
 		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.taskId, POSTFIX_METER, names);
 		
 		try
@@ -695,6 +703,14 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public ITimer timer(String... names)
 	{
+		if(! this.enabled)
+		{
+			if(this.disabledTimer != null)
+			{
+				return this.disabledTimer;
+			}
+		}
+		
 		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.taskId, POSTFIX_TIMER, names);
 		
 		try
@@ -774,6 +790,14 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public ICounter counter(String... names)
 	{
+		if(! this.enabled)
+		{
+			if(this.disabledCounter != null)
+			{
+				return this.disabledCounter;
+			}	
+		}
+		
 		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.taskId, POSTFIX_COUNTER, names);
 		try
 		{
@@ -852,6 +876,14 @@ public class MetricImpl implements IMetrics,IExtensibleMetrics
 	@Override
 	public IHistogram histogram(String... names)
 	{
+		if(! this.enabled)
+		{
+			if(this.disabledHistogram != null)
+			{
+				return this.disabledHistogram;
+			}	
+		}
+		
 		String key = IMetrics.metricName(dispatcher.getId(), this.queue == null ? null : this.queue.getId(), this.taskId, POSTFIX_HISTORGRAM, names);
 		try
 		{

@@ -54,7 +54,6 @@ import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueComponentConfigurable;
 import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueueChildScope;
@@ -766,7 +765,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
 	public void bindQueueController(IQueueController queueController,ServiceReference<IQueueController> serviceReference, Map<String, ?> properties)
 	{
-		IQueueComponentConfigurable configurable = null;
+		List<QueueComponentConfiguration> controllerConfigurationList = queueController.configureQueueController();
 		osgiLifecycleReadLock.lock();
 		try
 		{
@@ -796,31 +795,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				return;
 			}
 			
-			if(queueController instanceof IQueueComponentConfigurable)
+			if(controllerConfigurationList == null)
 			{
-				configurable = (IQueueComponentConfigurable)queueController;
-			}
-			else
-			{
-				configurable = new IQueueComponentConfigurable()
-				{
-					private List<QueueComponentConfiguration> controllerConfigurationList = new ArrayList<QueueComponentConfiguration>();
-					private List<QueueComponentConfiguration> serviceConfigurationList = new ArrayList<QueueComponentConfiguration>();
-					
-					@Override
-					public List<QueueComponentConfiguration> configureQueueService()
-					{
-						return this.serviceConfigurationList;
-					}
-					
-					@Override
-					public List<QueueComponentConfiguration> configureQueueController()
-					{
-						return this.controllerConfigurationList;
-					}
-				};
-				
-				List<QueueComponentConfiguration> controllerConfigurationList = configurable.configureQueueController();
+				controllerConfigurationList = new ArrayList<QueueComponentConfiguration>();
 				
 				String eventDispatcherId = EventDispatcherConstants.DEFAULT_DISPATCHER_ID;
 				if
@@ -947,7 +924,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					}
 				}
 			}
-			this.registerQueueControllerLifecycled(queueController, configurable, serviceReference.getBundle(), properties);
+			this.registerQueueControllerLifecycled(queueController, controllerConfigurationList, serviceReference.getBundle(), properties);
 		}
 		finally 
 		{
@@ -956,9 +933,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public void registerQueueController(IQueueController queueController, IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties)
+	public void registerQueueController(IQueueController queueController, Collection<QueueComponentConfiguration> controllerConfigurationList, Bundle bundle, Map<String, ?> properties)
 	{
-		if(configuration == null)
+		if(controllerConfigurationList == null)
 		{
 			return;
 		}
@@ -971,7 +948,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		osgiLifecycleReadLock.lock();
 		try
 		{
-			registerQueueControllerLifecycled(queueController, configuration, bundle, properties);
+			registerQueueControllerLifecycled(queueController, controllerConfigurationList, bundle, properties);
 		}
 		finally 
 		{
@@ -980,9 +957,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		
 	}
 	
-	private void registerQueueControllerLifecycled(IQueueController queueController, IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties)
+	private void registerQueueControllerLifecycled(IQueueController queueController, Collection<QueueComponentConfiguration> controllerConfigurationList, Bundle bundle, Map<String, ?> properties)
 	{
-		if(configuration == null)
+		if(controllerConfigurationList == null)
 		{
 			return;
 		}
@@ -994,16 +971,14 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList = null;
 		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
 		List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList = null;
+		List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList = null;
+		List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
 		
-		if(configuration.configureQueueController() == null)
-		{
-			return;
-		}
 		
 		QueueComponentConfiguration.BoundedByQueueId boundedById;
 		QueueComponentConfiguration.BoundedByQueueConfiguration boundedByQueueConfiguration;
 		QueueComponentConfiguration.SubscribeEvent subscribeEvent;
-		for(QueueComponentConfiguration config : configuration.configureQueueController())
+		for(QueueComponentConfiguration config : controllerConfigurationList)
 		{
 			if(config instanceof QueueComponentConfiguration.BoundedByQueueId)
 			{
@@ -1040,6 +1015,22 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				}
 				subscribeEventList.add(subscribeEvent.copy());
 			}
+			if(config instanceof QueueComponentConfiguration.ChainDispatcherRuleConfiguration)
+			{
+				if(chainDispatcherRuleConfigurationList == null)
+				{
+					chainDispatcherRuleConfigurationList = new ArrayList<QueueComponentConfiguration.ChainDispatcherRuleConfiguration>();
+				}
+				chainDispatcherRuleConfigurationList.add(((QueueComponentConfiguration.ChainDispatcherRuleConfiguration)config).copy());
+			}
+			if(config instanceof QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration)
+			{
+				if(runTaskOnQueuedInChainRuleConfigurationList == null)
+				{
+					runTaskOnQueuedInChainRuleConfigurationList = new ArrayList<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration>();
+				}
+				runTaskOnQueuedInChainRuleConfigurationList.add(((QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration)config).copy());
+			}
 		}
 		
 		if
@@ -1060,7 +1051,15 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			if(controllerContainer == null)
 			{
-				controllerContainer = new ControllerContainer(this,queueController,properties,boundByIdList, boundedByQueueConfigurationList, subscribeEventList);
+				controllerContainer = new ControllerContainer
+				(
+					this,queueController,properties,
+					boundByIdList, 
+					boundedByQueueConfigurationList, 
+					subscribeEventList,
+					chainDispatcherRuleConfigurationList,
+					runTaskOnQueuedInChainRuleConfigurationList
+				);
 				
 				this.controllerDetachIndex.put(queueController,controllerContainer);
 				this.controllerList.add(controllerContainer);
@@ -1566,7 +1565,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	@Reference(cardinality=ReferenceCardinality.MULTIPLE,policy=ReferencePolicy.DYNAMIC)
 	public void bindQueueService(IQueueService queueService,ServiceReference<IQueueController> serviceReference,Map<String, ?> properties)
 	{
-		IQueueComponentConfigurable configurable = null;
+		List<QueueComponentConfiguration> serviceConfigurationList = queueService.configureQueueService();
 		osgiLifecycleReadLock.lock();
 		try
 		{
@@ -1596,31 +1595,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				return;
 			}
 			
-			if(queueService instanceof IQueueComponentConfigurable)
+			if(serviceConfigurationList == null)
 			{
-				configurable = (IQueueComponentConfigurable)queueService;
-			}
-			else
-			{
-				configurable = new IQueueComponentConfigurable()
-				{
-					private List<QueueComponentConfiguration> controllerConfigurationList = new ArrayList<QueueComponentConfiguration>();
-					private List<QueueComponentConfiguration> serviceConfigurationList = new ArrayList<QueueComponentConfiguration>();
-					
-					@Override
-					public List<QueueComponentConfiguration> configureQueueService()
-					{
-						return this.serviceConfigurationList;
-					}
-					
-					@Override
-					public List<QueueComponentConfiguration> configureQueueController()
-					{
-						return this.controllerConfigurationList;
-					}
-				};
-				
-				List<QueueComponentConfiguration> serviceConfigurationList = configurable.configureQueueService();
+				serviceConfigurationList = new ArrayList<QueueComponentConfiguration>();
 				
 				String eventDispatcherId = EventDispatcherConstants.DEFAULT_DISPATCHER_ID;
 				if
@@ -1750,7 +1727,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 						.setPeriodicRepetitionIntervalMS(periodicRepetitionInterval)
 				);
 			}
-			registerQueueServiceLifecycled(queueService, configurable, serviceReference.getBundle(), properties);
+			registerQueueServiceLifecycled(queueService, serviceConfigurationList, serviceReference.getBundle(), properties);
 		}
 		finally 
 		{
@@ -1759,9 +1736,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	}
 	
 	@Override
-	public void registerQueueService(IQueueService queueService,IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties)
+	public void registerQueueService(IQueueService queueService, Collection<QueueComponentConfiguration> serviceConfigurationList, Bundle bundle, Map<String, ?> properties)
 	{
-		if(configuration == null)
+		if(serviceConfigurationList == null)
 		{
 			return;
 		}
@@ -1774,7 +1751,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		osgiLifecycleReadLock.lock();
 		try
 		{
-			registerQueueServiceLifecycled(queueService, configuration, bundle, properties);
+			registerQueueServiceLifecycled(queueService, serviceConfigurationList, bundle, properties);
 		}
 		finally 
 		{
@@ -1782,9 +1759,9 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 	}
 	
-	public void registerQueueServiceLifecycled(IQueueService queueService,IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties)
+	public void registerQueueServiceLifecycled(IQueueService queueService,Collection<QueueComponentConfiguration> serviceConfigurationList, Bundle bundle, Map<String, ?> properties)
 	{
-		if(configuration == null)
+		if(serviceConfigurationList == null)
 		{
 			return;
 		}
@@ -1795,17 +1772,15 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		}
 		List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList = null;
 		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
-		List<QueueComponentConfiguration.QueueServiceConfiguration> serviceConfigurationList = null;
+		List<QueueComponentConfiguration.QueueServiceConfiguration> serviceBehaviorConfigurationList = null;
+		List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList = null;
+		List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
 		
-		if(configuration.configureQueueService() == null)
-		{
-			return;
-		}
 		
 		QueueComponentConfiguration.BoundedByQueueId boundedById;
 		QueueComponentConfiguration.BoundedByQueueConfiguration boundedByQueueConfiguration;
 		QueueComponentConfiguration.QueueServiceConfiguration serviceConfiguration;
-		for(QueueComponentConfiguration config : configuration.configureQueueService())
+		for(QueueComponentConfiguration config : serviceConfigurationList)
 		{
 			if(config instanceof QueueComponentConfiguration.BoundedByQueueId)
 			{
@@ -1836,11 +1811,27 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			if(config instanceof QueueComponentConfiguration.QueueServiceConfiguration)
 			{
 				serviceConfiguration = (QueueComponentConfiguration.QueueServiceConfiguration)config;
-				if(serviceConfigurationList == null)
+				if(serviceBehaviorConfigurationList == null)
 				{
-					serviceConfigurationList = new ArrayList<QueueComponentConfiguration.QueueServiceConfiguration>();
+					serviceBehaviorConfigurationList = new ArrayList<QueueComponentConfiguration.QueueServiceConfiguration>();
 				}
-				serviceConfigurationList.add(serviceConfiguration.copy());
+				serviceBehaviorConfigurationList.add(serviceConfiguration.copy());
+			}
+			if(config instanceof QueueComponentConfiguration.ChainDispatcherRuleConfiguration)
+			{
+				if(chainDispatcherRuleConfigurationList == null)
+				{
+					chainDispatcherRuleConfigurationList = new ArrayList<QueueComponentConfiguration.ChainDispatcherRuleConfiguration>();
+				}
+				chainDispatcherRuleConfigurationList.add(((QueueComponentConfiguration.ChainDispatcherRuleConfiguration)config).copy());
+			}
+			if(config instanceof QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration)
+			{
+				if(runTaskOnQueuedInChainRuleConfigurationList == null)
+				{
+					runTaskOnQueuedInChainRuleConfigurationList = new ArrayList<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration>();
+				}
+				runTaskOnQueuedInChainRuleConfigurationList.add(((QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration)config).copy());
 			}
 		}
 		
@@ -1861,7 +1852,15 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			
 			if(serviceContainer == null)
 			{
-				serviceContainer = new ServiceContainer(this, boundByIdList, boundedByQueueConfigurationList, serviceConfigurationList);
+				serviceContainer = new ServiceContainer
+				(
+					this, 
+					boundByIdList, 
+					boundedByQueueConfigurationList, 
+					serviceBehaviorConfigurationList,
+					chainDispatcherRuleConfigurationList,
+					runTaskOnQueuedInChainRuleConfigurationList
+				);
 				serviceContainer.setQueueService(queueService);
 				serviceContainer.setProperties(properties);
 				

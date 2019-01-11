@@ -10,21 +10,22 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.extension.api;
 
+import java.util.Collection;
 import java.util.Map;
 
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.osgi.framework.Bundle;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.IQueueComponentConfigurable;
 import org.sodeac.eventdispatcher.api.IQueueService;
+import org.sodeac.eventdispatcher.api.QueueComponentConfiguration;
 
 public interface IExtensibleEventDispatcher extends IEventDispatcher
 {
 	public String getBundleId();
 	public String getBundleVersion();
 	
-	public void registerQueueController(IQueueController queueController, IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties);
-	public void registerQueueService(IQueueService queueService,IQueueComponentConfigurable configuration, Bundle bundle, Map<String, ?> properties);
+	public void registerQueueController(IQueueController queueController, Collection<QueueComponentConfiguration> controllerConfigurationList, Bundle bundle, Map<String, ?> properties);
+	public void registerQueueService(IQueueService queueService, Collection<QueueComponentConfiguration> serviceConfigurationList, Bundle bundle, Map<String, ?> properties);
 	
 	public void unregisterQueueController(IQueueController eventController);
 	public void unregisterQueueService(IQueueService queueService);

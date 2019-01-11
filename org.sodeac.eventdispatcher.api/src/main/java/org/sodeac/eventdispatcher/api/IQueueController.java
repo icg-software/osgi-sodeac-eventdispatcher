@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+import java.util.List;
+
 /**
  * 
  * An eventcontroller reacts to a wide variety of queue happenings, if it implements appropriate extension interfaces.
@@ -19,5 +21,13 @@ package org.sodeac.eventdispatcher.api;
  */
 public interface IQueueController extends IQueueComponent
 {
-	
+	/**
+	 * 
+	 * 
+	 * @return list of configuration to configure queue controller
+	 */
+	public default List<QueueComponentConfiguration> configureQueueController()
+	{
+		return null;
+	}
 }

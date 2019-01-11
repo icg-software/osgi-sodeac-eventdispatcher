@@ -10,12 +10,22 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.api;
 
+import java.util.List;
+
 /**
  * OSGi-service interface to register {@link IQueueTask} as OSGi-service / component
  * 
  * @author Sebastian Palarus
  *
  */
-public interface IQueueService extends IQueueTask, IQueueComponent
+public interface IQueueService extends IQueueTask,IQueueComponent
 { 
+	/**
+	 * 
+	 * @return list of configuration to configure queue service
+	 */
+	public default List<QueueComponentConfiguration> configureQueueService()
+	{
+		return null;
+	}
 }

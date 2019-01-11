@@ -23,6 +23,7 @@ import org.sodeac.eventdispatcher.itest.runner.AbstractTest;
 import org.sodeac.eventdispatcher.itest.components.scope.ScopeTestSimpleManagementController;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;

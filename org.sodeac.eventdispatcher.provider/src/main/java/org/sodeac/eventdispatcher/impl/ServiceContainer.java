@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -36,13 +36,17 @@ public class ServiceContainer
 		EventDispatcherImpl dispatcher, 
 		List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList, 
 		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList,
-		List<QueueComponentConfiguration.QueueServiceConfiguration> serviceConfigurationList
+		List<QueueComponentConfiguration.QueueServiceConfiguration> serviceConfigurationList,
+		List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList,
+		List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList
 	)
 	{
 		super();
 		this.dispatcher = dispatcher;
 		this.boundByIdList = boundByIdList;
 		this.boundedByQueueConfigurationList = boundedByQueueConfigurationList;
+		this.chainDispatcherRuleConfigurationList = chainDispatcherRuleConfigurationList;
+		this.runTaskOnQueuedInChainRuleConfigurationList = runTaskOnQueuedInChainRuleConfigurationList;
 		if((serviceConfigurationList != null) && (! serviceConfigurationList.isEmpty()))
 		{
 			this.serviceConfiguration = serviceConfigurationList.get(0);
@@ -57,6 +61,8 @@ public class ServiceContainer
 	private EventDispatcherImpl dispatcher;
 	private List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList = null;
 	private List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
+	private List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList = null;
+	private List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
 	private QueueComponentConfiguration.QueueServiceConfiguration serviceConfiguration = null;
 	
 	private volatile Map<String, ?> properties = null;
@@ -266,8 +272,19 @@ public class ServiceContainer
 		return filterAttributes;
 	}
 	
-	
-	
+	public List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> getChainDispatcherRuleConfigurationList()
+	{
+		return chainDispatcherRuleConfigurationList;
+	}
+
+
+	public List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> getRunTaskOnQueuedInChainRuleConfigurationList()
+	{
+		return runTaskOnQueuedInChainRuleConfigurationList;
+	}
+
+
+
 	public class ServiceFilterObjects
 	{
 		QueueComponentConfiguration.BoundedByQueueConfiguration bound = null;
