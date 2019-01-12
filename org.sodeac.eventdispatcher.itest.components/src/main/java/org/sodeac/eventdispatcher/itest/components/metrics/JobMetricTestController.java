@@ -132,7 +132,7 @@ public class JobMetricTestController implements IQueueController,IOnQueuedEvent,
 			
 			if(jobCounter < repeat)
 			{
-				taskControl.setExecutionTimeStamp(System.currentTimeMillis() + ((long)sleeptime) + ((long)worktime),true);
+				taskControl.setExecutionTimestamp(System.currentTimeMillis() + ((long)sleeptime) + ((long)worktime),true);
 			}
 			
 			try

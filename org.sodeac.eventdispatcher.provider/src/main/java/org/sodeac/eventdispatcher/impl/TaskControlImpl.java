@@ -11,10 +11,12 @@
 package org.sodeac.eventdispatcher.impl;
 
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 import org.sodeac.eventdispatcher.api.ITaskControl;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
+import org.sodeac.eventdispatcher.api.IQueue;
 
 public class TaskControlImpl implements ITaskControl
 {
@@ -26,24 +28,17 @@ public class TaskControlImpl implements ITaskControl
 	
 	private volatile boolean stopTaskOnTimeout = false;
 	private volatile boolean inRun = false;
-	private volatile ExecutionTimeStampSource executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.SCHEDULE;
-	
-	
-	private IPropertyBlock taskPropertyBlock = null;
+	private volatile ExecutionTimestampSource executionTimeStampSource = ITaskControl.ExecutionTimestampSource.SCHEDULE;
 	
 	private ReentrantLock executionTimestampLock = null;
+	private SetTimestampRequest setTimestampRequest = null;
 	
 	public TaskControlImpl(IPropertyBlock taskPropertyBlock)
 	{
 		super();
 		this.executionTimeStamp = System.currentTimeMillis();
-		this.taskPropertyBlock = taskPropertyBlock;
-		
-		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
-		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
-		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
-		
 		this.executionTimestampLock = new ReentrantLock();
+		this.setTimestampRequest = new SetTimestampRequest();
 	}
 	
 	public void preRun()
@@ -73,7 +68,7 @@ public class TaskControlImpl implements ITaskControl
 	}
 
 	@Override
-	public void timeOut()
+	public void timeout()
 	{
 		this.inTimeOut = true;
 		this.done = true;
@@ -85,24 +80,24 @@ public class TaskControlImpl implements ITaskControl
 	}
 
 	@Override
-	public boolean isInTimeOut()
+	public boolean isInTimeout()
 	{
 		return inTimeOut;
 	}
 
 	@Override
-	public long getExecutionTimeStamp()
+	public long getExecutionTimestamp()
 	{
 		return this.executionTimeStamp;
 	}
 	
 	@Override
-	public ExecutionTimeStampSource getExecutionTimeStampSource()
+	public ExecutionTimestampSource getExecutionTimestampSource()
 	{
 		return this.executionTimeStampSource;
 	}
 	
-	public void setExecutionTimeStampSource(ExecutionTimeStampSource executionTimeStampSource)
+	public void setExecutionTimeStampSource(ExecutionTimestampSource executionTimeStampSource)
 	{
 		this.executionTimeStampSource = executionTimeStampSource;
 	}
@@ -113,7 +108,7 @@ public class TaskControlImpl implements ITaskControl
 	}
 	
 	@Override
-	public boolean setExecutionTimeStamp(long executionTimeStamp, boolean force)
+	public boolean setExecutionTimestamp(long executionTimeStamp, boolean force)
 	{
 		executionTimestampLock.lock();
 		try
@@ -124,19 +119,48 @@ public class TaskControlImpl implements ITaskControl
 				(executionTimeStamp < old) || 
 				force || 
 				(old < System.currentTimeMillis()) || 
-				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.SCHEDULE) ||
-				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.WORKER) ||
-				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.PERODIC)
+				(this.executionTimeStampSource == ITaskControl.ExecutionTimestampSource.SCHEDULE) ||
+				(this.executionTimeStampSource == ITaskControl.ExecutionTimestampSource.WORKER) ||
+				(this.executionTimeStampSource == ITaskControl.ExecutionTimestampSource.PERODIC)
 			) 
 			{
 				this.executionTimeStamp = executionTimeStamp;
-				this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.WORKER;
-				this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
+				this.executionTimeStampSource = ITaskControl.ExecutionTimestampSource.WORKER;
 				
 				if(inRun)
 				{
 					this.done = false;
 				}
+				
+				return true;
+			}
+			
+			/*
+			 * ignored if 
+			 * 		not forced and
+			 * 		current configured execution timestamp in future and
+			 * 		new requested execution timestamp is later then current configured execution timestamp and
+			 * 		current configured execution timestamp configured by (schedule, worker or periodic service configuration)
+			 */
+			
+			return false;
+		}
+		finally 
+		{
+			executionTimestampLock.unlock();
+		}
+	}
+	
+	public boolean setExecutionTimeStamp(long executionTimeStamp, ITaskControl.ExecutionTimestampSource type, Predicate<SetTimestampRequest> predicate)
+	{
+		executionTimestampLock.lock();
+		try
+		{
+			this.setTimestampRequest.setTimestamp(executionTimeStamp);
+			if(predicate.test(this.setTimestampRequest)) 
+			{
+				this.executionTimeStamp = executionTimeStamp;
+				this.executionTimeStampSource = type;
 				
 				return true;
 			}
@@ -147,101 +171,33 @@ public class TaskControlImpl implements ITaskControl
 		{
 			executionTimestampLock.unlock();
 		}
-	}
-	
-	public void setExecutionTimeStampPeriodic(long executionTimeStamp)
-	{
-		executionTimestampLock.lock();
-		try
-		{
-			long old = this.executionTimeStamp;
-			if
-			(
-				(old > System.currentTimeMillis()) &&
-				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.RESCHEDULE) &&
-				(executionTimeStamp > 0)
-			)
-			{
-				return;
-			}
-			
-			this.executionTimeStamp = executionTimeStamp;
-			this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.PERODIC;
-			this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
-		}
-		finally 
-		{
-			executionTimestampLock.unlock();
-		}
-	}
-	
-	public void setExecutionTimeStampSchedule(long executionTimeStamp)
-	{
-		executionTimestampLock.lock();
-		try
-		{
-			this.executionTimeStamp = executionTimeStamp;
-			this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.SCHEDULE;
-			this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);
-		}
-		finally 
-		{
-			executionTimestampLock.unlock();
-		}
 		
-	}
-	
-	public void setExecutionTimeStampReschedule(long executionTimeStamp)
-	{
-		executionTimestampLock.lock();
-		try
-		{
-			long old = this.executionTimeStamp;
-			if
-			( 
-				(executionTimeStamp < old) || 
-				(old < System.currentTimeMillis()) || 
-				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.SCHEDULE) ||
-				(this.executionTimeStampSource == ITaskControl.ExecutionTimeStampSource.RESCHEDULE) 
-			) 
-			{
-				this.executionTimeStamp = executionTimeStamp;
-				this.executionTimeStampSource = ITaskControl.ExecutionTimeStampSource.RESCHEDULE;
-				this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_EXECUTION_TIMESTAMP, this.executionTimeStamp);	
-			}
-		}
-		finally 
-		{
-			executionTimestampLock.unlock();
-		}
 	}
 
 	@Override
-	public long getTimeOut()
+	public long getTimeout()
 	{
 		return this.timeOutValue;
 	}
 
 	@Override
-	public long setTimeOut(long timeOut)
+	public long setTimeout(long timeOut)
 	{
 		long old = this.timeOutValue;
 		this.timeOutValue = timeOut;
-		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_TIMEOUT_VALUE, this.timeOutValue);
 		return old;
 	}
 	
 	@Override
-	public long getHeartBeatTimeOut()
+	public long getHeartbeatTimeout()
 	{
 		return this.heartBeatTimeOut;
 	}
 	
-	public long setHeartBeatTimeOut(long heartBeatTimeOut)
+	public long setHeartbeatTimeout(long heartBeatTimeOut)
 	{
 		long old =  this.heartBeatTimeOut;
 		this.heartBeatTimeOut = heartBeatTimeOut;
-		this.taskPropertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_HEARTBEAT_TIMEOUT, this.heartBeatTimeOut);
 		return old;
 	}
 
@@ -252,15 +208,132 @@ public class TaskControlImpl implements ITaskControl
 	}
 
 	@Override
-	public boolean setStopOnTimeOutFlag(boolean value)
+	public boolean setStopOnTimeoutFlag(boolean value)
 	{
 		boolean oldValue = this.stopTaskOnTimeout;
 		this.stopTaskOnTimeout = value;
 		return oldValue;
 	}
 	
-	public boolean getStopOnTimeOutFlag()
+	public boolean getStopOnTimeoutFlag()
 	{
 		return this.stopTaskOnTimeout;
+	}
+	
+	public class SetTimestampRequest
+	{
+		private long timestamp = -1L;
+		public long getTimestamp()
+		{
+			return this.timestamp;
+		}
+		private void setTimestamp(long timestamp)
+		{
+			this.timestamp = timestamp;
+		}
+		public TaskControlImpl getTaskControl()
+		{
+			return TaskControlImpl.this;
+		}
+	}
+	
+	/**
+	 * Predicate to test for {@link IQueue#rescheduleTask(String, long, long, long)}
+	 * 
+	 * @author Sebastian Palarus
+	 *
+	 */
+	public static class RescheduleTimestampPredicate implements Predicate<SetTimestampRequest>
+	{
+		public static final RescheduleTimestampPredicate INSTANCE = new TaskControlImpl.RescheduleTimestampPredicate();
+		
+		@Override
+		public boolean test(SetTimestampRequest setTimestampRequest)
+		{
+			long old = setTimestampRequest.getTaskControl().getExecutionTimestamp();
+			long executionTimeStamp = setTimestampRequest.getTimestamp();
+			ExecutionTimestampSource executionTimestampSource = setTimestampRequest.getTaskControl().getExecutionTimestampSource();
+			
+			return 																						// (| ....)
+				(executionTimeStamp < old) || 															// earlier execution is requested
+				(old < System.currentTimeMillis()) || 													// last request in past
+				(executionTimestampSource == ITaskControl.ExecutionTimestampSource.SCHEDULE) ||			// last request from schedule
+				(executionTimestampSource == ITaskControl.ExecutionTimestampSource.RESCHEDULE) 			// or reschedule
+			;
+			
+			/*
+			 * => ignore if
+			 * 		current execution plan requires earlier execution in the future and was requested by 
+			 * 			trigger, 
+			 * 			tasks control 
+			 * 			periodic service configuration
+			 */
+		}
+		
+		public static RescheduleTimestampPredicate getInstance()
+		{
+			return RescheduleTimestampPredicate.INSTANCE;
+		}
+		
+	}
+	
+	/**
+	 * Predicate to test for {@link IQueue#scheduleTask(org.sodeac.eventdispatcher.api.IQueueTask)} ...
+	 * 
+	 * @author Sebastian Palarus
+	 *
+	 */
+	public static class ScheduleTimestampPredicate implements Predicate<SetTimestampRequest>
+	{
+		public static final ScheduleTimestampPredicate INSTANCE = new TaskControlImpl.ScheduleTimestampPredicate();
+		
+		@Override
+		public boolean test(SetTimestampRequest setTimestampRequest)
+		{
+			return true;
+		}
+		
+		public static ScheduleTimestampPredicate getInstance()
+		{
+			return ScheduleTimestampPredicate.INSTANCE;
+		}
+	}
+	
+	/**
+	 * Predicate to test for set periodic reschedule service timestamp
+	 * 
+	 * @author Sebastian Palarus
+	 *
+	 */
+	public static class PeriodicServiceTimestampPredicate implements Predicate<SetTimestampRequest>
+	{
+		public static final PeriodicServiceTimestampPredicate INSTANCE = new PeriodicServiceTimestampPredicate();
+		
+		@Override
+		public boolean test(SetTimestampRequest setTimestampRequest)
+		{
+			long old = setTimestampRequest.getTaskControl().getExecutionTimestamp();
+			long executionTimeStamp = setTimestampRequest.getTimestamp();
+			ExecutionTimestampSource executionTimestampSource = setTimestampRequest.getTaskControl().getExecutionTimestampSource();
+			
+			return !
+			(
+				(old > System.currentTimeMillis()) &&
+				(executionTimestampSource  == ITaskControl.ExecutionTimestampSource.RESCHEDULE) &&
+				(executionTimeStamp > 0)
+			);
+			
+			
+			/*
+			 * => ignore if
+			 * 		current execution plan is in the future and was requested by IQueue#rescheduleTask and new requested timestamp is not 0
+			 */
+		}
+		
+		public static PeriodicServiceTimestampPredicate getInstance()
+		{
+			return PeriodicServiceTimestampPredicate.INSTANCE;
+		}
+		
 	}
 }

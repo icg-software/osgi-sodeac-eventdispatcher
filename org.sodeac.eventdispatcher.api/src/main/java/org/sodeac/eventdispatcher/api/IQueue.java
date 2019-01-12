@@ -278,6 +278,9 @@ public interface IQueue
 	/**
 	 * reset execution plan for an existing {@link IQueueTask}
 	 * 
+	 * <p>The execution timestamp is ignored if current execution plan requires earlier execution in the future 
+	 * and was requested by trigger, tasks control and periodic service configuration
+	 * 
 	 * @param id registration-id of {@link IQueueTask} in which reset execution plan 
 	 * @param executionTimeStamp new execution time millis
 	 * @param timeOutValue new timeout value in ms, before notify for timeout

@@ -136,7 +136,7 @@ public class DispatcherGuardian extends Thread
 					
 					if(task !=  null)
 					{
-						heartBeatTimeOut = task.getTaskControl().getHeartBeatTimeOut();
+						heartBeatTimeOut = task.getTaskControl().getHeartbeatTimeout();
 						if(heartBeatTimeOut > 0)
 						{
 							try
@@ -280,7 +280,7 @@ public class DispatcherGuardian extends Thread
 			return;
 		}
 		
-		long timeOutTimeStamp = taskControl.getTimeOut() + System.currentTimeMillis();
+		long timeOutTimeStamp = taskControl.getTimeout() + System.currentTimeMillis();
 		
 		taskTimeOutIndexWriteLock.lock();
 		try
@@ -292,12 +292,12 @@ public class DispatcherGuardian extends Thread
 				taskObservable.queue = queue;
 				this.taskTimeOutIndex.put(queue,taskObservable);
 			}
-			if(taskControl.getTimeOut() > 0)
+			if(taskControl.getTimeout() > 0)
 			{
 				taskObservable.task = task;
 				taskObservable.taskTimeOut = timeOutTimeStamp;
 			}
-			else if(taskControl.getHeartBeatTimeOut() > 0)
+			else if(taskControl.getHeartbeatTimeout() > 0)
 			{
 				taskObservable.task = task;
 			}
@@ -323,7 +323,7 @@ public class DispatcherGuardian extends Thread
 				}
 				else
 				{
-					long heartBeatTimeOut = task.getTaskControl().getHeartBeatTimeOut();
+					long heartBeatTimeOut = task.getTaskControl().getHeartbeatTimeout();
 					if(heartBeatTimeOut > 0)
 					{
 						try

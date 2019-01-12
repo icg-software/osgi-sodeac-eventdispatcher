@@ -36,6 +36,9 @@ import org.sodeac.eventdispatcher.api.IQueueWorker;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueueEventResult;
 import org.sodeac.eventdispatcher.api.ITimer;
+import org.sodeac.eventdispatcher.api.ITaskControl.ExecutionTimestampSource;
+import org.sodeac.eventdispatcher.impl.TaskControlImpl.PeriodicServiceTimestampPredicate;
+import org.sodeac.eventdispatcher.impl.TaskControlImpl.ScheduleTimestampPredicate;
 
 public class QueueWorker extends Thread
 {
@@ -470,15 +473,15 @@ public class QueueWorker extends Thread
 							ITimer.Context timerContextQueue = null;
 							try
 							{
-								taskTimeOut = ((dueTask.getTaskControl().getTimeOut() > 0) || (dueTask.getTaskControl().getHeartBeatTimeOut() > 0));
+								taskTimeOut = ((dueTask.getTaskControl().getTimeout() > 0) || (dueTask.getTaskControl().getHeartbeatTimeout() > 0));
 								this.currentRunningTask = dueTask;
 								dueTask.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT, System.currentTimeMillis());
 								
 								if(taskTimeOut)
 								{
-									if(dueTask.getTaskControl().getTimeOut() > 0)
+									if(dueTask.getTaskControl().getTimeout() > 0)
 									{
-										this.currentTimeOutTimeStamp = System.currentTimeMillis() + dueTask.getTaskControl().getTimeOut();
+										this.currentTimeOutTimeStamp = System.currentTimeMillis() + dueTask.getTaskControl().getTimeout();
 									}
 									this.eventQueue.getEventDispatcher().registerTimeOut(this.eventQueue,dueTask);
 								}
@@ -497,7 +500,12 @@ public class QueueWorker extends Thread
 									{
 										periodicRepetitionInterval = 1000L * 60L * 60L * 24L * 365L * 108L;
 									}
-									dueTask.getTaskControl().setExecutionTimeStampPeriodic(System.currentTimeMillis() + periodicRepetitionInterval);
+									dueTask.getTaskControl().setExecutionTimeStamp
+									(
+										System.currentTimeMillis() + periodicRepetitionInterval, 
+										ExecutionTimestampSource.PERODIC, 
+										PeriodicServiceTimestampPredicate.getInstance()
+									);
 									dueTask.getTaskControl().preRunPeriodicTask();
 								}
 								else if(dueTask.getTask() instanceof IQueueService)
@@ -529,7 +537,12 @@ public class QueueWorker extends Thread
 									{
 										periodicRepetitionInterval = 1000L * 60L * 60L * 24L * 365L * 108L;
 									}
-									dueTask.getTaskControl().setExecutionTimeStampPeriodic(System.currentTimeMillis() + periodicRepetitionInterval);
+									dueTask.getTaskControl().setExecutionTimeStamp
+									(
+										System.currentTimeMillis() + periodicRepetitionInterval, 
+										ExecutionTimestampSource.PERODIC, 
+										PeriodicServiceTimestampPredicate.getInstance()
+									);
 									dueTask.getTaskControl().preRunPeriodicTask();
 								}
 								else
@@ -1088,14 +1101,14 @@ public class QueueWorker extends Thread
 		// HeartBeat TimeOut
 		
 		boolean heartBeatTimeout = false;
-		if(timeOutTask.getTaskControl().getHeartBeatTimeOut() > 0)
+		if(timeOutTask.getTaskControl().getHeartbeatTimeout() > 0)
 		{
 			try
 			{
 				long lastHeartBeat = (Long)timeOutTask.getMetrics().getQualityValue(IMetrics.QUALITY_VALUE_LAST_HEARTBEAT);
 				if(lastHeartBeat > 0)
 				{
-					if((lastHeartBeat + timeOutTask.getTaskControl().getHeartBeatTimeOut() ) <= System.currentTimeMillis())
+					if((lastHeartBeat + timeOutTask.getTaskControl().getHeartbeatTimeout() ) <= System.currentTimeMillis())
 					{
 						heartBeatTimeout = true;
 					}
@@ -1145,7 +1158,7 @@ public class QueueWorker extends Thread
 			}
 			else
 			{
-				timeOutTask.getTaskControl().timeOut();
+				timeOutTask.getTaskControl().timeout();
 			}
 		}
 		catch (Exception e) {}
@@ -1162,7 +1175,7 @@ public class QueueWorker extends Thread
 			catch (Exception e) {}
 		}
 		
-		if(timeOutTask.getTaskControl().getStopOnTimeOutFlag())
+		if(timeOutTask.getTaskControl().getStopOnTimeoutFlag())
 		{
 			if(Thread.currentThread() != this)
 			{

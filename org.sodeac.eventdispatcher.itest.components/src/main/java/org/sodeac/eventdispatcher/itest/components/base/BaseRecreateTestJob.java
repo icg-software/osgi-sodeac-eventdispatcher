@@ -49,7 +49,7 @@ public class BaseRecreateTestJob implements IQueueTask
 				e.printStackTrace();
 			}
 			
-			tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_QUEUE_SIGNAL,queue, "" + signal + "_" + taskControl.isInTimeOut()));
+			tracingObject.getTracingEventList().add(new TracingEvent(TracingEvent.ON_QUEUE_SIGNAL,queue, "" + signal + "_" + taskControl.isInTimeout()));
 		}
 	}
 

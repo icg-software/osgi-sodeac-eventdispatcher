@@ -49,6 +49,7 @@ import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueChildScope;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
+import org.sodeac.eventdispatcher.api.ITaskControl.ExecutionTimestampSource;
 import org.sodeac.eventdispatcher.api.IQueueEventResult;
 import org.sodeac.eventdispatcher.api.ITimer;
 import org.sodeac.eventdispatcher.api.QueueComponentConfiguration;
@@ -57,9 +58,11 @@ import org.sodeac.eventdispatcher.extension.api.IEventDispatcherExtension;
 import org.sodeac.eventdispatcher.extension.api.IExtensibleQueue;
 import org.sodeac.eventdispatcher.impl.ControllerContainer.ControllerFilterObjects;
 import org.sodeac.eventdispatcher.impl.ServiceContainer.ServiceFilterObjects;
+import org.sodeac.eventdispatcher.impl.TaskControlImpl.RescheduleTimestampPredicate;
+import org.sodeac.eventdispatcher.impl.TaskControlImpl.ScheduleTimestampPredicate;
 
 public class QueueImpl implements IQueue,IExtensibleQueue
-{
+{	
 	public QueueImpl(String queueId,EventDispatcherImpl eventDispatcher, boolean enableMetrics, String name, String category,Map<String, Object> configurationProperties, Map<String, Object> stateProperties)
 	{
 		super();
@@ -1494,18 +1497,18 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			TaskControlImpl taskControl = new TaskControlImpl(propertyBlock);
 			if(executionTimeStamp > 0)
 			{
-				taskControl.setExecutionTimeStampSchedule(executionTimeStamp);
+				taskControl.setExecutionTimeStamp(executionTimeStamp, ExecutionTimestampSource.SCHEDULE, ScheduleTimestampPredicate.getInstance());
 			}
 			if(heartBeatTimeOut > 0)
 			{
-				taskControl.setHeartBeatTimeOut(heartBeatTimeOut);
+				taskControl.setHeartbeatTimeout(heartBeatTimeOut);
 			}
 			if(timeOutValue > 0)
 			{
-				taskControl.setTimeOut(timeOutValue);
+				taskControl.setTimeout(timeOutValue);
 			}
 			
-			taskControl.setStopOnTimeOutFlag(stopOnTimeOut);
+			taskControl.setStopOnTimeoutFlag(stopOnTimeOut);
 			
 			propertyBlock.setProperty(EventDispatcherConstants.PROPERTY_KEY_TASK_ID, id);
 			
@@ -1621,17 +1624,19 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			
 			if(heartBeatTimeOut > 0)
 			{
-				taskControl.setHeartBeatTimeOut(heartBeatTimeOut);
+				taskControl.setHeartbeatTimeout(heartBeatTimeOut);
 			}
 			if(timeOutValue > 0)
 			{
-				taskControl.setTimeOut(timeOutValue);
+				taskControl.setTimeout(timeOutValue);
 			}
 			
 			if(executionTimeStamp > 0)
 			{
-				taskControl.setExecutionTimeStampReschedule(executionTimeStamp);
-				this.notifyOrCreateWorker(executionTimeStamp);
+				if(taskControl.setExecutionTimeStamp(executionTimeStamp, ExecutionTimestampSource.RESCHEDULE, RescheduleTimestampPredicate.getInstance()))
+				{
+					this.notifyOrCreateWorker(executionTimeStamp);
+				}
 			}
 			
 			return taskContainer.getTask();

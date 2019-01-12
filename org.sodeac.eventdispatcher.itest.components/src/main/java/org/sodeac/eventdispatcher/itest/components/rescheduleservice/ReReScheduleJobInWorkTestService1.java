@@ -73,7 +73,7 @@ public class ReReScheduleJobInWorkTestService1 implements EventHandler,IQueueCon
 		
 		if(reReScheduleInWork)
 		{
-			taskControl.setExecutionTimeStamp(System.currentTimeMillis(), true);
+			taskControl.setExecutionTimestamp(System.currentTimeMillis(), true);
 			reReScheduleInWork = false;
 			return;
 		}

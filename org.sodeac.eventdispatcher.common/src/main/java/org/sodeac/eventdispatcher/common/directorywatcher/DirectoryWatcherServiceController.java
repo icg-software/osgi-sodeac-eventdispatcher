@@ -128,7 +128,7 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 	{
 		if(! queue.getConfigurationPropertyBlock().getPropertyOrDefault(SERVICE_ID + ".run" , Boolean.class, false))
 		{
-			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimestamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			return;
 		}
 		
@@ -136,14 +136,14 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 		if(dir == null)
 		{
 			CommonEventDispatcherHelper.log(context, logService, LogService.LOG_ERROR, "directory to monitored not defined",null);
-			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimestamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			return;
 		}
 		String topic = queue.getConfigurationPropertyBlock().getProperty("eventtopic",String.class);
 		if((topic == null) || topic.isEmpty())
 		{
 			CommonEventDispatcherHelper.log(context, logService, LogService.LOG_ERROR, "topic to fire on directory modified not defined", null);
-			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimestamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			return;
 		}
 		
@@ -271,7 +271,7 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 			}
 			if(! queue.getConfigurationPropertyBlock().getPropertyOrDefault(SERVICE_ID + ".run" , Boolean.class, false))
 			{
-				taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+				taskControl.setExecutionTimestamp(System.currentTimeMillis() + (1080L * 3600L),true);
 				return;
 			}
 			
@@ -279,12 +279,12 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 		}
 		catch(NoSuchFileException e )
 		{
-			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimestamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			CommonEventDispatcherHelper.log(DirectoryWatcherServiceController.this.context, DirectoryWatcherServiceController.this.logService, LogService.LOG_ERROR, "directory for modification not exists", e);
 		}
 		catch(IOException e )
 		{
-			taskControl.setExecutionTimeStamp(System.currentTimeMillis() + (1080L * 3600L),true);
+			taskControl.setExecutionTimestamp(System.currentTimeMillis() + (1080L * 3600L),true);
 			CommonEventDispatcherHelper.log(DirectoryWatcherServiceController.this.context, DirectoryWatcherServiceController.this.logService, LogService.LOG_ERROR, "error watching directory for modification", e);
 		}
 		finally

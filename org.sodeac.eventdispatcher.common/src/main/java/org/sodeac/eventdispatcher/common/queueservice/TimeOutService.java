@@ -48,7 +48,7 @@ public class TimeOutService implements IQueueService
 			queue.getConfigurationPropertyBlock().removeAdapter(TimeOutServiceAdapter.class);
 			return;
 		}
-		taskControl.setExecutionTimeStamp(nextTimeOut, true);
+		taskControl.setExecutionTimestamp(nextTimeOut, true);
 
 	}
 

@@ -714,6 +714,13 @@ public abstract class QueueComponentConfiguration implements Serializable
 	public static class RunTaskOnQueuedInChainRuleConfiguration extends QueueComponentConfiguration
 	{
 		/**
+		 * run by trigger
+		 * :: reset service reference or task ...
+		 * boolsche operations 
+		 * action: task, service, reset
+		 * metrics trigger (setzt unter anderem eine Konfig und wird von einem Service unterstützt)
+		 * 
+		 * TaskController Parameter entwirren
 		 * 
 		 */
 		private static final long serialVersionUID = 3838680301290863139L;
