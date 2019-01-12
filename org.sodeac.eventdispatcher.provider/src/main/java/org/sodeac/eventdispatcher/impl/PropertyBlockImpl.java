@@ -23,11 +23,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.function.Supplier;
 
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
-import org.sodeac.eventdispatcher.api.IPropertyBlockOperationHandler;
-import org.sodeac.eventdispatcher.api.IPropertyBlockOperationResult;
+import org.sodeac.eventdispatcher.api.IPropertyBlockAtomicProcedure;
 import org.sodeac.eventdispatcher.api.IPropertyLock;
 import org.sodeac.eventdispatcher.api.PropertyIsLockedException;
 import org.sodeac.eventdispatcher.extension.api.IExtensiblePropertyBlock;
@@ -764,7 +764,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 	}
 
 	@Override
-	public IPropertyBlockOperationResult operate(IPropertyBlockOperationHandler operationHandler)
+	public Supplier<List<PropertyBlockModifyItem>> computeProcedure(IPropertyBlockAtomicProcedure operationHandler)
 	{
 		UnlockedWrapper wrapper = new UnlockedWrapper();
 		List<IPropertyBlockModifyListener> listenerList = null;
@@ -797,21 +797,21 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			}
 		}
 		
-		return new PropertyBlockOperationResult(wrapper.modifyList);
+		return new PropertyBlockProcedureModifyAuditTrail(wrapper.modifyList);
 	}
 	
-	private class PropertyBlockOperationResult implements IPropertyBlockOperationResult
+	private class PropertyBlockProcedureModifyAuditTrail implements Supplier<List<PropertyBlockModifyItem>>
 	{
 		private  List<PropertyBlockModifyItem> modifyList = null;
 		
-		public PropertyBlockOperationResult( List<PropertyBlockModifyItem> modifyList)
+		public PropertyBlockProcedureModifyAuditTrail( List<PropertyBlockModifyItem> modifyList)
 		{
 			super();
 			this.modifyList = modifyList;
 		}
 		
 		@Override
-		public List<PropertyBlockModifyItem> getModifyList()
+		public List<PropertyBlockModifyItem> get()
 		{
 			return this.modifyList;
 		}
@@ -1131,7 +1131,7 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 		}
 
 		@Override
-		public IPropertyBlockOperationResult operate(IPropertyBlockOperationHandler operationHandler)
+		public Supplier<List<PropertyBlockModifyItem>> computeProcedure(IPropertyBlockAtomicProcedure operationHandler)
 		{
 			checkValid();
 			
@@ -1139,9 +1139,9 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			
 			if(this.modifyList == null)
 			{
-				return new PropertyBlockOperationResult(null);
+				return new PropertyBlockProcedureModifyAuditTrail(null);
 			}
-			return new PropertyBlockOperationResult(Collections.unmodifiableList(this.modifyList));
+			return new PropertyBlockProcedureModifyAuditTrail(Collections.unmodifiableList(this.modifyList));
 		}
 		
 		private void checkValid()

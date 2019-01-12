@@ -12,6 +12,7 @@ package org.sodeac.eventdispatcher.api;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -107,7 +108,7 @@ public interface IPropertyBlock
 			
 		};
 		
-		operate(new IPropertyBlockOperationHandler()
+		computeProcedure(new IPropertyBlockAtomicProcedure()
 		{
 			@SuppressWarnings("unchecked")
 			@Override
@@ -242,12 +243,12 @@ public interface IPropertyBlock
 	public IPropertyLock lockProperty(String key);
 	
 	/**
-	 * Enables complex editing in locked mode with {@link IPropertyBlockOperationHandler}.
+	 * Enables complex editing in locked mode with {@link IPropertyBlockAtomicProcedure}.
 	 * 
 	 * @param operationHandler handle to edit property
-	 * @return audit trail
+	 * @return audit trail of modified property items
 	 */
-	public IPropertyBlockOperationResult operate(IPropertyBlockOperationHandler operationHandler);
+	public Supplier<List<PropertyBlockModifyItem>> computeProcedure(IPropertyBlockAtomicProcedure operationHandler);
 	
 	public interface Conplier<T> extends Supplier<T>,Consumer<T>{}
 	
