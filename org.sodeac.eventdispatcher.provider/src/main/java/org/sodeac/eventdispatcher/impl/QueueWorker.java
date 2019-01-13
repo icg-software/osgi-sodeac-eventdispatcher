@@ -30,7 +30,6 @@ import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnQueuedEventList;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
-import org.sodeac.eventdispatcher.api.IQueueTask;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueueWorker;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
@@ -38,6 +37,7 @@ import org.sodeac.eventdispatcher.api.IQueueEventResult;
 import org.sodeac.eventdispatcher.api.ITimer;
 import org.sodeac.eventdispatcher.api.ITaskControl.ExecutionTimestampSource;
 import org.sodeac.eventdispatcher.impl.TaskControlImpl.PeriodicServiceTimestampPredicate;
+import org.sodeac.multichainlist.Snapshot;
 
 public class QueueWorker extends Thread
 {
@@ -56,8 +56,6 @@ public class QueueWorker extends Thread
 	private volatile Object waitMonitor = new Object();
 	
 	private List<TaskContainer> dueTaskList = null;
-	private List<String> signalList = null;
-	private List<IOnQueueAttach> onQueueAttachList = null;
 	
 	private volatile Long currentTimeOutTimeStamp = null;
 	private volatile TaskContainer currentRunningTask = null;
@@ -72,9 +70,7 @@ public class QueueWorker extends Thread
 		this.eventQueue = impl;
 		this.workerWrapper = new QueueWorkerWrapper(this);
 		this.dueTaskList = new ArrayList<TaskContainer>();
-		this.signalList = new ArrayList<String>();
-		this.onQueueAttachList = new ArrayList<IOnQueueAttach>();
-		this.context = new QueueTaskContextImpl();
+		this.context = new QueueTaskContextImpl(this.dueTaskList);
 		this.context.setQueue(this.eventQueue);
 		super.setDaemon(true);
 		super.setName(QueueWorker.class.getSimpleName() + " " + this.eventQueue.getId());
@@ -84,41 +80,41 @@ public class QueueWorker extends Thread
 	{
 		try
 		{
-			if(! this.onQueueAttachList.isEmpty())
-			{
-				this.onQueueAttachList.clear();
-			}
-			eventQueue.fetchOnQueueAttachList(this.onQueueAttachList); // TODO mcl
-			if(this.onQueueAttachList.isEmpty())
+			Snapshot<IOnQueueAttach> onQueueAttachSnapshot = eventQueue.getOnQueueAttachList();
+			if(onQueueAttachSnapshot == null)
 			{
 				return;
 			}
-			for(IOnQueueAttach onQueueAttach : this.onQueueAttachList)
+			try
 			{
-				try
+				
+				for(IOnQueueAttach onQueueAttach : onQueueAttachSnapshot)
 				{
-					onQueueAttach.onQueueAttach(this.eventQueue);
-				}
-				catch (Exception e) 
-				{
-					log(LogService.LOG_ERROR,"Exception on on-create() event controller",e);
-				}
-				catch (Error e) 
-				{
-					log(LogService.LOG_ERROR,"Exception on on-create() event controller",e);
+					try
+					{
+						onQueueAttach.onQueueAttach(this.eventQueue);
+					}
+					catch (Exception e) 
+					{
+						log(LogService.LOG_ERROR,"Exception on on-create() event controller",e);
+					}
+					catch (Error e) 
+					{
+						log(LogService.LOG_ERROR,"Exception on on-create() event controller",e);
+					}
 				}
 			}
-			this.onQueueAttachList.clear();
+			finally 
+			{
+				onQueueAttachSnapshot.close();
+			}
 		}
 		catch (Exception e) 
 		{
-			this.onQueueAttachList.clear();
-			log(LogService.LOG_ERROR,"Exception while check queueAttach"
-					+ "",e);
+			log(LogService.LOG_ERROR,"Exception while check queueAttach",e);
 		}
 		catch (Error e) 
 		{
-			this.onQueueAttachList.clear();
 			log(LogService.LOG_ERROR,"Exception while check queueAttach",e);
 		}
 	}
@@ -149,7 +145,7 @@ public class QueueWorker extends Thread
 				}
 				
 				eventQueue.closeWorkerSnapshots();
-				newEventsSnapshot = eventQueue.getNewScheduledEventsSnaphot(); // TODO not closable Wrapper or lock close feature ?
+				newEventsSnapshot = eventQueue.getNewScheduledEventsSnaphot();
 				try
 				{
 					if((newEventsSnapshot != null) && (! newEventsSnapshot.isEmpty()))
@@ -406,36 +402,57 @@ public class QueueWorker extends Thread
 			
 			try
 			{
-				this.signalList.clear();
-				eventQueue.fetchSignalList(this.signalList); // TODO mcl
-				if(! this.signalList.isEmpty())
+				Snapshot<String> signalSnapshot = eventQueue.getSignalsSnapshot();
+				try
 				{
-
-					try
+					if((signalSnapshot != null) && (! signalSnapshot.isEmpty()))
 					{
-						checkQueueAttach();
-					}
-					catch(Exception ex) {}
-					catch(Error ex) {}
-					
-					for(String signal : this.signalList)
-					{
-						eventQueue.touchLastWorkerAction();
-						for(ControllerContainer conf : eventQueue.getConfigurationList())
+	
+						try
 						{
-							try
+							checkQueueAttach();
+						}
+						catch(Exception ex) {}
+						catch(Error ex) {}
+						
+						for(String signal : signalSnapshot)
+						{
+							eventQueue.touchLastWorkerAction();
+							for(ControllerContainer conf : eventQueue.getConfigurationList())
 							{
-								if(go)
+								try
 								{
-									if(conf.isImplementingIOnQueueSignal())
-									((IOnQueueSignal)conf.getQueueController()).onQueueSignal(eventQueue, signal);
+									if(go)
+									{
+										if(conf.isImplementingIOnQueueSignal())
+										{
+											((IOnQueueSignal)conf.getQueueController()).onQueueSignal(eventQueue, signal);
+										}
+									}
+								}
+								catch (Exception e) 
+								{
+									log(LogService.LOG_ERROR,"Exception while process signal",e);
+								}
+								catch (Error e) 
+								{
+									log(LogService.LOG_ERROR,"Error while process signal",e);
 								}
 							}
-							catch (Exception e) {}
 						}
 					}
 				}
-				this.signalList.clear();
+				finally 
+				{
+					if(signalSnapshot != null)
+					{
+						try
+						{
+							signalSnapshot.close();
+						}
+						catch (Exception e) {}
+					}
+				}
 			}
 			catch (Exception e) 
 			{
@@ -447,7 +464,7 @@ public class QueueWorker extends Thread
 			}
 			
 			this.dueTaskList.clear();
-			eventQueue.getDueTasks(this.dueTaskList); // TODO mcl
+			eventQueue.getDueTasks(this.dueTaskList);
 			
 			if(! dueTaskList.isEmpty())
 			{
@@ -461,7 +478,6 @@ public class QueueWorker extends Thread
 				
 				eventQueue.touchLastWorkerAction();
 				boolean taskTimeOut  = false;
-				List<IQueueTask> currentProcessedTaskList = null;
 				for(TaskContainer dueTask : this.dueTaskList)
 				{
 					try
@@ -472,6 +488,8 @@ public class QueueWorker extends Thread
 						}
 						if(go)
 						{
+							this.context.resetCurrentProcessedTaskList();
+							
 							ITimer.Context timerContextTask = null;
 							ITimer.Context timerContextQueue = null;
 							try
@@ -487,15 +505,6 @@ public class QueueWorker extends Thread
 										this.currentTimeOutTimeStamp = System.currentTimeMillis() + dueTask.getTaskControl().getTimeout();
 									}
 									this.eventQueue.getEventDispatcher().registerTimeOut(this.eventQueue,dueTask);
-								}
-								if(currentProcessedTaskList == null)
-								{
-									currentProcessedTaskList = new ArrayList<IQueueTask>();
-									for(TaskContainer taskContainer : this.dueTaskList)
-									{
-										currentProcessedTaskList.add(taskContainer.getTask());
-									}
-									this.context.setCurrentProcessedTaskList(currentProcessedTaskList);
 								}
 								if(dueTask.getTask() instanceof IPeriodicQueueTask)
 								{
@@ -882,38 +891,57 @@ public class QueueWorker extends Thread
 							
 							try
 							{
-								this.signalList.clear();
-								eventQueue.fetchSignalList(this.signalList); // TODO mcl
-								if(! this.signalList.isEmpty())
+								Snapshot<String> signalSnapshot = eventQueue.getSignalsSnapshot();
+								try
 								{
-
-									try
+									if((signalSnapshot != null) && (! signalSnapshot.isEmpty()))
 									{
-										checkQueueAttach();
-									}
-									catch(Exception ex) {}
-									catch(Error ex) {}
-									
-									for(String signal : this.signalList)
-									{
-										eventQueue.touchLastWorkerAction();
-										for(ControllerContainer conf : eventQueue.getConfigurationList())
+					
+										try
 										{
-											try
+											checkQueueAttach();
+										}
+										catch(Exception ex) {}
+										catch(Error ex) {}
+										
+										for(String signal : signalSnapshot)
+										{
+											eventQueue.touchLastWorkerAction();
+											for(ControllerContainer conf : eventQueue.getConfigurationList())
 											{
-												if(go)
+												try
 												{
-													if(conf.isImplementingIOnQueueSignal())
+													if(go)
 													{
-														((IOnQueueSignal)conf.getQueueController()).onQueueSignal(eventQueue, signal);
+														if(conf.isImplementingIOnQueueSignal())
+														{
+															((IOnQueueSignal)conf.getQueueController()).onQueueSignal(eventQueue, signal);
+														}
 													}
 												}
+												catch (Exception e) 
+												{
+													log(LogService.LOG_ERROR,"Exception while process signal",e);
+												}
+												catch (Error e) 
+												{
+													log(LogService.LOG_ERROR,"Error while process signal",e);
+												}
 											}
-											catch (Exception e) {}
 										}
 									}
 								}
-								this.signalList.clear();
+								finally 
+								{
+									if(signalSnapshot != null)
+									{
+										try
+										{
+											signalSnapshot.close();
+										}
+										catch (Exception e) {}
+									}
+								}
 							}
 							catch (Exception e) 
 							{

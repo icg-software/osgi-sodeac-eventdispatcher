@@ -1,5 +1,7 @@
 package org.sodeac.eventdispatcher.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.sodeac.eventdispatcher.api.IMetrics;
@@ -14,6 +16,17 @@ public class QueueTaskContextImpl implements IQueueTaskContext
 	private IQueue queue;
 	private TaskContainer dueTask;
 	private List<IQueueTask> currentProcessedTaskList;
+	private List<IQueueTask> currentProcessedTaskListWritable;
+	private List<IQueueTask> currentProcessedTaskListReadOnly;
+	private List<TaskContainer> dueTaskList;
+	
+	public QueueTaskContextImpl(List<TaskContainer> dueTaskList)
+	{
+		super();
+		this.dueTaskList = dueTaskList;
+		currentProcessedTaskListWritable = new ArrayList<IQueueTask>();
+		currentProcessedTaskListReadOnly = Collections.unmodifiableList(currentProcessedTaskListWritable);
+	}
 	
 	@Override
 	public IQueue getQueue()
@@ -42,6 +55,15 @@ public class QueueTaskContextImpl implements IQueueTaskContext
 	@Override
 	public List<IQueueTask> currentProcessedTaskList()
 	{
+		if(currentProcessedTaskList == null)
+		{
+			currentProcessedTaskListWritable.clear();
+			for(TaskContainer taskContainer : this.dueTaskList)
+			{
+				currentProcessedTaskListWritable.add(taskContainer.getTask());
+			}
+		}
+		this.currentProcessedTaskList = this.currentProcessedTaskListReadOnly;
 		return this.currentProcessedTaskList;
 	}
 
@@ -50,9 +72,13 @@ public class QueueTaskContextImpl implements IQueueTaskContext
 		this.queue = queue;
 	}
 
-	public void setCurrentProcessedTaskList(List<IQueueTask> currentProcessedTaskList)
+	public void resetCurrentProcessedTaskList()
 	{
-		this.currentProcessedTaskList = currentProcessedTaskList;
+		this.currentProcessedTaskList = null;
+		if(! this.currentProcessedTaskListWritable.isEmpty())
+		{
+			this.currentProcessedTaskListWritable.clear();
+		}
 	}
 
 	public void setDueTask(TaskContainer dueTask)

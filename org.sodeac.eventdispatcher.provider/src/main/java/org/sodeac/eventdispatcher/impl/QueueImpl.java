@@ -115,11 +115,15 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.taskListReadLock = this.taskListLock.readLock();
 		this.taskListWriteLock = this.taskListLock.writeLock();
 		
-		this.signalList = new ArrayList<String>();
-		this.signalListLock = new ReentrantLock(true);
+		this.signalQueue = new MultiChainList<String>();
+		this.chainSignalQueue = this.signalQueue.createChainView(null,this.signalQueue.getPartition(null));
+		this.signalQueue.lockDefaultLinker();
+		this.chainSignalQueue.lockDefaultLinker();
 		
-		this.onQueueAttachList = new ArrayList<IOnQueueAttach>();
-		this.onQueueAttachListLock = new ReentrantLock(true);
+		this.onQueueAttachQueue = new MultiChainList<>();
+		this.chainOnQueueAttachQueue = this.onQueueAttachQueue.createChainView(null,this.onQueueAttachQueue.getPartition(null));
+		this.onQueueAttachQueue.lockDefaultLinker();
+		this.chainOnQueueAttachQueue.lockDefaultLinker();
 		
 		this.lastWorkerAction = System.currentTimeMillis();
 		
@@ -260,12 +264,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	protected WriteLock taskListWriteLock;
 	
 	protected volatile boolean signalListUpdate = false;
-	protected List<String> signalList = null;
-	protected ReentrantLock signalListLock = null;
+	protected MultiChainList<String> signalQueue = null;
+	protected ChainView<String> chainSignalQueue = null;
 	
 	protected volatile boolean onQueueAttachListUpdate = false;
-	protected List<IOnQueueAttach> onQueueAttachList = null;
-	protected ReentrantLock onQueueAttachListLock = null;
+	protected MultiChainList<IOnQueueAttach> onQueueAttachQueue = null;
+	protected ChainView<IOnQueueAttach> chainOnQueueAttachQueue = null;
 	
 	protected volatile QueueWorker queueWorker = null;
 	protected volatile SpooledQueueWorker currentSpooledQueueWorker = null;
@@ -2389,27 +2393,15 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		return eventDispatcher;
 	}
 
-	public void fetchSignalList(List<String> fillList)
+	public Snapshot<String> getSignalsSnapshot()
 	{
 		if(! signalListUpdate)
 		{
-			return;
+			return null;
 		}
 		
-		this.signalListLock.lock();
-		try
-		{
-			signalListUpdate = false;
-			for(String signal : this.signalList)
-			{
-				fillList.add(signal);
-			}
-			this.signalList.clear();
-		}
-		finally 
-		{
-			this.signalListLock.unlock();
-		}
+		this.signalListUpdate = false;
+		return this.chainSignalQueue.createImmutableSnapshotPoll();
 	}
 	
 	public Snapshot<? extends IQueuedEvent> getNewScheduledEventsSnaphot()
@@ -2630,11 +2622,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				return false;
 			}
-			if(! this.signalList.isEmpty())
+			if(this.chainSignalQueue.getSize() > 0)
 			{
 				return false;
 			}
-			if(! this.onQueueAttachList.isEmpty())
+			if(this.chainOnQueueAttachQueue.getSize() > 0)
 			{
 				return false;
 			}
@@ -2696,11 +2688,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				return false;
 			}
-			if(! this.signalList.isEmpty())
+			if(this.chainSignalQueue.getSize() > 0)
 			{
 				return false;
 			}
-			if(! this.onQueueAttachList.isEmpty())
+			if(this.chainOnQueueAttachQueue.getSize() > 0)
 			{
 				return false;
 			}
@@ -2770,16 +2762,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public void signal(String signal)
 	{
-		this.signalListLock.lock();
-		try
-		{
-			signalListUpdate = true;
-			this.signalList.add(signal);
-		}
-		finally 
-		{
-			this.signalListLock.unlock();
-		}
+		this.chainSignalQueue.defaultLinker().append(signal);
+		this.signalListUpdate = true;
 		
 		try
 		{
@@ -2789,44 +2773,28 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		{
 			log(LogService.LOG_ERROR, "mark metric signal", e);
 		}
-		this.notifyOrCreateWorker(-1);
+		
+		if(this.registrationTypes.onSignal)
+		{
+			this.notifyOrCreateWorker(-1);
+		}
 	}
 	
-	public void fetchOnQueueAttachList(List<IOnQueueAttach> fillList)
+	public Snapshot<IOnQueueAttach> getOnQueueAttachList()
 	{
 		if(! onQueueAttachListUpdate)
 		{
-			return;
+			return null;
 		}
 		
-		this.onQueueAttachListLock.lock();
-		try
-		{
-			onQueueAttachListUpdate = false;
-			for(IOnQueueAttach onQueueAttach : this.onQueueAttachList)
-			{
-				fillList.add(onQueueAttach);
-			}
-			this.onQueueAttachList.clear();
-		}
-		finally 
-		{
-			this.onQueueAttachListLock.unlock();
-		}
+		this.onQueueAttachListUpdate = false;
+		return this.chainOnQueueAttachQueue.createImmutableSnapshotPoll();
 	}
 	
 	public void addOnQueueAttach(IOnQueueAttach onQueueAttach)
 	{
-		this.onQueueAttachListLock.lock();
-		try
-		{
-			onQueueAttachListUpdate = true;
-			this.onQueueAttachList.add(onQueueAttach);
-		}
-		finally 
-		{
-			this.onQueueAttachListLock.unlock();
-		}
+		this.onQueueAttachListUpdate = true;
+		this.chainOnQueueAttachQueue.defaultLinker().append(onQueueAttach);
 		
 		this.notifyOrCreateWorker(-1);
 	}
@@ -3174,6 +3142,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			{
 				newRegistrationTypes.onFireEvents = true;
 			}
+			if(controllerContainer.isImplementingIOnQueueSignal())
+			{
+				newRegistrationTypes.onSignal = true;
+			}
 		}
 		
 		this.registrationTypes = newRegistrationTypes;
@@ -3184,5 +3156,6 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		boolean onQueuedEvent = false;
 		boolean onRemoveEvents = false;
 		boolean onFireEvents = false;
+		boolean onSignal = false;
 	}
 }
