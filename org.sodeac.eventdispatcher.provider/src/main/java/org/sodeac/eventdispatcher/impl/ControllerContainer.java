@@ -20,7 +20,7 @@ import java.util.Set;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.log.LogService;
-import org.sodeac.eventdispatcher.api.IDynamicController;
+import org.sodeac.eventdispatcher.api.IFeatureConfigurableController;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
@@ -110,19 +110,19 @@ public class ControllerContainer
 		}
 		
 		
-		if(this.queueController instanceof IDynamicController)
+		if(this.queueController instanceof IFeatureConfigurableController)
 		{
-			IDynamicController dynamicController = (IDynamicController)this.queueController;
-			implementsIOnFireEvent = dynamicController.implementsOnFiredEvent();
-			implementsIOnTaskDone = dynamicController.implementsOnTaskDone();
-			implementsIOnTaskError = dynamicController.implementsOnTaskError();
-			implementsIOnTaskTimeout = dynamicController.implementsOnTaskTimeout();
-			implementsIOnQueueAttach = dynamicController.implementsOnQueueAttach();
-			implementsIOnQueueDetach = dynamicController.implementsOnQueueDetach();
-			implementsIOnQueueSignal = dynamicController.implementsOnQueueSignal();
-			implementsIOnScheduleEvent = dynamicController.implementsOnQueuedEvent();
-			implementsIOnScheduleEventList = dynamicController.implementsOnQueuedEventList();
-			implementsIOnRemoveEvent = dynamicController.implementsOnRemovedEvent();
+			IFeatureConfigurableController featureConfigurableController = (IFeatureConfigurableController)this.queueController;
+			implementsIOnFireEvent = featureConfigurableController.implementsOnFiredEvent();
+			implementsIOnTaskDone = featureConfigurableController.implementsOnTaskDone();
+			implementsIOnTaskError = featureConfigurableController.implementsOnTaskError();
+			implementsIOnTaskTimeout = featureConfigurableController.implementsOnTaskTimeout();
+			implementsIOnQueueAttach = featureConfigurableController.implementsOnQueueAttach();
+			implementsIOnQueueDetach = featureConfigurableController.implementsOnQueueDetach();
+			implementsIOnQueueSignal = featureConfigurableController.implementsOnQueueSignal();
+			implementsIOnScheduleEvent = featureConfigurableController.implementsOnQueuedEvent();
+			implementsIOnScheduleEventList = featureConfigurableController.implementsOnQueuedEventList();
+			implementsIOnRemoveEvent = featureConfigurableController.implementsOnRemovedEvent();
 		}
 		else
 		{
