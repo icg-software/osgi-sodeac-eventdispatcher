@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Sebastian Palarus
+ * Copyright (c) 2017, 2019 Sebastian Palarus
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -10,15 +10,12 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.common.task;
 
-import java.util.List;
 import java.util.Map;
 
 import org.sodeac.eventdispatcher.api.IConcernEvent;
-import org.sodeac.eventdispatcher.api.ITaskControl;
-import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueTask;
+import org.sodeac.eventdispatcher.api.IQueueTaskContext;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 
 public class FireSyncEvent implements IQueueTask,IConcernEvent
@@ -37,8 +34,10 @@ public class FireSyncEvent implements IQueueTask,IConcernEvent
 	}
 	
 	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock properties, ITaskControl taskControl, List<IQueueTask> currentProcessedTaskList)
+	public void run(IQueueTaskContext taskContext)
 	{
+		IQueue queue = taskContext.getQueue();
+		
 		if((removeEvent && (this.event != null)))
 		{
 			try

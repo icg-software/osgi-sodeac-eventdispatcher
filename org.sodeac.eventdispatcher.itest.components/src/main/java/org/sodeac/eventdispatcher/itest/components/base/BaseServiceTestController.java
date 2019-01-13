@@ -27,8 +27,6 @@ import org.osgi.service.event.EventHandler;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
-import org.sodeac.eventdispatcher.api.ITaskControl;
-import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
 import org.sodeac.eventdispatcher.api.IOnTaskTimeout;
@@ -36,11 +34,10 @@ import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IOnQueueSignal;
 import org.sodeac.eventdispatcher.api.IOnRemovedEvent;
-import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IOnFiredEvent;
-import org.sodeac.eventdispatcher.api.IQueueTask;
+import org.sodeac.eventdispatcher.api.IQueueTaskContext;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 import org.sodeac.eventdispatcher.itest.components.TracingEvent;
@@ -110,8 +107,10 @@ public class BaseServiceTestController extends AbstractBaseTestController implem
 	}
 
 	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl,List<IQueueTask> currentProcessedJobList)
+	public void run(IQueueTaskContext taskContext)
 	{
+		IQueue queue = taskContext.getQueue();
+		
 		List<IQueuedEvent> queueEventList = queue.getEventList(null, null, null);
 		for(IQueuedEvent event : queueEventList)
 		{

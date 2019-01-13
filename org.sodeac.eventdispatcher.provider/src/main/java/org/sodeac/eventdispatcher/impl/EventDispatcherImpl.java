@@ -972,7 +972,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
 		List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList = null;
 		List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList = null;
-		List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
+		List<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
 		
 		
 		QueueComponentConfiguration.BoundedByQueueId boundedById;
@@ -1023,13 +1023,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				}
 				chainDispatcherRuleConfigurationList.add(((QueueComponentConfiguration.ChainDispatcherRuleConfiguration)config).copy());
 			}
-			if(config instanceof QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration)
+			if(config instanceof QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration)
 			{
 				if(runTaskOnQueuedInChainRuleConfigurationList == null)
 				{
-					runTaskOnQueuedInChainRuleConfigurationList = new ArrayList<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration>();
+					runTaskOnQueuedInChainRuleConfigurationList = new ArrayList<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration>();
 				}
-				runTaskOnQueuedInChainRuleConfigurationList.add(((QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration)config).copy());
+				runTaskOnQueuedInChainRuleConfigurationList.add(((QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration)config).copy());
 			}
 		}
 		
@@ -1774,7 +1774,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
 		List<QueueComponentConfiguration.QueueServiceConfiguration> serviceBehaviorConfigurationList = null;
 		List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList = null;
-		List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
+		List<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
 		
 		
 		QueueComponentConfiguration.BoundedByQueueId boundedById;
@@ -1825,13 +1825,13 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				}
 				chainDispatcherRuleConfigurationList.add(((QueueComponentConfiguration.ChainDispatcherRuleConfiguration)config).copy());
 			}
-			if(config instanceof QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration)
+			if(config instanceof QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration)
 			{
 				if(runTaskOnQueuedInChainRuleConfigurationList == null)
 				{
-					runTaskOnQueuedInChainRuleConfigurationList = new ArrayList<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration>();
+					runTaskOnQueuedInChainRuleConfigurationList = new ArrayList<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration>();
 				}
-				runTaskOnQueuedInChainRuleConfigurationList.add(((QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration)config).copy());
+				runTaskOnQueuedInChainRuleConfigurationList.add(((QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration)config).copy());
 			}
 		}
 		

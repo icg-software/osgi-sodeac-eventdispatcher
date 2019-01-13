@@ -24,11 +24,9 @@ import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.ITaskControl;
-import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
-import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueTask;
+import org.sodeac.eventdispatcher.api.IQueueTaskContext;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 
@@ -63,8 +61,11 @@ public class ReReScheduleJobInWorkTestService1 implements EventHandler,IQueueCon
 	protected volatile IEventDispatcher dispatcher;
 	
 	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl, List<IQueueTask> currentProcessedJobList)
+	public void run(IQueueTaskContext taskContext)
 	{
+		IQueue queue = taskContext.getQueue();
+		ITaskControl taskControl = taskContext.getTaskControl();
+		
 		if( dataObject == null)
 		{
 			return;

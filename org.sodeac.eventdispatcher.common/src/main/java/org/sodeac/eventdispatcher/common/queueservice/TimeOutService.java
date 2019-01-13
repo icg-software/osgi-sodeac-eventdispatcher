@@ -10,15 +10,12 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.common.queueservice;
 
-import java.util.List;
-
 import org.osgi.service.component.annotations.Component;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.ITaskControl;
-import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueTask;
+import org.sodeac.eventdispatcher.api.IQueueTaskContext;
 import org.sodeac.eventdispatcher.api.IQueueService;
 
 @Component
@@ -37,8 +34,12 @@ public class TimeOutService implements IQueueService
 	public static final String SERVICE_ID = "org.sodeac.eventdispatcher.common.queueservice.timeout";
 
 	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl, List<IQueueTask> currentProcessedTaskList)
+	public void run(IQueueTaskContext taskContext)
 	{
+		IQueue queue = taskContext.getQueue();
+		ITaskControl taskControl = taskContext.getTaskControl();
+		IPropertyBlock propertyBlock = taskContext.getTaskPropertyBlock();
+		
 		TimeOutServiceAdapter adapter = queue.getConfigurationPropertyBlock().getAdapter(TimeOutServiceAdapter.class);
 		long nextTimeOut = adapter.calculateNextTimeOutTimestamp();
 		

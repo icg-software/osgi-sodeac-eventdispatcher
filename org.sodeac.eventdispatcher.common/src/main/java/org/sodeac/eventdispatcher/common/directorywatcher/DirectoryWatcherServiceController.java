@@ -38,13 +38,12 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.ITaskControl;
-import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IOnTaskError;
 import org.sodeac.eventdispatcher.api.IOnQueueAttach;
 import org.sodeac.eventdispatcher.api.IOnQueueDetach;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IQueueTask;
+import org.sodeac.eventdispatcher.api.IQueueTaskContext;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.common.CommonEventDispatcherHelper;
 
@@ -119,13 +118,11 @@ public class DirectoryWatcherServiceController implements IQueueController, IOnT
 	}
 	
 	@Override
-	public void run
-	(
-		IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, 
-		ITaskControl taskControl,
-		List<IQueueTask> currentProcessedTaskList
-	)
+	public void run(IQueueTaskContext taskContext)
 	{
+		IQueue queue = taskContext.getQueue();
+		ITaskControl taskControl = taskContext.getTaskControl();
+		
 		if(! queue.getConfigurationPropertyBlock().getPropertyOrDefault(SERVICE_ID + ".run" , Boolean.class, false))
 		{
 			taskControl.setExecutionTimestamp(System.currentTimeMillis() + (1080L * 3600L),true);

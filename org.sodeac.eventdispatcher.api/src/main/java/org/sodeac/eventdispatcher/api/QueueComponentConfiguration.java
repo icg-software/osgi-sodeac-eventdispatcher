@@ -711,16 +711,15 @@ public abstract class QueueComponentConfiguration implements Serializable
 	 * @author Sebastian Palarus
 	 *
 	 */
-	public static class RunTaskOnQueuedInChainRuleConfiguration extends QueueComponentConfiguration
+	public static class RunTaskOnTriggerRuleConfiguration extends QueueComponentConfiguration
 	{
 		/**
 		 * run by trigger
 		 * :: reset service reference or task ...
-		 * boolsche operations 
-		 * action: task, service, reset
-		 * metrics trigger (setzt unter anderem eine Konfig und wird von einem Service unterstützt)
+		 * all conditions with and-op
+		 * metrics trigger (needs adapter rule configuration)
+		 * rule group id (to enable /disable set of rules)
 		 * 
-		 * TaskController Parameter entwirren
 		 * 
 		 */
 		private static final long serialVersionUID = 3838680301290863139L;
@@ -730,7 +729,7 @@ public abstract class QueueComponentConfiguration implements Serializable
 		private IQueueTask task = null;
 		private Predicate<IQueuedEvent> eventPredicate = null;
 
-		public RunTaskOnQueuedInChainRuleConfiguration(String ruleId, String chain, IQueueTask task)
+		public RunTaskOnTriggerRuleConfiguration(String ruleId, String chain, IQueueTask task)
 		{
 			super();
 			
@@ -750,7 +749,7 @@ public abstract class QueueComponentConfiguration implements Serializable
 			return eventPredicate;
 		}
 
-		public RunTaskOnQueuedInChainRuleConfiguration setEventPredicate(Predicate<IQueuedEvent> eventPredicate)
+		public RunTaskOnTriggerRuleConfiguration setEventPredicate(Predicate<IQueuedEvent> eventPredicate)
 		{
 			this.eventPredicate = eventPredicate;
 			return this;
@@ -779,11 +778,16 @@ public abstract class QueueComponentConfiguration implements Serializable
 		}
 
 		@Override
-		public RunTaskOnQueuedInChainRuleConfiguration copy()
+		public RunTaskOnTriggerRuleConfiguration copy()
 		{
-			return new RunTaskOnQueuedInChainRuleConfiguration(this.ruleId, this.chain, this.task).setEventPredicate(this.eventPredicate);
+			return new RunTaskOnTriggerRuleConfiguration(this.ruleId, this.chain, this.task).setEventPredicate(this.eventPredicate);
 		}
 		
+	}
+	
+	public static class AdapterRuleConfiguration // TODO extends QueueComponentConfiguration
+	{
+		// TODO set adapter in configuration to attach other controller/services
 	}
 	
 	/**

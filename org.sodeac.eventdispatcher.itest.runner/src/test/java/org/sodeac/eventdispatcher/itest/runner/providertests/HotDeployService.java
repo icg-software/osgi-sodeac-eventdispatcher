@@ -10,14 +10,8 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.itest.runner.providertests;
 
-import java.util.List;
-
 import org.sodeac.eventdispatcher.api.IQueueController;
-import org.sodeac.eventdispatcher.api.ITaskControl;
-import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IPropertyBlock;
-import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueTask;
+import org.sodeac.eventdispatcher.api.IQueueTaskContext;
 import org.sodeac.eventdispatcher.api.IQueueService;
 
 public class HotDeployService implements IQueueController, IQueueService
@@ -26,11 +20,7 @@ public class HotDeployService implements IQueueController, IQueueService
 	private int count = 0;
 
 	@Override
-	public void run
-	(
-		IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl,
-		List<IQueueTask> currentProcessedJobList
-	)
+	public void run(IQueueTaskContext context)
 	{
 		this.count++;
 	}

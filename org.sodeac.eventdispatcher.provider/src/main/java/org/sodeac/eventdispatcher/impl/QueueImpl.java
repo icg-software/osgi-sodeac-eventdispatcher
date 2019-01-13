@@ -1839,7 +1839,9 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		}	
 	}	
 
+	
 	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Snapshot<IQueuedEvent> getEventSnapshot(String chainName)
 	{
 		if(Thread.currentThread() == this.queueWorker)
@@ -1852,6 +1854,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	}
 
 	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Snapshot<IQueuedEvent> getEventSnapshotPoll(String chainName)
 	{
 		if(Thread.currentThread() == this.queueWorker)

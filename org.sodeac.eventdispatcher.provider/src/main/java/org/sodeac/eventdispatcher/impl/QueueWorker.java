@@ -38,7 +38,6 @@ import org.sodeac.eventdispatcher.api.IQueueEventResult;
 import org.sodeac.eventdispatcher.api.ITimer;
 import org.sodeac.eventdispatcher.api.ITaskControl.ExecutionTimestampSource;
 import org.sodeac.eventdispatcher.impl.TaskControlImpl.PeriodicServiceTimestampPredicate;
-import org.sodeac.eventdispatcher.impl.TaskControlImpl.ScheduleTimestampPredicate;
 
 public class QueueWorker extends Thread
 {
@@ -65,6 +64,8 @@ public class QueueWorker extends Thread
 	private volatile long wakeUpTimeStamp = -1;
 	private volatile boolean inFreeingArea = false;
 	
+	private QueueTaskContextImpl context = null;
+	
 	public QueueWorker(QueueImpl impl)
 	{
 		super();
@@ -73,6 +74,8 @@ public class QueueWorker extends Thread
 		this.dueTaskList = new ArrayList<TaskContainer>();
 		this.signalList = new ArrayList<String>();
 		this.onQueueAttachList = new ArrayList<IOnQueueAttach>();
+		this.context = new QueueTaskContextImpl();
+		this.context.setQueue(this.eventQueue);
 		super.setDaemon(true);
 		super.setName(QueueWorker.class.getSimpleName() + " " + this.eventQueue.getId());
 	}
@@ -146,7 +149,7 @@ public class QueueWorker extends Thread
 				}
 				
 				eventQueue.closeWorkerSnapshots();
-				newEventsSnapshot = eventQueue.getNewScheduledEventsSnaphot();
+				newEventsSnapshot = eventQueue.getNewScheduledEventsSnaphot(); // TODO not closable Wrapper or lock close feature ?
 				try
 				{
 					if((newEventsSnapshot != null) && (! newEventsSnapshot.isEmpty()))
@@ -492,6 +495,7 @@ public class QueueWorker extends Thread
 									{
 										currentProcessedTaskList.add(taskContainer.getTask());
 									}
+									this.context.setCurrentProcessedTaskList(currentProcessedTaskList);
 								}
 								if(dueTask.getTask() instanceof IPeriodicQueueTask)
 								{
@@ -559,7 +563,8 @@ public class QueueWorker extends Thread
 								
 								timerContextQueue = eventQueue.getMetrics().timer(IMetrics.METRICS_RUN_TASK).time();
 								
-								dueTask.getTask().run(eventQueue, dueTask.getMetrics(), dueTask.getPropertyBlock(), dueTask.getTaskControl() ,currentProcessedTaskList);
+								this.context.setDueTask(dueTask);								
+								dueTask.getTask().run(this.context);
 								
 								dueTask.getMetrics().setQualityValue(IMetrics.QUALITY_VALUE_FINISHED_TIMESTAMP, System.currentTimeMillis());
 								dueTask.getPropertyBlock().setProperty(EventDispatcherConstants.PROPERTY_KEY_THROWED_EXCEPTION, null);
@@ -1286,6 +1291,7 @@ public class QueueWorker extends Thread
 		}
 		
 		this.eventQueue = eventQueue;
+		this.context.setQueue(this.eventQueue);
 		if(this.eventQueue == null)
 		{
 			super.setName(QueueWorker.class.getSimpleName() + " IDLE");

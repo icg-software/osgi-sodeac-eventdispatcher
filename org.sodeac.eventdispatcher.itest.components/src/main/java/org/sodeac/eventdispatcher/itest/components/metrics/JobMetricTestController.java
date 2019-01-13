@@ -11,7 +11,6 @@
 package org.sodeac.eventdispatcher.itest.components.metrics;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.osgi.service.component.annotations.Component;
@@ -25,12 +24,11 @@ import org.sodeac.eventdispatcher.api.IQueueController;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 import org.sodeac.eventdispatcher.api.IEventDispatcher;
 import org.sodeac.eventdispatcher.api.ITaskControl;
-import org.sodeac.eventdispatcher.api.IMetrics;
 import org.sodeac.eventdispatcher.api.IOnTaskDone;
-import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
 import org.sodeac.eventdispatcher.api.IOnQueuedEvent;
 import org.sodeac.eventdispatcher.api.IQueueTask;
+import org.sodeac.eventdispatcher.api.IQueueTaskContext;
 import org.sodeac.eventdispatcher.api.IQueuedEvent;
 
 @Component
@@ -119,15 +117,11 @@ public class JobMetricTestController implements IQueueController,IOnQueuedEvent,
 		}
 		
 		@Override
-		public void run
-		(
-			IQueue queue, 
-			IMetrics metrics, 
-			IPropertyBlock propertyBlock, 
-			ITaskControl taskControl,
-			List<IQueueTask> currentProcessedJobList
-		)
+		public void run(IQueueTaskContext taskContext)
 		{
+			IQueue queue = taskContext.getQueue();
+			ITaskControl taskControl = taskContext.getTaskControl();
+			
 			jobCounter++;
 			
 			if(jobCounter < repeat)

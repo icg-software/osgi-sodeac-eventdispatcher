@@ -50,7 +50,7 @@ public class ControllerContainer
 		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList, 
 		List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList,
 		List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList,
-		List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList
+		List<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList
 	)
 	{
 		super();
@@ -73,7 +73,7 @@ public class ControllerContainer
 	private List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
 	private List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList = null;
 	private List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList = null;
-	private List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
+	private List<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
 	
 	private volatile boolean registered = false;
 	
@@ -362,7 +362,7 @@ public class ControllerContainer
 		return chainDispatcherRuleConfigurationList;
 	}
 
-	public List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> getRunTaskOnQueuedInChainRuleConfigurationList()
+	public List<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration> getRunTaskOnQueuedInChainRuleConfigurationList()
 	{
 		return runTaskOnQueuedInChainRuleConfigurationList;
 	}

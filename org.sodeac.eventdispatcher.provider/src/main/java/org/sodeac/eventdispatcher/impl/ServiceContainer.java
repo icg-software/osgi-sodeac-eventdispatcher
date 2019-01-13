@@ -38,7 +38,7 @@ public class ServiceContainer
 		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList,
 		List<QueueComponentConfiguration.QueueServiceConfiguration> serviceConfigurationList,
 		List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList,
-		List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList
+		List<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList
 	)
 	{
 		super();
@@ -62,7 +62,7 @@ public class ServiceContainer
 	private List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList = null;
 	private List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
 	private List<QueueComponentConfiguration.ChainDispatcherRuleConfiguration> chainDispatcherRuleConfigurationList = null;
-	private List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
+	private List<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration> runTaskOnQueuedInChainRuleConfigurationList = null;
 	private QueueComponentConfiguration.QueueServiceConfiguration serviceConfiguration = null;
 	
 	private volatile Map<String, ?> properties = null;
@@ -278,7 +278,7 @@ public class ServiceContainer
 	}
 
 
-	public List<QueueComponentConfiguration.RunTaskOnQueuedInChainRuleConfiguration> getRunTaskOnQueuedInChainRuleConfigurationList()
+	public List<QueueComponentConfiguration.RunTaskOnTriggerRuleConfiguration> getRunTaskOnQueuedInChainRuleConfigurationList()
 	{
 		return runTaskOnQueuedInChainRuleConfigurationList;
 	}

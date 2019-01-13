@@ -10,15 +10,10 @@
  *******************************************************************************/
 package org.sodeac.eventdispatcher.common.queueservice;
 
-import java.util.List;
-
 import org.osgi.service.component.annotations.Component;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
-import org.sodeac.eventdispatcher.api.ITaskControl;
-import org.sodeac.eventdispatcher.api.IMetrics;
-import org.sodeac.eventdispatcher.api.IPropertyBlock;
 import org.sodeac.eventdispatcher.api.IQueue;
-import org.sodeac.eventdispatcher.api.IQueueTask;
+import org.sodeac.eventdispatcher.api.IQueueTaskContext;
 import org.sodeac.eventdispatcher.api.IQueueService;
 import org.sodeac.eventdispatcher.api.IQueueChildScope;
 
@@ -37,8 +32,10 @@ public class ScopeSingleSyncCallService implements IQueueService
 	public static final String SERVICE_ID = "org.sodeac.eventdispatcher.common.queueservice.scopesinglecall";
 
 	@Override
-	public void run(IQueue queue, IMetrics metrics, IPropertyBlock propertyBlock, ITaskControl taskControl,List<IQueueTask> currentProcessedTaskList)
+	public void run(IQueueTaskContext taskContext)
 	{
+		IQueue queue = taskContext.getQueue();
+		
 		@SuppressWarnings("unchecked")
 		ScopeSingleSyncCallServiceAdapter<Object> adapter = queue.getConfigurationPropertyBlock().getAdapter(ScopeSingleSyncCallServiceAdapter.class);
 		if(adapter.getQueue() == null)
