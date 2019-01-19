@@ -17,6 +17,7 @@ package org.sodeac.eventdispatcher.api;
  * @author Sebastian Palarus
  *
  */
+@FunctionalInterface
 public interface IQueueTask
 {
 	
@@ -35,6 +36,7 @@ public interface IQueueTask
 	 * run this task, invoked by queue-worker.
 	 * 
 	 * @param context of task running
+	 * @throws Exception
 	 */
-	public void run(IQueueTaskContext taskContext);
+	public void run(IQueueTaskContext taskContext) throws Exception;
 }
