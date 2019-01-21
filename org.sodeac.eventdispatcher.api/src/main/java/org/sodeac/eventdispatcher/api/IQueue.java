@@ -369,7 +369,7 @@ public interface IQueue
 	 * 
 	 * @return new scope, or null, if scope already exists
 	 */
-	public default IQueueChildScope createChildSessionScope(UUID scopeId,String scopeName, IQueueChildScope parentScope, Map<String,Object> configurationProperties, Map<String,Object> stateProperties)
+	public default IQueueChildScope createChildScope(UUID scopeId,String scopeName, IQueueChildScope parentScope, Map<String,Object> configurationProperties, Map<String,Object> stateProperties)
 	{
 		return this.createChildScope(scopeId, scopeName, parentScope, configurationProperties, stateProperties, false, false);
 	}
