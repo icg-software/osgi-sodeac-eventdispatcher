@@ -219,7 +219,7 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 		this.chainDispatcher = new ChainDispatcher(this);
 		this.disabledRules = new HashSet<String>();
 		
-		this.registrationTypes = registrationTypes;
+		this.registrationTypes = new RegistrationTypes();
 	}
 	
 	protected String category = null;
@@ -665,6 +665,8 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 			this.controllerIndex.put(controllerContainer,controllerContainer);
 			this.controllerListCopy = null;
 			
+			this.recalcRegistrationTypes();
+			
 			// merge OSGi event subscriptions
 			if(subscriptionMerger != null)
 			{
@@ -686,7 +688,6 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 				chainDispatcher.reset();
 			}
 			
-			this.recalcRegistrationTypes();
 			return true;
 		}
 		finally 
