@@ -44,7 +44,7 @@
             <Bundle-ActivationPolicy>lazy</Bundle-ActivationPolicy>
           	<Import-Package>
             	org.sodeac.eventdispatcher.api;version="0.9.11",
-            	org.sodeac.multichainlist;version="1.0.0",
+            	org.sodeac.multichainlist;version="1.0.1",
             	*
             </Import-Package>
             <Export-Package>

@@ -30,7 +30,7 @@
             <Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
             <Bundle-ActivationPolicy>lazy</Bundle-ActivationPolicy>
             <Import-Package>
-            	org.sodeac.multichainlist;version="1.0.0",
+            	org.sodeac.multichainlist;version="1.0.1",
             	*
             </Import-Package>
             <Export-Package>
