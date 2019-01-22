@@ -317,6 +317,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public void queueEvent(Event event)
 	{
+	    if(this.disposed)
+		{
+			return;
+		}
+		
 		QueuedEventImpl queuedEvent = null;
 		
 		if(this.eventListLimit <= this.eventQueue.getNodeSize())
@@ -347,6 +352,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public void queueEvents(Collection<Event> events)
 	{
+	    if(this.disposed)
+		{
+			return;
+		}
+		
 		if(events == null)
 		{
 			return;
@@ -423,6 +433,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public Future<IQueueEventResult> queueEventWithResult(Event event)
 	{
+	    if(this.disposed)
+		{
+			return this.eventDispatcher.createFutureOfScheduleResult(new QueueEventResultImpl());
+		}
+		
 		QueuedEventImpl queuedEvent = null;
 		QueueEventResultImpl resultImpl = new QueueEventResultImpl();
 		
@@ -456,6 +471,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public Future<IQueueEventResult> queueEventsWithResult(Collection<Event> events)
 	{
+	    if(this.disposed)
+		{
+			return this.eventDispatcher.createFutureOfScheduleResult(new QueueEventResultImpl());
+		}
+		
 		List<QueuedEventImpl> queuedEventList = new ArrayList<QueuedEventImpl>(events.size());
 		QueueEventResultImpl resultImpl = new QueueEventResultImpl();
 		
@@ -1302,6 +1322,10 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public IPropertyBlock getTaskPropertyBlock(String id)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
 		taskListReadLock.lock();
 		try
 		{
@@ -1325,7 +1349,12 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public List<IQueueTask> getTaskList(Filter filter)
 	{
-		List<IQueueTask> queryTaskList = new ArrayList<IQueueTask>();
+	    List<IQueueTask> queryTaskList = new ArrayList<IQueueTask>();
+		
+		if(this.disposed)
+		{
+			return queryTaskList;
+		}
 		
 		taskListReadLock.lock();
 		try
@@ -1357,6 +1386,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	public Map<String,IQueueTask> getTaskIndex(Filter filter)
 	{
 		Map<String,IQueueTask> queryTaskIndex = new HashMap<String,IQueueTask>();
+		
+		if(this.disposed)
+		{
+			return queryTaskIndex;
+		}
 		
 		taskListReadLock.lock();
 		try
@@ -1412,7 +1446,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public String scheduleTask(String id, IQueueTask task, IPropertyBlock propertyBlock, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut, boolean stopOnTimeOut )
 	{
-
+        if(this.disposed)
+		{
+			return null;
+		}
+		
 		TaskContainer taskContainer = null;
 		
 		taskListWriteLock.lock();
@@ -1593,6 +1631,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public IQueueTask rescheduleTask(String id, long executionTimeStamp, long timeOutValue, long heartBeatTimeOut)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
+		
 		TaskContainer taskContainer = null;
 		
 		if((id == null) || (id.isEmpty()))
@@ -1655,7 +1698,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public IQueueTask getTask(String id)
 	{
-
+        if(this.disposed)
+		{
+			return null;
+		}
+		
 		taskListReadLock.lock();
 		try
 		{
@@ -1679,6 +1726,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public IQueueTask removeTask(String id)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
+		
 		taskListWriteLock.lock();
 		try
 		{
@@ -1709,6 +1761,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public IQueuedEvent getEvent(String uuid)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
+		
 		if(uuid == null)
 		{
 			return null;
@@ -1748,6 +1805,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public List<IQueuedEvent> getEventList(String[] topics, Filter eventFilter, Filter nativeEventFilter)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
+		
 		boolean match = true;
 		List<IQueuedEvent> queryList = new ArrayList<>();
 		Snapshot<QueuedEventImpl> snapshot = this.chainEventQueue.createImmutableSnapshot();
@@ -1849,6 +1911,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Snapshot<IQueuedEvent> getEventSnapshot(String chainName)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
+		
 		if(Thread.currentThread() == this.queueWorker)
 		{
 			Snapshot snaphot = (Snapshot)this.eventQueue.createChainView(chainName).createImmutableSnapshot();
@@ -1862,6 +1929,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Snapshot<IQueuedEvent> getEventSnapshotPoll(String chainName)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
+		
 		if(Thread.currentThread() == this.queueWorker)
 		{
 			Snapshot snaphot = (Snapshot)this.eventQueue.createChainView(chainName).createImmutableSnapshotPoll();
@@ -1926,6 +1998,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public boolean removeEvent(String uuid)
 	{
+	    if(this.disposed)
+		{
+			return false;
+		}
+		
 		if(uuid == null)
 		{
 			return false;
@@ -1980,6 +2057,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public boolean removeEventList(List<String> uuidList)
 	{
+	    if(this.disposed)
+		{
+			return false;
+		}
+		
 		if(uuidList == null)
 		{
 			return false;
@@ -2442,6 +2524,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public void sendEvent(String topic, Map<String, ?> properties)
 	{
+	    if(this.disposed)
+		{
+			return;
+		}
+		
 		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_SEND_EVENT, System.currentTimeMillis());
 		
 		ITimer.Context timerContext = null;
@@ -2479,6 +2566,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public void postEvent(String topic, Map<String, ?> properties)
 	{
+	    if(this.disposed)
+		{
+			return;
+		}
+		
 		this.metrics.setQualityValue(IMetrics.QUALITY_VALUE_LAST_POST_EVENT, System.currentTimeMillis());
 		
 		try
@@ -2503,6 +2595,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	protected void notifyOrCreateWorker(long nextRuntimeStamp)
 	{
+	    if(this.disposed)
+		{
+			return;
+		}
+		
 		boolean notify = false;
 		QueueWorker worker = null;
 		
@@ -2763,6 +2860,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public void signal(String signal)
 	{
+	    if(this.disposed)
+		{
+			return;
+		}
+		
 		this.chainSignalQueue.defaultLinker().append(signal);
 		this.signalListUpdate = true;
 		
@@ -2920,6 +3022,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public List<IQueueChildScope> getChildScopes(Filter filter)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
+		
 		List<IQueueChildScope> copyList = this.queueScopeListCopy;
 		if(copyList.isEmpty())
 		{
@@ -2953,6 +3060,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	protected List<IQueueChildScope> getChildSessionScopes(UUID parentScopeId)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
+		
 		List<IQueueChildScope> copyList = this.queueScopeListCopy;
 		if(copyList.isEmpty())
 		{
@@ -2983,6 +3095,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public IQueueChildScope getChildScope(UUID scopeId)
 	{
+	    if(this.disposed)
+		{
+			return null;
+		}
+		
 		this.queueScopeListReadLock.lock();
 		try
 		{
@@ -3079,6 +3196,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public void enableRule(String ruleId)
 	{
+	    if(this.disposed)
+		{
+			return;
+		}
+		
 		if(this.disabledRules.contains(ruleId))
 		{
 			genericQueueSpoolLock.lock();
@@ -3099,6 +3221,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	@Override
 	public void disableRule(String ruleId)
 	{
+	    if(this.disposed)
+		{
+			return;
+		}
+		
 		if(!this.disabledRules.contains(ruleId))
 		{
 			genericQueueSpoolLock.lock();
@@ -3118,6 +3245,11 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	public boolean ruleIsDisabled(String ruleId)
 	{
+	    if(this.disposed)
+		{
+			return false;
+		}
+		
 		return this.disabledRules.contains(ruleId);
 	}
 	
