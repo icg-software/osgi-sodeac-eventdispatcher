@@ -11,7 +11,6 @@
 package org.sodeac.eventdispatcher.api;
 
 import java.util.List;
-import java.util.concurrent.Future;
 
 import org.osgi.service.event.Event;
 
