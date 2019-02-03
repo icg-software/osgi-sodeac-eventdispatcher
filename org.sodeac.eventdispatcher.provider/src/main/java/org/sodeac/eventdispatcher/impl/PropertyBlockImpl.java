@@ -528,11 +528,12 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			this.modifyListenerList.add(listener);
 			this.modifyListenerList = new ArrayList<IPropertyBlockModifyListener>(this.modifyListenerList);
 			
-			if((this.modifyListenerListCopy != null) && (! this.modifyListenerListCopy.isEmpty()))
+			List<IPropertyBlockModifyListener> modifyListenerListCopy = this.modifyListenerListCopy;
+			if((modifyListenerListCopy != null) && (! modifyListenerListCopy.isEmpty()))
 			{
 				try
 				{
-					this.modifyListenerListCopy.clear();
+					 // TODO doit in future -- this.modifyListenerListCopy.clear();
 				}
 				catch (Exception e) {}
 			}
@@ -558,11 +559,13 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			while(this.modifyListenerList.remove(listener)) {}
 			
 			this.modifyListenerList = new ArrayList<IPropertyBlockModifyListener>(this.modifyListenerList);
-			if((this.modifyListenerListCopy != null) && (! this.modifyListenerListCopy.isEmpty()))
+			
+			List<IPropertyBlockModifyListener> modifyListenerListCopy = this.modifyListenerListCopy;
+			if((modifyListenerListCopy != null) && (! modifyListenerListCopy.isEmpty()))
 			{
 				try
 				{
-					this.modifyListenerListCopy.clear();
+					 // TODO doit in future -- this.modifyListenerListCopy.clear();
 				}
 				catch (Exception e) {}
 			}
@@ -584,7 +587,10 @@ public class PropertyBlockImpl implements IPropertyBlock,IExtensiblePropertyBloc
 			{
 				try
 				{
-					this.modifyListenerList.clear();
+					if(! this.modifyListenerList.isEmpty())
+					{
+						this.modifyListenerList.clear();
+					}
 				}
 				catch (Exception e) {}
 				this.modifyListenerList = null;
