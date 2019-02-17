@@ -811,6 +811,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					eventDispatcherId = (String)properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID);
 				}
 				
+				if((! eventDispatcherId.equals(this.id)) && (! eventDispatcherId.equals(EventDispatcherConstants.ALL_DISPATCHERS)))
+				{
+					return;
+				}
+				
 				List<String> queueIdList = getQueueIdsFromServiceProperties(properties);
 				List<String> queueConfigurationFilterList = getQueueConfigurationFilterListFromServiceProperties(properties);
 				Boolean dispableMetrics = getDisableMetricsFromServiceProperties(properties);
@@ -1003,7 +1008,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			if(config instanceof QueueComponentConfiguration.BoundedByQueueConfiguration)
 			{
 				boundedByQueueConfiguration = (QueueComponentConfiguration.BoundedByQueueConfiguration)config;
-				if((boundedByQueueConfiguration.getDispatcherId() != null) && (! boundedByQueueConfiguration.getDispatcherId().equals(this.id)))
+				if((boundedByQueueConfiguration.getDispatcherId() != null) && (! boundedByQueueConfiguration.getDispatcherId().equals(this.id)) && (! boundedByQueueConfiguration.getDispatcherId().equals(EventDispatcherConstants.ALL_DISPATCHERS)))
 				{
 					continue;
 				}
@@ -1161,7 +1166,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					{
 						continue;
 					}
-					if((boundedQueueId.getDispatcherId() != null) && (! boundedQueueId.getDispatcherId().equals(this.id)))
+					if((boundedQueueId.getDispatcherId() != null) && (! boundedQueueId.getDispatcherId().equals(this.id)) && (! boundedQueueId.getDispatcherId().equals(EventDispatcherConstants.ALL_DISPATCHERS)))
 					{
 						continue;
 					}
@@ -1624,6 +1629,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					eventDispatcherId = (String)properties.get(EventDispatcherConstants.PROPERTY_DISPATCHER_ID);
 				}
 				
+				if((! eventDispatcherId.equals(this.id)) && (! eventDispatcherId.equals(EventDispatcherConstants.ALL_DISPATCHERS)))
+				{
+					return;
+				}
+				
 				List<String> queueIdList = getQueueIdsFromServiceProperties(properties);
 				List<String> queueConfigurationFilterList = getQueueConfigurationFilterListFromServiceProperties(properties);
 				Boolean dispableMetrics = getDisableMetricsFromServiceProperties(properties);
@@ -1803,7 +1813,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			if(config instanceof QueueComponentConfiguration.BoundedByQueueId)
 			{
 				boundedById = (QueueComponentConfiguration.BoundedByQueueId)config;
-				if((boundedById.getDispatcherId() != null) && (! boundedById.getDispatcherId().equals(this.id)))
+				if((boundedById.getDispatcherId() != null) && (! boundedById.getDispatcherId().equals(this.id)) && (! boundedById.getDispatcherId().equals(EventDispatcherConstants.ALL_DISPATCHERS)))
 				{
 					continue;
 				}
@@ -1816,7 +1826,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			if(config instanceof QueueComponentConfiguration.BoundedByQueueConfiguration)
 			{
 				boundedByQueueConfiguration = (QueueComponentConfiguration.BoundedByQueueConfiguration)config;
-				if((boundedByQueueConfiguration.getDispatcherId() != null) && (! boundedByQueueConfiguration.getDispatcherId().equals(this.id)))
+				if((boundedByQueueConfiguration.getDispatcherId() != null) && (! boundedByQueueConfiguration.getDispatcherId().equals(this.id)) && (! boundedByQueueConfiguration.getDispatcherId().equals(EventDispatcherConstants.ALL_DISPATCHERS)))
 				{
 					continue;
 				}

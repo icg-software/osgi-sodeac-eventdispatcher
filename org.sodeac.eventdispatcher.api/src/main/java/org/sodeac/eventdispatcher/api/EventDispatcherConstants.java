@@ -51,6 +51,7 @@ public class EventDispatcherConstants
 	// TASK
 	
 	public static final String DEFAULT_DISPATCHER_ID = "default";
+	public static final String ALL_DISPATCHERS = "*";
 	public static final long DEFAULT_TIMEOUT = 1080 * 1080;
 	public static final String PROPERTY_KEY_EXECUTION_TIMESTAMP 	= "EXECUTION_TIMESTAMP"	;
 	public static final String PROPERTY_KEY_HEARTBEAT_TIMEOUT 		= "HEARTBEAT_TIMEOUT "	;
