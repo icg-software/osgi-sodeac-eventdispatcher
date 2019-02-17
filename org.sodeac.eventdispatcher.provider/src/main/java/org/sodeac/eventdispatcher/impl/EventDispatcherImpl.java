@@ -73,7 +73,12 @@ import org.sodeac.eventdispatcher.api.IQueueController;
 
 import com.codahale.metrics.MetricRegistry;
 
-@Component(name="EventDispatcherProvider" ,service=IEventDispatcher.class,property={EventDispatcherConstants.PROPERTY_ID + "=" + EventDispatcherConstants.DEFAULT_DISPATCHER_ID})
+@Component
+(
+	name="EventDispatcherProvider" ,
+	service=IEventDispatcher.class,
+	factory = EventDispatcherConstants.EVENTDISPATCHER_SERVICE_FACTORY_ID
+)
 public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDispatcher
 {
 	private Map<String,QueueImpl> queueIndex;
@@ -109,7 +114,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	
 	private PropertyBlockImpl propertyBlock;
 	
-	private String id = EventDispatcherConstants.DEFAULT_DISPATCHER_ID;
+	private String id = null;
 	
 	private volatile ComponentContext context = null;
 	private volatile boolean activated = false;
@@ -377,6 +382,8 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	@Activate
 	private void activate(ComponentContext context, Map<String, ?> properties)
 	{
+		// TODO Test ED with id already exists ???
+		
 		osgiLifecycleWriteLock.lock();
 		try
 		{
@@ -385,6 +392,10 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 			if((properties.get(EventDispatcherConstants.PROPERTY_ID) != null) && (properties.get(EventDispatcherConstants.PROPERTY_ID).toString().length() > 0))
 			{
 				this.id = properties.get(EventDispatcherConstants.PROPERTY_ID).toString();
+			}
+			else
+			{
+				this.id = "anonym-" + UUID.randomUUID().toString();
 			}
 			
 			this.queueIndexReadLock.lock();
@@ -492,25 +503,11 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 					}
 					catch (Exception e) 
 					{
-						if(logService != null)
-						{
-							logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on unregister event controller", e);
-						}
-						else
-						{
-							System.err.println("Exception on unregister event controller " + e.getMessage());
-						}
+						log(LogService.LOG_ERROR, "Exception on unregister event controller", e);
 					}
 					catch (Error e) 
 					{
-						if(logService != null)
-						{
-							logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Error on Register Event Configuration", e);
-						}
-						else
-						{
-							System.err.println("Error on unregister event controller " + e.getMessage());
-						}
+						log(LogService.LOG_ERROR, "Exception on unregister event controller", e);
 					}
 				}
 			}
@@ -577,14 +574,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				}
 				catch (Exception e) 
 				{
-					if(logService != null)
-					{
-						logService.log(context.getServiceReference(), LogService.LOG_ERROR, "Exception on unregister dispatcher to extension", e);
-					}
-					else
-					{
-						System.err.println("Exception on unregister dispatcher to extension " + e.getMessage());
-					}
+					log(LogService.LOG_ERROR, "Exception on unregister dispatcher to extension", e);
 				}
 			}
 			
@@ -968,6 +958,12 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			return;
 		}
+		
+		if(this.id == null)
+		{
+			return;
+		}
+		
 		List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList = null;
 		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
 		List<QueueComponentConfiguration.SubscribeEvent> subscribeEventList = null;
@@ -1081,6 +1077,16 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	
 	private boolean registerQueueController(ControllerContainer controllerContainer)
 	{
+		if(this.context == null)
+		{
+			return false;
+		}
+		
+		if(this.id == null)
+		{
+			return false;
+		}
+		
 		this.extensionListReadLock.lock();
 		try
 		{
@@ -1104,10 +1110,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				)
 			)
 			{
-				if(this.logService != null)
-				{
-					log(LogService.LOG_WARNING, "Missing QueueId or ConfigurationFilter",null);
-				}
+				log(LogService.LOG_WARNING, "Missing QueueId or ConfigurationFilter",null);
 				return false;
 			}
 			
@@ -1770,6 +1773,10 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 		{
 			return;
 		}
+		if(this.id == null)
+		{
+			return;
+		}
 		List<QueueComponentConfiguration.BoundedByQueueId> boundByIdList = null;
 		List<QueueComponentConfiguration.BoundedByQueueConfiguration> boundedByQueueConfigurationList = null;
 		List<QueueComponentConfiguration.QueueServiceConfiguration> serviceBehaviorConfigurationList = null;
@@ -1901,10 +1908,7 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 				)
 			)
 			{
-				if(this.logService != null)
-				{
-					log(LogService.LOG_WARNING, "Missing queueId or queueConfigurationFilter for service",null);
-				}
+				log(LogService.LOG_WARNING, "Missing queueId or queueConfigurationFilter for service",null);
 				return false;
 			}
 			

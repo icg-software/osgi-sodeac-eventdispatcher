@@ -40,6 +40,8 @@ public class EventDispatcherConstants
 	
 	// Dispatcher
 	
+	public static final String EVENTDISPATCHER_SERVICE_FACTORY_ID = "org.sodeac.eventdispatcher.api.eventdispatcher";
+	public static final String EVENTDISPATCHER_COMPONENT_FACTORY_FILTER = "(component.factory=org.sodeac.eventdispatcher.api.eventdispatcher)";
 	public static final String PROPERTY_DISPATCHER_ID = "dispatcherid";
 	public static final String PROPERTY_ID = "id";
 	public static final String PROPERTY_QUEUE_ID = "queueid";
