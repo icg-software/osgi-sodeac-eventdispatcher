@@ -35,6 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
@@ -380,23 +381,33 @@ public class EventDispatcherImpl implements IEventDispatcher,IExtensibleEventDis
 	private ICounter counterConfigurationSize;
 	
 	@Activate
-	private void activate(ComponentContext context, Map<String, ?> properties)
+	private void activate(ComponentContext context, Map<String, ?> properties) throws InvalidSyntaxException
 	{
-		// TODO Test ED with id already exists ???
+		if((properties.get(EventDispatcherConstants.PROPERTY_ID) != null) && (! properties.get(EventDispatcherConstants.PROPERTY_ID).toString().isEmpty()))
+		{
+			this.id = properties.get(EventDispatcherConstants.PROPERTY_ID).toString();
+		}
+		else
+		{
+			this.id = "anonym-" + UUID.randomUUID().toString();
+		}
+		
+		Collection<ServiceReference<IEventDispatcher>> dispatcherServiceRefences = context.getBundleContext().getServiceReferences(IEventDispatcher.class,"(" + EventDispatcherConstants.PROPERTY_ID + "=" + this.id + ")" );
+		if(! dispatcherServiceRefences.isEmpty())
+		{
+			for(ServiceReference<IEventDispatcher> serviceReference : dispatcherServiceRefences)
+			{
+				if(context.getServiceReference() != serviceReference)
+				{
+					throw new RuntimeException("SDC EventDispatcher with id '" + this.id + "' already exists");
+				}
+			}
+		}
 		
 		osgiLifecycleWriteLock.lock();
 		try
 		{
 			this.context = context;
-			
-			if((properties.get(EventDispatcherConstants.PROPERTY_ID) != null) && (properties.get(EventDispatcherConstants.PROPERTY_ID).toString().length() > 0))
-			{
-				this.id = properties.get(EventDispatcherConstants.PROPERTY_ID).toString();
-			}
-			else
-			{
-				this.id = "anonym-" + UUID.randomUUID().toString();
-			}
 			
 			this.queueIndexReadLock.lock();
 			try

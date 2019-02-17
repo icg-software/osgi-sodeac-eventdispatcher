@@ -24,10 +24,11 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.log.LogService;
 import org.sodeac.eventdispatcher.api.EventDispatcherConstants;
 
-@Component(immediate=true,service=DefaultEventDispatcherFactory.class)
+@Component(immediate=true,service=DefaultEventDispatcherFactory.class,scope=ServiceScope.SINGLETON)
 public class DefaultEventDispatcherFactory
 {
 	@Reference(target = EventDispatcherConstants.EVENTDISPATCHER_COMPONENT_FACTORY_FILTER )
