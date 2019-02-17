@@ -16,8 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import org.sodeac.commons.function.ConplierBean;
 
 /**
  * A thread-safe property-container
@@ -90,23 +91,7 @@ public interface IPropertyBlock
 	 */
 	public default <T> T getPropertyOrSupply(String key, Class<T> resultClass, Supplier<T> propertySupplierIfNotExists)
 	{
-		final Conplier<T> valueContainer = new Conplier<T>()
-		{
-			private T value = null;
-					
-			@Override
-			public void accept(T t)
-			{
-				this.value = t;
-			}
-
-			@Override
-			public T get()
-			{
-				return this.value;
-			}
-			
-		};
+		ConplierBean<T> valueContainer = new ConplierBean<T>();
 		
 		computeProcedure(new IPropertyBlockAtomicProcedure()
 		{
@@ -248,8 +233,6 @@ public interface IPropertyBlock
 	 * @return audit trail of modified property items
 	 */
 	public Supplier<List<PropertyBlockModifyItem>> computeProcedure(IPropertyBlockAtomicProcedure operationHandler);
-	
-	public interface Conplier<T> extends Supplier<T>,Consumer<T>{}
 	
 	/**
 	 * helper to build a map in static way
