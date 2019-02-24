@@ -2456,18 +2456,25 @@ public class QueueImpl implements IQueue,IExtensibleQueue
 	
 	public void stopQueueWorker()
 	{
+		QueueWorker worker = null;
 		this.workerSpoolLock.lock();
 		try
 		{
 			if(this.queueWorker != null)
 			{
-				this.queueWorker.stopWorker();
+				worker = this.queueWorker;
 				this.queueWorker = null;
+				worker.softStopWorker();
 			}
 		}
 		finally 
 		{
 			this.workerSpoolLock.unlock();
+		}
+		
+		if(worker != null)
+		{
+			worker.stopWorker();
 		}
 	}
 

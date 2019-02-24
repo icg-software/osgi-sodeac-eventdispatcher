@@ -1276,6 +1276,11 @@ public class QueueWorker extends Thread
 		catch (Error e) {}
 	}
 	
+	public void softStopWorker()
+	{
+		this.go = false;
+	}
+	
 	public void stopWorker()
 	{
 		this.go = false;
