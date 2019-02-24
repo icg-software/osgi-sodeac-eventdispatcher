@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>org.sodeac.eventdispatcher.provider</artifactId>
-  <version>0.9.11-SNAPSHOT</version>
+  <version>0.9.12-SNAPSHOT</version>
   <packaging>bundle</packaging>
   <name>Sodeac Event Dispatcher Provider</name>
   
@@ -14,8 +14,8 @@
   
   <properties>
     <!-- bundle.version>${project.version}</bundle.version-->
-    <bundle.version>0.9.11</bundle.version>
-    <bundle.api.version>0.9.11</bundle.api.version>
+    <bundle.version>0.9.12</bundle.version>
+    <bundle.api.version>0.9.12</bundle.api.version>
   </properties>
   
    <repositories>
@@ -36,7 +36,7 @@
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.api</artifactId>
-      <version>0.9.11-SNAPSHOT</version>
+      <version>0.9.12-SNAPSHOT</version>
     </dependency>
     <dependency>
 	    <groupId>io.dropwizard.metrics</groupId>
@@ -59,7 +59,7 @@
             <Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
             <Bundle-ActivationPolicy>lazy</Bundle-ActivationPolicy>
           	<Import-Package>
-            	org.sodeac.eventdispatcher.api;version="0.9.11",
+            	org.sodeac.eventdispatcher.api;version="0.9.12",
             	org.sodeac.multichainlist;version="1.0.1",
             	*
             </Import-Package>
