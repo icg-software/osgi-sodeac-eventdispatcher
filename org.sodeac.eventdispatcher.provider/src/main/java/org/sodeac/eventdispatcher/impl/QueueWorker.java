@@ -612,7 +612,7 @@ public class QueueWorker extends Thread
 								this.currentRunningTask = null;
 								
 								runningTask.getPropertyBlock().setProperty(EventDispatcherConstants.PROPERTY_KEY_THROWED_EXCEPTION, e);
-								log(LogService.LOG_ERROR,"Exception while process task " + dueTask,e);
+								log(LogService.LOG_ERROR,"Exception while process task " + dueTask.getTask(),e);
 								if(timerContextTask != null)
 								{
 									try
@@ -688,7 +688,7 @@ public class QueueWorker extends Thread
 								
 								Exception exc = new Exception(e.getMessage(),e);
 								runningTask.getPropertyBlock().setProperty(EventDispatcherConstants.PROPERTY_KEY_THROWED_EXCEPTION, exc);
-								log(LogService.LOG_ERROR,"Error while process task " + dueTask,e);
+								log(LogService.LOG_ERROR,"Error while process task " + dueTask.getTask(),e);
 								if(timerContextTask != null)
 								{
 									try
