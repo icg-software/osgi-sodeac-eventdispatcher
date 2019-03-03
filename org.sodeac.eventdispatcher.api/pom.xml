@@ -36,7 +36,8 @@
             <Export-Package>
             	org.sodeac.eventdispatcher.api;version="${bundle.version}",
             	org.sodeac.eventdispatcher.annotation;version="${bundle.version}",
-            	org.sodeac.commons.function;version="${bundle.version}"
+            	org.sodeac.commons.function;version="${bundle.version}",
+            	org.sodeac.commons.flow;version="${bundle.version}"
             </Export-Package>
           </instructions>
           <source>1.8</source>
