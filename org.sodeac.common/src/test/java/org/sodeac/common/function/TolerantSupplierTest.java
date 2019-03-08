@@ -85,7 +85,7 @@ public class TolerantSupplierTest
 		ConplierBean<Integer> i = new ConplierBean<Integer>(null);
 		Integer x = TolerantSupplier.forSupplier(i)
 					.withAttemptCount(3)
-					.withTimeToSleepValue(1, TimeUnit.SECONDS)
+					.withWaitTimeForNextAttempt(1, TimeUnit.SECONDS)
 					.withDefaultValue(5)
 					.get();
 		assertEquals("x should be corrext",Integer.valueOf(5), x);
@@ -104,7 +104,7 @@ public class TolerantSupplierTest
 		
 		Integer x = TolerantSupplier.forSupplier(i)
 					.withAttemptCount(3)
-					.withTimeToSleepValue(1, TimeUnit.SECONDS)
+					.withWaitTimeForNextAttempt(1, TimeUnit.SECONDS)
 					.withDefaultValue(3)
 					.get();
 		assertEquals("x should be corrext",Integer.valueOf(5), x);
@@ -123,7 +123,7 @@ public class TolerantSupplierTest
 		
 		Integer x = TolerantSupplier.forSupplier(i)
 					.withAttemptCount(3)
-					.withTimeToSleepValue(1, TimeUnit.SECONDS)
+					.withWaitTimeForNextAttempt(1, TimeUnit.SECONDS)
 					.withDefaultValue(3)
 					.get();
 		assertEquals("x should be corrext",Integer.valueOf(3), x);
