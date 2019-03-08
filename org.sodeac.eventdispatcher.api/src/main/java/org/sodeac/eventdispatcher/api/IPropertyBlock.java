@@ -18,7 +18,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import org.sodeac.commons.function.ConplierBean;
+import org.sodeac.common.function.ConplierBean;
 
 /**
  * A thread-safe property-container

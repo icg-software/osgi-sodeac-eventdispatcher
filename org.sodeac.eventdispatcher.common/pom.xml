@@ -52,9 +52,13 @@
             	org.sodeac.eventdispatcher.common.controller;version="${bundle.version}",
             	org.sodeac.eventdispatcher.common.directorywatcher;version="${bundle.version}",
             	org.sodeac.eventdispatcher.common.task;version="${bundle.version}",
+            	org.sodeac.eventdispatcher.common.flow.api;version="${bundle.version}",
             	org.sodeac.eventdispatcher.common.queueservice;version="${bundle.version}",
             	org.sodeac.eventdispatcher.common.reactiveservice.api*;version="${bundle.version}"
             </Export-Package>
+            <Private-Package>
+            	org.sodeac.eventdispatcher.common.flow.impl;version="${bundle.version}",
+            </Private-Package>
           </instructions>
           <source>1.8</source>
           <target>1.8</target>

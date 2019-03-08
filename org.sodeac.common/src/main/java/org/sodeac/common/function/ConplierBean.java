@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.commons.function;
+package org.sodeac.common.function;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;

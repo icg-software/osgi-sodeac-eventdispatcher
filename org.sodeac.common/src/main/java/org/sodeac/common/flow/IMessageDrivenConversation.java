@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.commons.flow;
+package org.sodeac.common.flow;
 
 import java.util.Optional;
 import java.util.Set;
@@ -28,6 +28,9 @@ public interface IMessageDrivenConversation
 	
 	public IMessageDrivenConversation open();
 	public IMessageDrivenConversation close();
+	public boolean isClosed();
+	
+	public <A> A getAdapter(Class<A> adapterClass);
 	
 	public interface IChannel<T>
 	{
@@ -51,13 +54,14 @@ public interface IMessageDrivenConversation
 		}
 		
 		public IChannel<T> close(String reason);
+		public boolean isClosed();
 		public IChannelDescription getChannelDescription();
 		
 		public <P extends IChannelPolicy> Optional<P> getChannelPolicy(Class<P> type);
 		public <P extends IChannelEventProcessor> Optional<P> getChannelEventProcessor(Class<P> type);
 		
-		public IChannel<T> onMessageRequest(Function<IMessageRequest<T>,T> messageSupplier);
-		public IChannel<T> onMessageSupply(Consumer<IMessageSupply<T>> messageConsumer);
+		public IChannel<T> onMessageRequested(Function<IMessageRequest<T>,T> messageSupplier);
+		public IChannel<T> onMessageSupplied(Consumer<IMessageSupply<T>> messageConsumer);
 		
 		public IMessageDrivenConversation getConversation();
 		
@@ -77,7 +81,7 @@ public interface IMessageDrivenConversation
 			
 			public UUID getId();
 			public long getChannelSequence();
-			public long getChatSequence();
+			public long getConversationSequence();
 			public IChannel<T> getChannel();
 		}
 		
