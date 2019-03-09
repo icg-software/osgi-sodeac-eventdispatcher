@@ -10,59 +10,70 @@
  *******************************************************************************/
 package org.sodeac.common;
 
-import java.util.Optional;
 
 public interface ILifecycle
 {
 	public interface ILifecycleEvent
 	{
-		public ILifecycleState getPreviousState();
-		public ILifecycleState getNextState();
+		public ILifecycleState getContemporaryState();
 	}
+	
+	public interface IHealthCheckType{}
 	
 	public String getId();
 	public String getType();
 	public ILifecycleState getContemporaryState();
-	public <T> Optional<T> getProperty(String key, Class<T> clazz);
 	
 	public interface ILifecycleState
 	{
-		public interface IInstalledState extends ILifecycleState
+		public ILifecycle getLifecycle();
+		
+		public interface IUninstalledState extends ILifecycleState
 		{
-			public interface IInstallEvent extends ILifecycleEvent{}
-			public interface IUninstallEvent extends ILifecycleEvent{}
+			public interface IOnUninstallEvent extends ILifecycleEvent{}
 		}
 		
-		public interface IStartUpState extends IInstalledState
+		public interface IInstalledState extends IUninstalledState,ILifecycleState
 		{
+			public interface IOnInstallEvent extends ILifecycleEvent{}
+		}
+		
+		public interface IStartUpState extends IInstalledState,ILifecycleState
+		{
+			public interface IOnStartUpEvent extends ILifecycleEvent{}
 			public interface IConfigureEvent extends ILifecycleEvent{}
 			public interface ICheckRequirement extends ILifecycleEvent{}
 			public interface IBootstrapEvent extends ILifecycleEvent{}
 			public interface ILoadStateEvent extends ILifecycleEvent{}
-			public interface IHealthCheckEvent extends ILifecycleEvent{}
+			public interface IHealthCheckOnStartUpEvent extends ILifecycleEvent, IHealthCheckType{}
 		}
 		
-		public interface IReadyState extends IStartUpState
+		public interface IBrokenState extends IStartUpState,ILifecycleState
 		{
+			public interface IOnBrokenEvent extends ILifecycleEvent{}
+			public interface IHealingEvent extends ILifecycleEvent{}
+			public interface IHealthCheckOnBrokenEvent extends ILifecycleEvent, IHealthCheckType{}
+		}
+		
+		public interface IReadyState extends IStartUpState,ILifecycleState
+		{
+			public interface IOnReadyEvent extends ILifecycleEvent{}
+			public interface IHealthCheckOnReadyEvent extends ILifecycleEvent, IHealthCheckType{}
 			public interface IStartIOEvent extends ILifecycleEvent{}
 		}
 		
-		public interface IActiveState extends IReadyState
+		public interface IActiveState extends IReadyState,ILifecycleState
 		{
+			public interface IOnActiveEvent extends ILifecycleEvent{}
+			public interface IHealthCheckOnActiveEvent extends ILifecycleEvent, IHealthCheckType{}
 			public interface IStopIOEvent extends ILifecycleEvent{}
 		}
 		
-		public interface IShutdownState extends IInstalledState
+		public interface IShutDownState extends IStartUpState,ILifecycleState
 		{
+			public interface IOnShutDownEvent extends ILifecycleEvent{}
 			public interface ISaveStateEvent extends ILifecycleEvent{}
-			public interface IShutdownEvent extends ILifecycleEvent{}
+			public interface IDisposeEvent extends ILifecycleEvent{}
 		}
-		
-		public interface IBrokenState extends IInstalledState
-		{
-			public interface IHealingEvent extends ILifecycleEvent{}
-		}
-		
-		public interface IUninstalledState extends ILifecycleState{}
 	}
 }
