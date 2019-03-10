@@ -21,12 +21,12 @@
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.api</artifactId>
-      <version>0.9.12-SNAPSHOT</version>
+      <version>0.9.13-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.eventdispatcher.common</artifactId>
-      <version>0.9.12-SNAPSHOT</version>
+      <version>0.9.13-SNAPSHOT</version>
     </dependency>
         <dependency>
 	    <groupId>io.dropwizard.metrics</groupId>

@@ -142,11 +142,11 @@ public abstract class AbstractTest
 			mavenBundle("org.sodeac","org.sodeac.multichainlist","1.0.1").start(),
 			mavenBundle("com.googlecode.json-simple", "json-simple", "1.1.1").start(),
 			mavenBundle("com.google.guava", "guava", "25.1-jre").start(),
-			reactorBundle("org.sodeac.eventdispatcher.api","0.9.12").start(),
-			reactorBundle("org.sodeac.common","0.9.12").start(),
-			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.12").start(),
-			reactorBundle("org.sodeac.eventdispatcher.extension.jmx","0.9.12").start(),
-			reactorBundle("org.sodeac.eventdispatcher.common","0.9.12").start(),
+			reactorBundle("org.sodeac.eventdispatcher.api","0.9.13").start(),
+			reactorBundle("org.sodeac.common","0.9.13").start(),
+			reactorBundle("org.sodeac.eventdispatcher.provider","0.9.13").start(),
+			reactorBundle("org.sodeac.eventdispatcher.extension.jmx","0.9.13").start(),
+			reactorBundle("org.sodeac.eventdispatcher.common","0.9.13").start(),
 			reactorBundle("org.sodeac.eventdispatcher.itest.components","0.9.0").start()
 		};
 	}
