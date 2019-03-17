@@ -8,7 +8,7 @@
  * Contributors:
  *     Sebastian Palarus - initial API and implementation
  *******************************************************************************/
-package org.sodeac.common.flow;
+package org.sodeac.common.eip;
 
 import java.util.Optional;
 import java.util.Set;

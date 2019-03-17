@@ -1,6 +1,6 @@
-package org.sodeac.common.flow;
+package org.sodeac.common.eip;
 
-import org.sodeac.common.flow.IMessageDrivenConversation.IChannel.IChannelPolicy;
+import org.sodeac.common.eip.IMessageDrivenConversation.IChannel.IChannelPolicy;
 
 public interface ICommonChannelPolicies
 {
