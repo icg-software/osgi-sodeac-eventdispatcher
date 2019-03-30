@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>org.sodeac.eventdispatcher.api</artifactId>
-  <version>0.9.13-SNAPSHOT</version>
+  <version>0.9.14-SNAPSHOT</version>
   <packaging>bundle</packaging>
   <name>Sodeac Event Dispatcher API</name>
   <parent>
@@ -13,14 +13,14 @@
   
   <properties>
     <!-- bundle.version>${project.version}</bundle.version-->
-    <bundle.version>0.9.13</bundle.version>
+    <bundle.version>0.9.14</bundle.version>
   </properties>
   
   <dependencies>
     <dependency>
       <groupId>org.sodeac</groupId>
       <artifactId>org.sodeac.common</artifactId>
-      <version>0.9.13-SNAPSHOT</version>
+      <version>0.1.0</version>
     </dependency>
   </dependencies>
   

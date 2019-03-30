@@ -231,7 +231,6 @@
   <url>https://github.com/spalarus/osgi-sodeac-eventdispatcher</url>
 
   <modules>
-    <module>org.sodeac.common</module>
     <module>org.sodeac.eventdispatcher.api</module>
     <module>org.sodeac.eventdispatcher.provider</module>
     <module>org.sodeac.eventdispatcher.extension.jmx</module>
